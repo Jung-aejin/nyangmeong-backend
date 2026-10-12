@@ -1,0 +1,11 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# 비밀값
+.env
+.env.*
+
+# 개인 작업 기록과 Claude Code 개인 설정
+.claude/
+CLAUDE.local.md
