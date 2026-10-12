@@ -1,0 +1,22 @@
+# 도메인별 구획 안에 추가한다. 맨 끝에 붙이면 병합할 때 충돌한다
+# 비밀값은 ${키} 형태로 이름만 둔다. 값은 환경변수로 넣는다
+
+# 공통
+spring:
+  application:
+    name: nyangmeong-backend
+  profiles:
+    default: local
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  mvc:
+    format:
+      date: iso
+      date-time: iso
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true

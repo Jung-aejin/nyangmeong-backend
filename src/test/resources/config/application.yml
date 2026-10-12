@@ -1,0 +1,7 @@
+# 테스트는 DB에 붙지 않는다. 애플리케이션이 뜨는 데 필요한 주소 문자열만 준다.
+# 접속할 수 없는 주소라서, 기동 중에 쿼리를 날리는 코드가 생기면 접속 실패로 테스트가 실패한다
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:1/none
+    username: none
+    password: none
