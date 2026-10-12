@@ -429,10 +429,9 @@ public enum MatchStatus {
 
 ### PR
 
-- 대상은 `develop`이다(`hotfix/`만 `main`과 `develop` 양쪽). 승인 1명과 CI 통과 후 merge 커밋으로 병합한다.
+- 대상은 `develop`이다(`hotfix/`만 `main`과 `develop` 양쪽). 승인과 병합은 저장소 관리자가 한다. CI 통과 후 merge 커밋으로 병합한다.
 - 제목은 커밋 형식과 같게 쓴다.
 - 본문에 관련 FN ID, 무엇을 왜 바꿨는지, 어떻게 확인했는지를 적는다.
-- `global/`을 바꾸는 PR은 공통 모듈 담당자가 리뷰한다.
 
 ### 작업 상태 공유
 
