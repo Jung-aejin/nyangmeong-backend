@@ -13,7 +13,18 @@
 
 - 기능마다 브랜치를 새로 만들지 않고 자기 브랜치에서 작업해 `develop`으로 PR을 올린다.
 - PR 하나에는 기능 하나만 담는다. 열려 있는 PR이 있는 동안 같은 브랜치에 올린 커밋은 그 PR에 함께 들어가므로, 앞 PR이 병합된 뒤에 다음 기능을 시작한다.
-- 새 작업을 시작하기 전에 `develop`의 최신 내용을 자기 브랜치에 합친다. 건너뛰면 다음 PR에서 충돌이 커진다. `git fetch origin` 다음에 `git merge origin/develop`으로 합치고 rebase는 쓰지 않는다. 개인 브랜치는 이미 푸시되어 있어서 rebase하면 커밋이 새로 만들어지고 강제 푸시가 필요해진다.
+- 작업을 마치면 `develop`의 최신 내용을 자기 브랜치에 합친 뒤 푸시하고 PR을 올린다. 건너뛰면 그 사이 병합된 다른 사람의 변경과 PR에서 충돌한다. 작업한 내용은 먼저 커밋한다.
+
+  ```
+  git checkout develop
+  git pull origin develop      # 로컬 develop을 원격 기준으로 최신화
+  git checkout LJS             # 자기 브랜치
+  git merge develop            # 로컬 develop을 자기 브랜치에 병합
+  git push origin LJS
+  ```
+
+- 로컬 `develop`에는 직접 커밋하지 않는다. 최신화하는 데만 쓴다.
+- rebase는 쓰지 않는다. 개인 브랜치는 이미 푸시되어 있어서 rebase하면 커밋이 새로 만들어지고 강제 푸시가 필요해진다.
 - 병합은 merge 커밋으로 한다. squash는 쓰지 않는다. 개인 브랜치는 병합 뒤에도 계속 쓰는데, squash로 합치면 이력이 갈라져 이미 병합된 변경이 다음 PR에 다시 나타난다.
 - `main`과 `develop`에는 직접 푸시하지 않는다.
 - `hotfix/`는 배포본에 문제가 생겨 `develop`의 다음 배포를 기다릴 수 없을 때만 쓴다. `main`으로 PR을 올려 병합한 뒤 같은 내용을 `develop`에도 병합한다. 한쪽만 병합하면 다음 배포에서 수정이 사라진다.
