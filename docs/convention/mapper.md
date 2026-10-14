@@ -2,7 +2,7 @@
 
 `AGENTS.md`에서 이어지는 문서다.
 
-### Mapper와 XML
+## Mapper와 XML
 
 - SQL은 XML에만 쓴다. `@Select` 같은 어노테이션 SQL을 쓰지 않는다.
 - 정렬 컬럼은 enum으로만 받는다. 요청값을 SQL에 그대로 붙이지 않는다.
@@ -26,7 +26,7 @@ public PageResponse<PostSummary> search(PostSearchCond cond, PageQuery pq) {
 // NG: rows.stream().map(PostResponse::from).toList()  -- 전체 건수가 사라진다
 ```
 
-### VO와 enum
+## VO와 enum
 
 - VO는 부모 클래스 없이 테이블 컬럼만 필드로 가진다.
 - Y/N 컬럼과 코드 컬럼은 `String`으로 둔다. TypeHandler를 쓰지 않는다.

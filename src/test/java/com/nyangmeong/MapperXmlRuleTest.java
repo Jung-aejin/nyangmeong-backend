@@ -23,7 +23,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * DEL_YN이 있는 테이블을 조회하는 select에 DEL_YN = 'N' 조건이 있는지 Mapper XML을 읽어 검사한다(AGENTS.md 0장 5번).
+ * DEL_YN이 있는 테이블을 조회하는 select에 DEL_YN = 'N' 조건이 있는지 Mapper XML을 읽어 검사한다(AGENTS.md "코드를 쓰기 전에 꼭 알 것" 5번).
  * DB에 붙지 않는다. 실패하면 SQL에 조건을 넣는다.
  */
 class MapperXmlRuleTest {

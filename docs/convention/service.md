@@ -2,7 +2,7 @@
 
 `AGENTS.md`에서 이어지는 문서다.
 
-### Service
+## Service
 
 - `@Transactional`은 클래스가 아니라 메서드에 붙인다. 데이터를 바꾸는 메서드에는 `@Transactional`, 조회만 하는 메서드에는 `@Transactional(readOnly = true)`를 붙인다. Service의 `public` 메서드에는 둘 중 하나가 반드시 있어야 한다. 빠뜨리면 ArchUnit 테스트(`ArchitectureTest`)가 실패한다. 트랜잭션이 필요 없는 `public` 메서드는 이 테스트의 예외 목록에 추가한다.
 

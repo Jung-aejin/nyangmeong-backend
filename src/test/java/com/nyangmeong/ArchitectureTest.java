@@ -16,14 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * AGENTS.md 3장(의존 방향)과 docs/convention/service.md의 @Transactional 규칙을 검사한다.
+ * AGENTS.md의 의존 방향과 docs/convention/service.md의 @Transactional 규칙을 검사한다.
  * 실패하면 이 테스트가 아니라 메시지에 나온 코드를 고친다.
  */
 class ArchitectureTest {
 
     private static final String ROOT = "com.nyangmeong";
 
-    // AGENTS.md 3.1절의 층 표. 도메인을 새로 만들면 표와 여기를 같이 고친다
+    // AGENTS.md "도메인 간 호출은 낮은 층으로만"의 층 표. 도메인을 새로 만들면 표와 여기를 같이 고친다
     private static final Map<String, Integer> DOMAIN_LAYERS = domainLayers();
 
     // 트랜잭션이 필요 없는 Service public 메서드. "클래스이름.메서드이름"으로 적는다

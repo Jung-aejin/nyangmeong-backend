@@ -1,8 +1,6 @@
 # 냥멍케어 백엔드 컨벤션: API
 
-`AGENTS.md`에서 이어지는 문서다. 장 번호는 `AGENTS.md`와 이어진다.
-
-## 5. API 규칙
+`AGENTS.md`에서 이어지는 문서다.
 
 - 접두어는 `/api/v1`이다. 리소스는 복수형 kebab-case로 쓴다. 식별자는 경로에, 필터·정렬·페이지는 쿼리에 둔다.
   - 예: `/members/me`, `/pets/{petSn}/checkups`, `/places?plcClsfCd={공통코드}&keyword=병원`

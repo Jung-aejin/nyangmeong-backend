@@ -2,7 +2,7 @@
 
 `AGENTS.md`에서 이어지는 문서다.
 
-### Controller
+## Controller
 
 - `ApiResponse`로 감싼 값만 반환한다.
 - 로그인한 회원은 `@AuthenticationPrincipal LoginMember`로 받는다. 회원 일련번호를 경로, 쿼리, 요청 본문으로 받지 않는다. 받은 값을 그대로 쓰면 다른 회원의 번호를 넣어 남의 데이터를 조회하거나 바꿀 수 있다.

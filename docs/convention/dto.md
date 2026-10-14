@@ -2,7 +2,7 @@
 
 `AGENTS.md`에서 이어지는 문서다.
 
-### DTO와 Lombok
+## DTO와 Lombok
 
 - MyBatis가 값을 채우는 클래스(VO, `XxxSummary`, `XxxSearchCond`)는 `@Data`를 붙인 클래스로 쓴다. `@Builder`는 붙이지 않는다. `@Builder`만 붙이면 기본 생성자가 없어져 MyBatis가 객체를 만들지 못한다.
 - 요청·응답 DTO(`XxxRequest`, `XxxResponse`)는 `record`로 쓴다. 응답 DTO는 `XxxResponse.from(vo)` 정적 메서드로 VO에서 만든다.
