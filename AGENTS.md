@@ -34,7 +34,7 @@ com.nyangmeong
 │  ├─ response/  error/  security/  auth/  validation/  file/
 │  ├─ notification/  mail/  mybatis/  code/  setting/
 │  └─ external/  batch/  config/  log/
-├─ member/  pet/  health/  ai/  community/  place/
+├─ member/  pet/  health/  community/  place/
 ├─ support/  notification/  expense/
 │                          업무 기능. 도메인 1개 = 패키지 1개
 ├─ admin/                  여러 도메인을 합치는 관리자 조회만
@@ -76,8 +76,7 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 | 1 | `pet` | 0층 |
 | 2 | `health`, `place`, `notification` | 0~1층 |
 | 3 | `expense`, `community`, `support` | 0~2층 |
-| 4 | `ai` | 0~3층 |
-| 5 | `admin`, `job` | 전부 |
+| 4 | `admin`, `job` | 전부 |
 
 - 자기보다 낮은 층의 service만 부른다. 같은 층끼리는 부르지 않는다. 이 규칙이면 두 도메인이 서로를 부르는 순환이 생기지 않는다.
 - 위층의 기능이 필요하면 위층을 부르지 않는다. 위층이 아래층을 부르도록 방향을 바꾸거나, 이벤트를 발행하거나, 그 기능을 위층으로 옮긴다.
