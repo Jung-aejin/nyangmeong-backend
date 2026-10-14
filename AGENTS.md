@@ -135,7 +135,8 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 - 설정 파일에는 `${DB_PASSWORD}`처럼 키 이름만 둔다.
 - 설정 파일은 `application.yml`, `application-local.yml`, `application-prod.yml`로 나눈다.
 - 로그에 비밀번호와 토큰을 남기지 않는다.
-- 비밀값이 든 파일(`.env` 등)과 개인 작업 기록(`.claude/handoff.md`, `CLAUDE.local.md`)은 git에 올리지 않는다.
+- 비밀값이 든 파일(`.env` 등)과 `CLAUDE.local.md`는 git에 올리지 않는다.
+- 작업 기록은 `handoff/<이름>.md`에 사람마다 한 파일로 두고 커밋한다. 다른 PC에서도 이어서 작업하기 위해서다. 공개 저장소이므로 비밀값과 개인 PC 경로를 쓰지 않는다.
 
 ## 테스트
 

@@ -6,8 +6,11 @@ Thumbs.db
 .env
 .env.*
 
-# 개인 작업 기록과 Claude Code 개인 설정
-.claude/
+# Claude Code는 팀 공용 설정(settings.json, skills, mods)만 커밋한다. 작업 기록은 handoff/<이름>.md로 커밋한다
+.claude/*
+!.claude/settings.json
+!.claude/skills/
+!.claude/mods/
 CLAUDE.local.md
 
 HELP.md

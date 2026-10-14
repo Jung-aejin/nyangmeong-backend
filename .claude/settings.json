@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "nyangmeong-backend": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/kkori-lab/nyangmeong-backend.git"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "limit-guard@nyangmeong-backend": true
+  }
+}
