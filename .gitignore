@@ -6,6 +6,9 @@ Thumbs.db
 .env
 .env.*
 
+# setup이 로컬 DB에 실행한 db/ SQL 기록
+/db/.applied
+
 # Claude Code는 팀 공용 설정(settings.json, skills, mods)만 커밋한다. 작업 기록은 handoff/<이름>.md로 커밋한다
 .claude/*
 !.claude/settings.json

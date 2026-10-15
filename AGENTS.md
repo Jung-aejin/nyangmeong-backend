@@ -9,7 +9,7 @@
 
 어기면 되돌리기 어렵거나 오류 없이 조용히 잘못되는 것만 모았다. 나머지는 필요할 때 찾아본다.
 
-1. **비밀값을 커밋하지 않는다.** 이 저장소는 공개다. 비밀번호, 키, 토큰은 환경변수로만 넣는다. (설정과 비밀값)
+1. **비밀값을 커밋하지 않는다.** 이 저장소는 공개다. 비밀번호, 키, 토큰은 환경변수나 git에 올리지 않는 `.env.local`로만 넣는다. (설정과 비밀값)
 2. **의존은 한 방향이다.** 도메인이 `global`을 쓰고, 다른 도메인은 `service`로만, 자기보다 낮은 층만 부른다. 순환 참조 오류가 나면 `@Lazy`나 `ObjectProvider`로 덮지 않고 이벤트로 바꾸거나 기능을 위층으로 옮긴다. (의존 방향)
 3. **알림과 메일은 `@Transactional` 메서드 안에서 `EventPublisher.publish()`로 발행한다.** 트랜잭션 밖에서 부르면 예외가 난다. `ApplicationEventPublisher`를 직접 쓰면 이 검사가 빠져서 오류 없이 사라진다. (`docs/convention/service.md`)
 4. **테스트를 끄거나 지워서 통과시키지 않는다.** (테스트)
@@ -41,7 +41,8 @@ com.nyangmeong
 └─ job/                    여러 도메인에 걸친 배치만
 
 src/main/resources/mapper/{도메인}/{이름}Mapper.xml   (공통 모듈은 mapper/global/)
-db/                        테이블 생성·변경 SQL (저장소 루트). 사람이 직접 실행한다.
+db/                        테이블 생성·변경 SQL (저장소 루트). 팀 공용 DB에는 사람이 직접 실행한다.
+                           로컬 DB에는 setup이 아직 실행하지 않은 파일을 이름 순서로 실행한다
                            src/main/resources/db/migration은 만들지 않는다
 ```
 
@@ -131,7 +132,8 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 
 **이 저장소는 공개다. 한 번 커밋된 값은 지워도 이력에 남는다.**
 
-- 비밀값은 모두 환경변수로만 넣는다. 예: `JWT_SECRET`, `DB_PASSWORD`, `ENC_KEY`, `HMAC_KEY`, `MAIL_PASSWORD`, 소셜 로그인 클라이언트 시크릿, 외부 API 키(AI, OCR, 지도).
+- 로컬 개발 DB 접속 정보(`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`)는 setup이 만드는 `.env.local`(git 제외)에 둔다. Spring이 `spring.config.import`로 읽는다.
+- 그 밖의 비밀값은 모두 환경변수로만 넣는다. 예: `JWT_SECRET`, `DB_PASSWORD`, `ENC_KEY`, `HMAC_KEY`, `MAIL_PASSWORD`, 소셜 로그인 클라이언트 시크릿, 외부 API 키(AI, OCR, 지도).
 - 설정 파일에는 `${DB_PASSWORD}`처럼 키 이름만 둔다.
 - 설정 파일은 `application.yml`, `application-local.yml`, `application-prod.yml`로 나눈다.
 - 로그에 비밀번호와 토큰을 남기지 않는다.
