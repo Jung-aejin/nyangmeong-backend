@@ -118,6 +118,42 @@ mcp_add() {
   fi
 }
 
+# 이니셜 a가 b와 한 글자만 다르거나 이웃한 두 글자만 바뀌었으면 참
+near() {
+  local a=$1 b=$2 i diff=""
+  [ "${#a}" = "${#b}" ] || return 1
+  for ((i = 0; i < ${#a}; i++)); do
+    [ "${a:i:1}" = "${b:i:1}" ] || diff="$diff $i"
+  done
+  set -- $diff
+  [ $# = 1 ] && return 0
+  [ $# = 2 ] && [ $(($2 - $1)) = 1 ] && [ "${a:$1:1}" = "${b:$2:1}" ] && [ "${a:$2:1}" = "${b:$1:1}" ]
+}
+
+# 입력을 대문자로 바꿔 INITIALS 중 하나로 맞춘다. 같으면 그것, 비슷한 것이 하나면 확인 후 그것, 아니면 다시 묻는다
+ask_initials() {
+  local input c found answer
+  while :; do
+    read -rp "  개인 브랜치로 쓸 이니셜을 입력하세요($INITIALS 중 하나): " input
+    input=$(printf '%s' "$input" | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')
+    [ -n "$input" ] || continue
+    found=""
+    for c in $INITIALS; do
+      if [ "$c" = "$input" ]; then initials=$c; return 0; fi
+      if near "$input" "$c"; then found="$found $c"; fi
+    done
+    set -- $found
+    case $# in
+      0) printf '  %s 은(는) 목록에 없습니다.\n' "$input" ;;
+      1)
+        read -rp "  -> $1 으로 진행할까요? [Y/n] " answer
+        case "$answer" in [nN]*) ;; *) initials=$1; return 0 ;; esac
+        ;;
+      *) printf '  %s 와 비슷한 이니셜이 여럿입니다:%s. 정확히 입력해 주세요.\n' "$input" "$found" ;;
+    esac
+  done
+}
+
 step "공통"
 
 command -v git >/dev/null || die "Git이 없습니다. Windows는 Git for Windows를 설치한 뒤 다시 실행해 주세요."
@@ -168,11 +204,15 @@ for key in user.name user.email; do
   fi
 done
 
-# 개인 브랜치 이름 = 이니셜. 핸드오프 파일 이름과 커밋 접두사가 여기서 나온다
+# 개인 브랜치 이름 = 이니셜. 핸드오프 파일 이름과 커밋 접두사가 여기서 나온다.
+# 쓸 수 있는 이니셜은 마일스톤 담당 표(docs/convention/milestone.md "담당" 절)의 첫 열이다
+INITIALS=$(awk '/^## /{f = ($0 == "## 담당")} f && /^\| [A-Z]+ \|/{print $2}' docs/convention/milestone.md | tr '\n' ' ' | sed 's/ $//')
+[ -n "$INITIALS" ] || die "docs/convention/milestone.md 의 담당 표에서 이니셜을 읽지 못했습니다."
 branch=$(git branch --show-current)
+branch_ok=y
 case "$branch" in
   "" | main | master | develop)
-    read -rp "  개인 브랜치로 사용할 이니셜을 입력하세요(대문자, 예: LJS): " initials
+    ask_initials
     if git show-ref --verify --quiet "refs/heads/$initials"; then
       git checkout "$initials"
     elif git ls-remote --exit-code --heads origin "$initials" >/dev/null 2>&1; then
@@ -183,11 +223,24 @@ case "$branch" in
     branch=$initials
     ok "브랜치 $branch"
     ;;
-  *) skip "브랜치 $branch" ;;
+  *)
+    if printf ' %s ' "$INITIALS" | grep -qF " $branch "; then
+      skip "브랜치 $branch"
+    else
+      # 이니셜이 아닌 브랜치는 올리지 않고 이름을 바꾸라고 안내한다. 대소문자만 다르면 -M 이어야 맥·Windows에서 바뀐다
+      branch_ok=n
+      upper=$(printf '%s' "$branch" | tr '[:lower:]' '[:upper:]')
+      if printf ' %s ' "$INITIALS" | grep -qF " $upper "; then
+        todo "브랜치 $branch 는 대문자 이니셜이 아닙니다. git branch -M $upper 로 바꾼 뒤 다시 실행해 주세요"
+      else
+        todo "브랜치 $branch 는 이니셜($INITIALS)이 아닙니다. git checkout develop 한 뒤 다시 실행해 이니셜 브랜치를 만들어 주세요"
+      fi
+    fi
+    ;;
 esac
 
 # 원격에 없는 개인 브랜치는 공개 저장소이므로 물어보고 올린다
-if ! git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+if [ "$branch_ok" = y ] && ! git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
   read -rp "  origin에 $branch 브랜치가 없습니다. 지금 올리시겠습니까? [Y/n] " answer
   case "$answer" in
     [nN]*) todo "개인 브랜치를 올려 주세요: git push -u origin $branch" ;;
