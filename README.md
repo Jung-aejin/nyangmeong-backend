@@ -25,7 +25,7 @@ setup이 하는 일:
 | `DB_USERNAME` | |
 | `DB_PASSWORD` | |
 
-`db/`의 SQL은 setup이 실행하지 않는다. 테이블을 바꾸는 PR의 작성자가 병합 직후 공용 DB에 직접 실행한다(`AGENTS.md`).
+`db/`의 SQL은 setup이 실행하지 않는다. 테이블을 바꾸는 PR의 작성자가 병합 직후 공용 DB에 직접 실행한다(`docs/convention/shared-files.md`).
 
 ```
 ./gradlew bootRun

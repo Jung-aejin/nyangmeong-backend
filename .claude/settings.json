@@ -1,4 +1,5 @@
 {
+  "model": "sonnet",
   "extraKnownMarketplaces": {
     "nyangmeong-backend": {
       "source": {
