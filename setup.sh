@@ -93,15 +93,50 @@ vscode_extensions() {
   done
 }
 
+# MCP 서버를 감지한 AI 도구에 사용자 범위로 등록한다. 인증은 OAuth라 브라우저에서 한다
+# mcp_add <이름> <URL>
+mcp_add() {
+  if use_claude; then
+    if claude mcp get "$1" >/dev/null 2>&1; then
+      skip "Claude Code MCP $1"
+    else
+      claude mcp add -s user -t http "$1" "$2" >/dev/null && ok "Claude Code MCP $1"
+    fi
+    if claude mcp get "$1" 2>/dev/null | grep -q 'Needs authentication'; then
+      todo "claude 를 실행해 /mcp 에서 $1 를 고르고 Authenticate 해 주세요"
+    fi
+  fi
+  if use_codex; then
+    if codex mcp get "$1" >/dev/null 2>&1; then
+      skip "Codex MCP $1"
+    # 등록하면 바로 브라우저 로그인이 시작된다
+    elif codex mcp add "$1" --url "$2"; then
+      ok "Codex MCP $1"
+    else
+      todo "codex mcp login $1 로 로그인해 주세요"
+    fi
+  fi
+}
+
 step "공통"
 
 command -v git >/dev/null || die "Git이 없습니다. Windows는 Git for Windows를 설치한 뒤 다시 실행해 주세요."
 skip "Git $(git --version | awk '{print $3}')"
 
-# Claude Code: 공식 설치 스크립트가 ~/.local/bin에 설치한다. 로그인은 처음 실행할 때 직접 한다
+# AI 도구: 설치된 Claude Code·Codex를 감지해 그 도구에 MCP를 등록한다. 둘 다 없으면 Claude Code를 설치한다.
+# Codex만 쓰려면 Codex를 먼저 설치하고 실행한다. 다시 실행하면 새로 설치한 도구도 감지한다
+has_claude=n
+has_codex=n
 if command -v claude >/dev/null; then
+  has_claude=y
   skip "Claude Code $(claude --version 2>/dev/null | awk '{print $1}')"
-else
+fi
+if command -v codex >/dev/null; then
+  has_codex=y
+  skip "Codex $(codex --version 2>/dev/null | awk '{print $NF}')"
+fi
+# Claude Code: 공식 설치 스크립트가 ~/.local/bin에 설치한다. 로그인은 처음 실행할 때 직접 한다
+if [ "$has_claude$has_codex" = nn ]; then
   if [ "$OS" = mac ]; then
     curl -fsSL https://claude.ai/install.sh | bash
   else
@@ -110,9 +145,12 @@ else
   export PATH="$HOME/.local/bin:$PATH"
   command -v claude >/dev/null || die "Claude Code 설치에 실패했습니다. 위 출력을 확인해 주세요."
   persist_path "$HOME/.local/bin"
+  has_claude=y
   ok "Claude Code $(claude --version 2>/dev/null | awk '{print $1}')"
   todo "저장소 폴더에서 claude 를 실행해 로그인해 주세요"
 fi
+use_claude() { [ "$has_claude" = y ]; }
+use_codex() { [ "$has_codex" = y ]; }
 
 # 전역 git 설정(회사 계정 등)은 건드리지 않고 이 저장소에만 둔다. 전역 값이 있으면 그대로 쓸지 묻는다
 for key in user.name user.email; do
@@ -319,6 +357,17 @@ else
     has_env=y
     skip ".env.local (DB 접속 정보)"
   fi
+fi
+
+# MCP: DMS(요구사항정의서·화면설계서·기능명세서). DMS 주소는 공개 저장소에 두지 않고 .env.local의 DMS_MCP_URL에서 읽는다
+step "MCP"
+dms_url=$(sed -n 's/^DMS_MCP_URL=//p' .env.local 2>/dev/null | tr -d '\r' | head -1 || true)
+if [ ! -f .env.local ]; then
+  :  # .env.local이 없다는 안내는 위에서 했다
+elif [ -n "$dms_url" ]; then
+  mcp_add dms "$dms_url"
+else
+  todo ".env.local 에 DMS_MCP_URL 값이 없습니다. 디스코드의 최신 .env.local 로 바꿔 주세요"
 fi
 
 step "확인"
