@@ -93,27 +93,34 @@ vscode_extensions() {
   done
 }
 
-# MCP 서버를 감지한 AI 도구에 사용자 범위로 등록한다. 인증은 OAuth라 브라우저에서 한다
-# mcp_add <이름> <URL>
+# MCP 서버를 감지한 AI 도구에 사용자 범위로 등록한다. 원격 서버의 인증은 OAuth라 브라우저에서 한다
+# mcp_add <이름> <URL>              원격(HTTP) 서버
+# mcp_add <이름> -- <명령> [인자...]  이 PC에서 띄우는(stdio) 서버
 mcp_add() {
+  local name=$1
+  shift
   if use_claude; then
-    if claude mcp get "$1" >/dev/null 2>&1; then
-      skip "Claude Code MCP $1"
+    if claude mcp get "$name" >/dev/null 2>&1; then
+      skip "Claude Code MCP $name"
+    elif [ "$1" = -- ]; then
+      claude mcp add -s user "$name" "$@" >/dev/null && ok "Claude Code MCP $name"
     else
-      claude mcp add -s user -t http "$1" "$2" >/dev/null && ok "Claude Code MCP $1"
+      claude mcp add -s user -t http "$name" "$1" >/dev/null && ok "Claude Code MCP $name"
     fi
-    if claude mcp get "$1" 2>/dev/null | grep -q 'Needs authentication'; then
-      todo "claude 를 실행해 /mcp 에서 $1 를 고르고 Authenticate 해 주세요"
+    if claude mcp get "$name" 2>/dev/null | grep -q 'Needs authentication'; then
+      todo "claude 를 실행해 /mcp 에서 $name 를 고르고 Authenticate 해 주세요"
     fi
   fi
   if use_codex; then
-    if codex mcp get "$1" >/dev/null 2>&1; then
-      skip "Codex MCP $1"
-    # 등록하면 바로 브라우저 로그인이 시작된다
-    elif codex mcp add "$1" --url "$2"; then
-      ok "Codex MCP $1"
+    if codex mcp get "$name" >/dev/null 2>&1; then
+      skip "Codex MCP $name"
+    elif [ "$1" = -- ]; then
+      codex mcp add "$name" "$@" >/dev/null && ok "Codex MCP $name"
+    # 원격 서버는 등록하면 바로 브라우저 로그인이 시작된다
+    elif codex mcp add "$name" --url "$1"; then
+      ok "Codex MCP $name"
     else
-      todo "codex mcp login $1 로 로그인해 주세요"
+      todo "codex mcp login $name 로 로그인해 주세요"
     fi
   fi
 }
