@@ -155,14 +155,29 @@ fi
 
 step "백엔드"
 
-# JDK: build.gradle의 toolchain 버전. 배포판(Temurin, Oracle, Microsoft)은 가리지 않는다
+# JDK: build.gradle의 toolchain 버전. 배포판(Temurin, Oracle, Microsoft 등)은 가리지 않는다.
+# 버전은 폴더 이름이 아니라 JDK의 release 파일로 확인한다
 want_jdk=$(grep -o 'JavaLanguageVersion.of([0-9]*)' build.gradle | grep -o '[0-9][0-9]*')
+jdk_major() { sed -n 's/^JAVA_VERSION="\([0-9]*\).*/\1/p' "$1/release" 2>/dev/null; }
 have_jdk=""
+jdk_auto=n  # VS Code Java 확장이 자동으로 찾는 위치(표준 설치 위치, JAVA_HOME)에 있는가
 if [ "$OS" = mac ]; then
-  have_jdk=$(/usr/libexec/java_home -v "$want_jdk" 2>/dev/null || true)
+  d=$(/usr/libexec/java_home -v "$want_jdk" 2>/dev/null || true)
+  [ -n "$d" ] && [ "$(jdk_major "$d")" = "$want_jdk" ] && { have_jdk=$d; jdk_auto=y; }
 else
-  for d in "/c/Program Files/Eclipse Adoptium/jdk-$want_jdk"* "/c/Program Files/Java/jdk-$want_jdk"* "/c/Program Files/Microsoft/jdk-$want_jdk"*; do
-    [ -x "$d/bin/java.exe" ] && have_jdk="$d"
+  for d in "/c/Program Files/"{"Eclipse Adoptium",Java,Microsoft,Zulu,"Amazon Corretto",BellSoft}/*; do
+    [ "$(jdk_major "$d")" = "$want_jdk" ] && { have_jdk=$d; jdk_auto=y; }
+  done
+fi
+if [ -z "$have_jdk" ] && [ -n "${JAVA_HOME:-}" ]; then
+  d=$JAVA_HOME
+  [ "$OS" = win ] && d=$(cygpath -u "$d")
+  [ "$(jdk_major "$d")" = "$want_jdk" ] && { have_jdk=$d; jdk_auto=y; }
+fi
+# IntelliJ가 내려받은 JDK(~/.jdks)는 VS Code가 자동으로 찾지 못할 수 있다
+if [ -z "$have_jdk" ]; then
+  for d in "$HOME"/.jdks/*; do
+    [ "$(jdk_major "$d")" = "$want_jdk" ] && have_jdk=$d
   done
 fi
 if [ -n "$have_jdk" ]; then
@@ -170,6 +185,39 @@ if [ -n "$have_jdk" ]; then
 else
   pkg "temurin@$want_jdk" cask "EclipseAdoptium.Temurin.$want_jdk.JDK"
   ok "JDK $want_jdk"
+fi
+
+# VS Code: 1차는 Java 확장의 자동 감지에 맡긴다. 자동 감지 위치가 아닌 JDK만 사용자 설정의 java.configuration.runtimes에 넣는다.
+# 경로가 PC마다 다르므로 저장소의 .vscode/settings.json이 아니라 사용자 설정에 쓴다
+if [ -n "$have_jdk" ] && [ "$jdk_auto" = y ]; then
+  skip "VS Code JDK $want_jdk (자동 감지)"
+elif [ -n "$have_jdk" ]; then
+  if [ "$OS" = mac ]; then
+    user_settings="$HOME/Library/Application Support/Code/User/settings.json"
+    jdk_path=$have_jdk
+  else
+    user_settings="$(cygpath -u "$APPDATA")/Code/User/settings.json"
+    jdk_path=$(cygpath -m "$have_jdk")
+  fi
+  if [ -f "$user_settings" ] && grep -q '"java.configuration.runtimes"' "$user_settings"; then
+    # 사용자가 직접 관리하는 값이므로 고치지 않는다
+    if grep -qF "\"$jdk_path\"" "$user_settings"; then
+      skip "VS Code JDK $want_jdk (java.configuration.runtimes)"
+    else
+      todo "VS Code 사용자 설정의 java.configuration.runtimes 에 { \"name\": \"JavaSE-$want_jdk\", \"path\": \"$jdk_path\" } 를 추가해 주세요"
+    fi
+  else
+    entry="  \"java.configuration.runtimes\": [{ \"name\": \"JavaSE-$want_jdk\", \"path\": \"$jdk_path\" }]"
+    mkdir -p "$(dirname "$user_settings")"
+    if [ -s "$user_settings" ]; then
+      # 첫 번째 { 바로 뒤에 한 줄을 넣는다. VS Code 설정은 끝에 붙은 쉼표를 허용한다
+      awk -v e="$entry," '!done && /\{/ { sub(/\{/, "{\n" e); done = 1 } { print }' "$user_settings" > "$user_settings.tmp" \
+        && mv "$user_settings.tmp" "$user_settings"
+    else
+      printf '{\n%s\n}\n' "$entry" > "$user_settings"
+    fi
+    ok "VS Code JDK $want_jdk (자동 감지 위치가 아니라 java.configuration.runtimes 에 등록)"
+  fi
 fi
 
 if [ "$NEED_RESTART" = 1 ]; then
