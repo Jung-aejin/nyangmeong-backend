@@ -6,15 +6,18 @@ rem Windows cmd·PowerShell에서 setup.sh를 Git Bash로 실행한다. 설치 �
 rem cmd·PowerShell에서 bash를 치면 Git Bash 대신 WSL이 잡히므로 이 파일을 둔다.
 rem 프론트 저장소의 setup.bat와 내용이 같다. 고칠 때 둘 다 고친다.
 
-rem git.exe 위치(Git\cmd 또는 Git\mingw64\bin)에서 Git\bin\bash.exe를 찾는다
+rem Git Bash 위치: GIT_BASH 환경변수 → 기본 설치 위치 → git.exe 위치(Git\cmd 또는 Git\mingw64\bin) 순서로 찾는다.
+rem Scoop처럼 git.exe가 다른 폴더에 있으면 GIT_BASH에 bash.exe 경로를 넣고 실행한다
 set "GITBASH="
-for /f "delims=" %%g in ('where git 2^>nul') do (
+if defined GIT_BASH if exist "%GIT_BASH%" set "GITBASH=%GIT_BASH%"
+if not defined GITBASH if exist "%ProgramFiles%\Git\bin\bash.exe" set "GITBASH=%ProgramFiles%\Git\bin\bash.exe"
+if not defined GITBASH for /f "delims=" %%g in ('where git 2^>nul') do (
   if not defined GITBASH if exist "%%~dpg..\bin\bash.exe" set "GITBASH=%%~dpg..\bin\bash.exe"
   if not defined GITBASH if exist "%%~dpg..\..\bin\bash.exe" set "GITBASH=%%~dpg..\..\bin\bash.exe"
 )
 if not defined GITBASH (
   echo.
-  echo [중단] Git for Windows가 없습니다. https://git-scm.com 에서 설치한 뒤 다시 실행해 주세요.
+  echo [중단] Git Bash를 찾지 못했습니다. Git for Windows를 설치하거나, 설치돼 있으면 GIT_BASH 환경변수에 bash.exe 경로를 넣고 다시 실행해 주세요.
   set "RC=1"
   goto end
 )
@@ -23,7 +26,13 @@ if not defined GITBASH (
 set "RC=%ERRORLEVEL%"
 
 :end
-rem 탐색기에서 더블클릭하면 끝나자마자 창이 닫힌다. 실패했거나 직접 할 일이 남았을 때(종료 코드 0이 아님)만 멈춘다
-if not "%RC%"=="0" echo %cmdcmdline% | findstr /i /c:"%~nx0" >nul && pause
+rem 실패했거나 직접 할 일이 남았을 때(종료 코드 0이 아님) 탐색기 더블클릭이면 창이 바로 닫히지 않게 멈춘다.
+rem 더블클릭은 cmdcmdline이 ...setup.bat" " 로 끝나 끝에서 두 번째 글자가 공백이다(PowerShell은 "" 로 끝난다).
+rem 경로에 & 같은 글자가 있어도 깨지지 않도록 지연 확장으로 꺼낸다
+if not "%RC%"=="0" (
+  setlocal EnableDelayedExpansion
+  if "!cmdcmdline:~-2,1!"==" " pause
+  endlocal
+)
 chcp %OLDCP% >nul
 exit /b %RC%
