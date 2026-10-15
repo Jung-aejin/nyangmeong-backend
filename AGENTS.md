@@ -94,6 +94,7 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 | 설정 파일·비밀값·환경변수를 다룰 때, 핸드오프를 쓸 때 | `docs/convention/config.md` |
 | `ErrorCode`, `application.yml`, `db/` SQL을 고칠 때 | `docs/convention/shared-files.md` |
 | 브랜치·커밋·PR을 만들 때 | `docs/convention/git.md` |
+| 내 담당 화면·API를 마일스톤으로 나눌 때 | `docs/convention/milestone.md` |
 
 ## AI 도구 작업 방식
 
