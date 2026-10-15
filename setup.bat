@@ -23,7 +23,7 @@ if not defined GITBASH (
 set "RC=%ERRORLEVEL%"
 
 :end
-rem 탐색기에서 더블클릭하면 끝나자마자 창이 닫힌다. 실패했을 때만 메시지를 볼 수 있게 멈춘다
+rem 탐색기에서 더블클릭하면 끝나자마자 창이 닫힌다. 실패했거나 직접 할 일이 남았을 때(종료 코드 0이 아님)만 멈춘다
 if not "%RC%"=="0" echo %cmdcmdline% | findstr /i /c:"%~nx0" >nul && pause
 chcp %OLDCP% >nul
 exit /b %RC%

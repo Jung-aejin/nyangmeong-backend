@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 냥멍케어 백엔드 개발 환경 설치. 맥은 터미널에서 `bash setup.sh`, Windows는 cmd·PowerShell에서 `setup.bat`(또는 Git Bash에서 `bash setup.sh`)로 실행한다.
-# 이미 맞는 버전이 있으면 건너뛴다. 여러 번 실행해도 된다. `--reset-db`를 붙이면 로컬 DB를 지우고 db/의 SQL을 처음부터 다시 실행한다.
+# 이미 맞는 버전이 있으면 건너뛴다. 여러 번 실행해도 된다.
 # 프론트 저장소의 setup.sh와 공통 부분(맨 위 함수와 "공통" 절)이 같다. 고칠 때 둘 다 고친다.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -155,11 +155,6 @@ fi
 
 step "백엔드"
 
-RESET_DB=0
-for arg in "$@"; do
-  case "$arg" in --reset-db) RESET_DB=1 ;; esac
-done
-
 # JDK: build.gradle의 toolchain 버전. 배포판(Temurin, Oracle, Microsoft)은 가리지 않는다
 want_jdk=$(grep -o 'JavaLanguageVersion.of([0-9]*)' build.gradle | grep -o '[0-9][0-9]*')
 have_jdk=""
@@ -177,197 +172,94 @@ else
   ok "JDK $want_jdk"
 fi
 
-# MySQL 8: 로컬 개발 DB
-find_mysql() {
-  mysql_bin=""
-  local m
-  for m in mysql /opt/homebrew/opt/mysql@8.4/bin/mysql /usr/local/opt/mysql@8.4/bin/mysql /usr/local/mysql/bin/mysql; do
-    if command -v "$m" >/dev/null 2>&1; then mysql_bin=$(command -v "$m"); break; fi
-  done
-  if [ "$OS" = win ] && [ -z "$mysql_bin" ]; then
-    for m in "/c/Program Files/MySQL/MySQL Server 8."*/bin/mysql.exe; do [ -x "$m" ] && mysql_bin="$m"; done
-  fi
-  return 0
-}
-find_mysql
-if [ -n "$mysql_bin" ] && "$mysql_bin" --version | grep -q ' 8\.'; then
-  skip "MySQL $("$mysql_bin" --version | sed -n 's/.*Ver \([0-9.]*\).*/\1/p')"
-else
-  pkg mysql@8.4 formula Oracle.MySQL 8.4.9
-  find_mysql
-  ok "MySQL 8.4"
-fi
-
 if [ "$NEED_RESTART" = 1 ]; then
   printf '\n[다시 실행] 새로 설치한 프로그램은 새 창에서만 인식됩니다. 창을 닫았다가 새로 열고 같은 명령(setup.bat 또는 bash setup.sh)을 한 번 더 실행해 주세요.\n'
   exit 2
 fi
 
-# DB: 로컬 MySQL에 스키마·전용 계정을 만들고 db/의 SQL을 실행한다.
-# 접속 정보는 .env.local(git 제외)에 쓰고 Spring이 읽는다(application.yml의 spring.config.import)
-DB_NAME=PAWEVER
-DB_USER=nyangmeong
-DB_PORT=${DB_PORT:-3306}  # 3306이 아닌 MySQL을 쓸 때만 환경변수로 바꾼다
-[ -n "$mysql_bin" ] || die "MySQL 명령을 찾지 못했습니다. 창을 새로 열고 다시 실행해 주세요."
-mysqladmin_bin="$(dirname "$mysql_bin")/mysqladmin"
-
-# db_sql <비밀번호> <계정> [mysql 인자...]. 비밀번호는 명령줄에 남지 않도록 MYSQL_PWD로 넘긴다
-db_sql() {
-  local pass=$1 user=$2
-  shift 2
-  MYSQL_PWD="$pass" "$mysql_bin" --protocol=TCP -h127.0.0.1 -P"$DB_PORT" -u"$user" --default-character-set=utf8mb4 "$@"
-}
-mysql_alive() { "$mysqladmin_bin" --protocol=TCP -h127.0.0.1 -P"$DB_PORT" ping >/dev/null 2>&1; }
-wait_mysql() {
-  local _
-  for _ in $(seq 1 30); do mysql_alive && return 0; sleep 1; done
-  return 1
-}
-
-# Windows 관리자 권한으로 PowerShell 스크립트를 실행한다(UAC 창이 뜬다)
-win_admin() {
-  local ps1
-  ps1=$(mktemp --suffix=.ps1)
-  printf '%s\n' "$1" > "$ps1"
-  powershell.exe -NoProfile -Command "Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','\"$(cygpath -w "$ps1")\"'" \
-    || { rm -f "$ps1"; die "관리자 권한 실행이 취소됐거나 실패했습니다. 다시 실행해 주세요."; }
-  rm -f "$ps1"
-}
-
-fresh_root=0
-if ! mysql_alive; then
-  if [ "$OS" = mac ]; then
-    brew services start mysql@8.4
-  else
-    base=$(cd "$(dirname "$mysql_bin")/.." && pwd -W)
-    svc=$(powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Service | Where-Object { \$_.PathName -like '*$(basename "$base")*' } | Select-Object -First 1).Name" | tr -d '\r')
-    if [ -n "$svc" ]; then
-      win_admin "Start-Service '$svc'"
-    else
-      # winget은 MySQL 프로그램만 설치하고 서버 초기화·서비스 등록은 하지 않는다. root는 비밀번호 없이 만들어진다
-      ver=$(basename "$base" | grep -o '[0-9]*\.[0-9]*' | tr -d .)
-      data="C:/ProgramData/MySQL/$(basename "$base")"
-      win_admin "\$ErrorActionPreference = 'Stop'
-New-Item -ItemType Directory -Force '$data' | Out-Null
-Set-Content -Encoding ascii '$data/my.ini' \"[mysqld]\`r\`nbasedir=$base\`r\`ndatadir=$data/Data\`r\`nport=$DB_PORT\"
-& '$base/bin/mysqld.exe' --defaults-file='$data/my.ini' --initialize-insecure
-& '$base/bin/mysqld.exe' --install MySQL$ver --defaults-file='$data/my.ini'
-Start-Service MySQL$ver"
-      fresh_root=1
-      ok "MySQL 서버 초기화, 서비스 MySQL$ver 등록"
-    fi
-  fi
-  wait_mysql || die "MySQL 서버가 응답하지 않습니다(포트 $DB_PORT). 서버 상태를 확인한 뒤 다시 실행해 주세요."
-fi
-skip "MySQL 서버 (127.0.0.1:$DB_PORT)"
-
-# .env.local의 값 하나를 읽는다. 쓸 때 역슬래시를 두 번 썼으므로 되돌린다
-env_get() { [ -f .env.local ] && sed -n "s/^$1=//p" .env.local | sed 's/\\\\/\\/g' || true; }
-
-db_pass=$(env_get DB_PASSWORD)
-if [ -n "$db_pass" ] && db_sql "$db_pass" "$DB_USER" -e "SELECT 1" "$DB_NAME" >/dev/null 2>&1; then
-  skip "DB $DB_NAME / 계정 $DB_USER"
+# DB: 팀 공용 DB를 쓴다. 접속 정보는 디스코드로 공유하는 .env.local(git 제외)을 이 폴더에 넣어 쓰고 Spring이 읽는다(application.yml의 spring.config.import).
+# 공개 저장소이므로 서버 주소도 저장소에 두지 않는다
+has_env=n
+if [ ! -f .env.local ]; then
+  todo "디스코드에서 받은 .env.local 을 이 폴더($(basename "$PWD"))에 넣고 다시 실행해 주세요. 내려받을 때 이름이 env.local 이나 .env.local.txt 로 바뀌지 않았는지 확인해 주세요"
 else
-  while :; do
-    read -rsp "  DB 계정 $DB_USER 에 사용할 비밀번호를 정해 입력하세요: " db_pass; echo
-    [ -n "$db_pass" ] || continue
-    read -rsp "  한 번 더 입력하세요: " again; echo
-    [ "$db_pass" = "$again" ] && break
-    echo "  두 비밀번호가 다릅니다. 다시 입력해 주세요."
+  missing=""
+  for key in DB_URL DB_USERNAME DB_PASSWORD; do
+    grep -q "^$key=." .env.local || missing="$missing $key"
   done
-  if [ "$fresh_root" = 1 ]; then
-    root_pass=""
+  if [ -n "$missing" ]; then
+    todo ".env.local 에 값이 없는 키가 있습니다:$missing. 디스코드의 최신 파일로 바꿔 주세요"
   else
-    read -rsp "  MySQL root 비밀번호를 입력하세요(없으면 엔터, 저장하지 않습니다): " root_pass; echo
+    has_env=y
+    skip ".env.local (DB 접속 정보)"
   fi
-  db_sql "$root_pass" root -e "SELECT 1" >/dev/null 2>&1 || die "root로 접속하지 못했습니다. 비밀번호를 확인한 뒤 다시 실행해 주세요."
-  if [ "$fresh_root" = 1 ]; then
-    read -rsp "  새로 만든 MySQL의 root 비밀번호를 정해 입력하세요(엔터면 비워 둡니다): " new_root; echo
-  fi
-  # SQL 문자열 안에서 역슬래시와 작은따옴표를 이스케이프한다
-  q=${db_pass//\\/\\\\}; q=${q//\'/\'\'}
-  {
-    printf 'CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;\n' "$DB_NAME"
-    for host in localhost 127.0.0.1; do
-      printf "CREATE USER IF NOT EXISTS '%s'@'%s' IDENTIFIED BY '%s';\n" "$DB_USER" "$host" "$q"
-      printf "ALTER USER '%s'@'%s' IDENTIFIED BY '%s';\n" "$DB_USER" "$host" "$q"
-      printf "GRANT ALL PRIVILEGES ON \`%s\`.* TO '%s'@'%s';\n" "$DB_NAME" "$DB_USER" "$host"
-    done
-    if [ -n "${new_root:-}" ]; then
-      r=${new_root//\\/\\\\}; r=${r//\'/\'\'}
-      printf "ALTER USER 'root'@'localhost' IDENTIFIED BY '%s';\n" "$r"
-    fi
-  } | db_sql "$root_pass" root
-  unset root_pass new_root q r again
-  ok "DB $DB_NAME / 계정 $DB_USER"
 fi
-
-# Properties 형식이라 역슬래시를 두 번 쓴다. heredoc 안에서는 치환 결과가 달라지므로 밖에서 만든다
-pass_prop=${db_pass//\\/\\\\}
-umask 077
-cat > .env.local <<EOF
-# setup.sh가 만든 로컬 DB 접속 정보. git에 올리지 않는다. 같은 이름의 환경변수가 있으면 환경변수가 우선한다
-DB_URL=jdbc:mysql://127.0.0.1:$DB_PORT/$DB_NAME
-DB_USERNAME=$DB_USER
-DB_PASSWORD=$pass_prop
-EOF
-unset pass_prop
-umask 022
-ok ".env.local (DB 접속 정보)"
-
-if [ "$RESET_DB" = 1 ]; then
-  read -rp "  $DB_NAME 의 모든 테이블과 데이터를 지우고 db/의 SQL을 처음부터 다시 실행합니다. 계속하시겠습니까? [y/N] " answer
-  case "$answer" in [yY]*) ;; *) die "DB 초기화를 취소했습니다." ;; esac
-  db_sql "$db_pass" "$DB_USER" -e "DROP DATABASE \`$DB_NAME\`; CREATE DATABASE \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
-  ok "DB $DB_NAME 초기화"
-fi
-
-# db/의 SQL은 파일 이름(YYYYMMDD_설명.sql) 순서로 한 번씩만 실행한다. 실행한 파일 이름은 db/.applied(git 제외)에 남긴다
-applied=db/.applied
-tables=$(db_sql "$db_pass" "$DB_USER" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()" "$DB_NAME")
-if [ "$tables" = 0 ]; then
-  : > "$applied"
-elif [ ! -f "$applied" ]; then
-  # 기록 없이 테이블만 있으면 첫 SQL의 DROP이 데이터를 지우므로, 지금 파일들은 이미 반영된 것으로 본다
-  ls db/*.sql 2>/dev/null | xargs -n1 basename > "$applied" || true
-  todo "테이블 ${tables}개가 이미 있어 db/의 SQL을 실행하지 않았습니다. 처음부터 만들려면 --reset-db 를 붙여 다시 실행해 주세요"
-fi
-ran=0
-for f in db/*.sql; do
-  [ -e "$f" ] || continue
-  name=$(basename "$f")
-  grep -qxF "$name" "$applied" && continue
-  db_sql "$db_pass" "$DB_USER" "$DB_NAME" < "$f" || die "$name 실행 중 오류가 났습니다. 위 메시지를 확인해 주세요."
-  echo "$name" >> "$applied"
-  ok "SQL $name"
-  ran=$((ran + 1))
-done
-tables=$(db_sql "$db_pass" "$DB_USER" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()" "$DB_NAME")
-[ "$ran" = 0 ] && skip "db/ SQL (새 파일 없음, 테이블 ${tables}개)"
-[ "$ran" -gt 0 ] && ok "테이블 ${tables}개"
 
 step "확인"
 ./gradlew build -q && ok "./gradlew build"
 
-# 서버가 .env.local을 읽고 뜨는지 보고 끈다. 포트는 비어 있는 아무 포트(0)를 쓴다
-jar=$(ls build/libs/*.jar | grep -v -- '-plain\.jar$' | head -1)
-log=$(mktemp)
-"$have_jdk/bin/java" -jar "$jar" --server.port=0 > "$log" 2>&1 &
-pid=$!
-for _ in $(seq 1 120); do
-  grep -q 'Started .* in ' "$log" && break
-  kill -0 "$pid" 2>/dev/null || break
-  sleep 1
-done
-started=$(grep -o 'Started .* in [0-9.]* seconds' "$log" || true)
-kill "$pid" 2>/dev/null || true
-wait "$pid" 2>/dev/null || true
-if [ -z "$started" ]; then
-  tail -40 "$log"
-  rm -f "$log"
-  die "서버가 뜨지 않았습니다. 위 로그를 확인해 주세요."
+# DB 접속: 서버는 첫 쿼리 때 DB에 붙으므로 기동만으로는 확인되지 않는다.
+# Spring과 같은 방식(Properties)으로 .env.local을 읽어 JDBC로 직접 접속해 본다. 드라이버는 Gradle이 받아 둔 것을 쓴다
+# 경로 중간에 해시 폴더가 있으므로 버전 폴더 이름으로 정렬해 가장 새 것을 고른다
+driver=$(find "${GRADLE_USER_HOME:-$HOME/.gradle}/caches/modules-2/files-2.1/com.mysql/mysql-connector-j" -name 'mysql-connector-j-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' 2>/dev/null \
+  | awk -F/ '{ print $(NF-2) "\t" $0 }' | sort -V | tail -1 | cut -f2)
+check=$(mktemp -d)
+cat > "$check/DbCheck.java" <<'JAVA'
+import java.io.FileReader;
+import java.sql.DriverManager;
+import java.util.Properties;
+
+public class DbCheck {
+  public static void main(String[] args) throws Exception {
+    Properties env = new Properties();
+    try (FileReader r = new FileReader(args[0])) { env.load(r); }
+    DriverManager.setLoginTimeout(5);
+    try (var c = DriverManager.getConnection(env.getProperty("DB_URL"), env.getProperty("DB_USERNAME"), env.getProperty("DB_PASSWORD"));
+         var rs = c.createStatement().executeQuery("SELECT DATABASE(), (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE())")) {
+      rs.next();
+      System.out.println(rs.getString(1) + ", 테이블 " + rs.getInt(2) + "개");
+    } catch (Exception e) {
+      System.out.println(e.getMessage().lines().findFirst().orElse(e.toString()));
+      System.exit(1);
+    }
+  }
+}
+JAVA
+to_native() { if [ "$OS" = win ]; then cygpath -w "$1"; else printf '%s' "$1"; fi; }
+if [ "$has_env" = n ]; then
+  :  # .env.local이 없거나 비어 있다는 안내는 위에서 했다
+elif [ -z "$driver" ]; then
+  todo "MySQL 드라이버를 찾지 못해 DB 접속을 확인하지 못했습니다"
+elif result=$("$have_jdk/bin/java" -Dstdout.encoding=UTF-8 -cp "$(to_native "$driver")" "$(to_native "$check/DbCheck.java")" "$(to_native "$PWD/.env.local")"); then
+  ok "DB 접속 ($result)"
+else
+  todo "공용 DB에 접속하지 못했습니다: $result. 네트워크(학원 밖이면 접속이 막힐 수 있음)와 접속 정보를 확인한 뒤 다시 실행해 주세요"
 fi
-rm -f "$log"
-ok "서버 기동 (${started#Started })"
+rm -rf "$check"
+
+# 서버가 .env.local을 읽고 뜨는지 보고 끈다. 포트는 비어 있는 아무 포트(0)를 쓴다
+if [ "$has_env" = y ]; then
+  jar=$(ls build/libs/*.jar | grep -v -- '-plain\.jar$' | head -1)
+  log=$(mktemp)
+  "$have_jdk/bin/java" -jar "$jar" --server.port=0 > "$log" 2>&1 &
+  pid=$!
+  for _ in $(seq 1 120); do
+    grep -q 'Started .* in ' "$log" && break
+    kill -0 "$pid" 2>/dev/null || break
+    sleep 1
+  done
+  started=$(grep -o 'Started .* in [0-9.]* seconds' "$log" || true)
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  if [ -z "$started" ]; then
+    tail -40 "$log"
+    rm -f "$log"
+    die "서버가 뜨지 않았습니다. 위 로그를 확인해 주세요."
+  fi
+  rm -f "$log"
+  ok "서버 기동 (${started#Started })"
+fi
 
 printf '\n설치가 끝났습니다. 직접 할 일 %d개(위 [직접] 줄).\n' "$TODO"
+# 직접 할 일이 남으면 0이 아닌 코드로 끝낸다. setup.bat이 이 코드를 보고 창을 닫지 않고 멈춘다
+[ "$TODO" = 0 ] || exit 3

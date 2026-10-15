@@ -10,13 +10,19 @@
 
 setup이 하는 일:
 
-- JDK 25와 MySQL 8을 설치한다. Windows에서 MySQL을 새로 설치하면 서버 초기화와 서비스 등록까지 한다(관리자 권한 창이 한 번 뜬다).
-- 로컬 MySQL에 스키마 `PAWEVER`와 계정 `nyangmeong`을 만든다. 실행 중에 계정 비밀번호를 정하고 MySQL root 비밀번호를 입력한다. root 비밀번호는 저장하지 않는다.
-- `db/`의 SQL을 파일 이름 순서로 실행한다. 다시 실행하면 아직 실행하지 않은 새 파일만 실행한다. 실행한 파일은 `db/.applied`(git 제외)에 기록된다.
-- 접속 정보를 `.env.local`(git 제외)에 쓴다. Spring이 이 파일을 읽는다. 같은 이름의 환경변수가 있으면 환경변수가 우선한다.
-- 빌드하고 서버가 뜨는지 확인한 뒤 끈다.
+- JDK 25를 설치한다.
+- 팀 공용 DB 접속 정보가 든 `.env.local`이 있는지 확인한다. 이 파일은 디스코드로 공유하므로, 받아서 저장소 루트(`setup.sh` 옆)에 넣는다. 내려받을 때 이름이 `env.local`이나 `.env.local.txt`로 바뀌지 않았는지 확인한다. git에는 올리지 않는다. 공개 저장소이므로 서버 주소도 저장소에 두지 않는다.
+- 빌드하고, 공용 DB에 접속되는지와 서버가 뜨는지 확인한 뒤 끈다. DB 접속이 안 되면(학원 밖 네트워크 등) 멈추지 않고 직접 할 일로 알려 준다.
 
-로컬 DB를 지우고 `db/`의 SQL을 처음부터 다시 실행하려면 `bash setup.sh --reset-db`(Windows는 `setup.bat --reset-db`)를 실행한다.
+`.env.local`은 Java properties 형식이다(`키=값`). Spring이 이 파일을 읽고, 같은 이름의 환경변수가 있으면 환경변수가 우선한다. 값에 역슬래시(`\`)가 있으면 두 번 쓴다.
+
+| 키 | 예 |
+| --- | --- |
+| `DB_URL` | `jdbc:mysql://호스트:3306/PAWEVER` |
+| `DB_USERNAME` | |
+| `DB_PASSWORD` | |
+
+`db/`의 SQL은 setup이 실행하지 않는다. 테이블을 바꾸는 PR의 작성자가 병합 직후 공용 DB에 직접 실행한다(`AGENTS.md`).
 
 ```
 ./gradlew bootRun

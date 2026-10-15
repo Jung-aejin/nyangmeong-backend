@@ -41,8 +41,7 @@ com.nyangmeong
 └─ job/                    여러 도메인에 걸친 배치만
 
 src/main/resources/mapper/{도메인}/{이름}Mapper.xml   (공통 모듈은 mapper/global/)
-db/                        테이블 생성·변경 SQL (저장소 루트). 팀 공용 DB에는 사람이 직접 실행한다.
-                           로컬 DB에는 setup이 아직 실행하지 않은 파일을 이름 순서로 실행한다
+db/                        테이블 생성·변경 SQL (저장소 루트). 사람이 직접 실행한다.
                            src/main/resources/db/migration은 만들지 않는다
 ```
 
@@ -132,7 +131,7 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 팀 
 
 **이 저장소는 공개다. 한 번 커밋된 값은 지워도 이력에 남는다.**
 
-- 로컬 개발 DB 접속 정보(`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`)는 setup이 만드는 `.env.local`(git 제외)에 둔다. Spring이 `spring.config.import`로 읽는다.
+- 공용 DB 접속 정보(`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`)는 디스코드로 공유하는 `.env.local`(git 제외)을 저장소 루트에 둔다. Spring이 `spring.config.import`로 읽는다. 서버 주소도 공개 저장소에 적지 않는다.
 - 그 밖의 비밀값은 모두 환경변수로만 넣는다. 예: `JWT_SECRET`, `DB_PASSWORD`, `ENC_KEY`, `HMAC_KEY`, `MAIL_PASSWORD`, 소셜 로그인 클라이언트 시크릿, 외부 API 키(AI, OCR, 지도).
 - 설정 파일에는 `${DB_PASSWORD}`처럼 키 이름만 둔다.
 - 설정 파일은 `application.yml`, `application-local.yml`, `application-prod.yml`로 나눈다.
