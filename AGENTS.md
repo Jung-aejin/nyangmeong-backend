@@ -17,7 +17,7 @@
 
 ## 기술 스택
 
-Java 21, Spring Boot 4.1, Spring Security 7, MyBatis(Mapper 인터페이스 + XML), MySQL 8, Lombok, Gradle. Docker는 쓰지 않는다.
+Java 25, Spring Boot 4.1, Spring Security 7, MyBatis(Mapper 인터페이스 + XML), MySQL 8, Lombok, Gradle. Docker는 쓰지 않는다.
 
 ### 편집기와 포맷
 
