@@ -10,8 +10,10 @@
 
 setup이 하는 일:
 
+- 처음 실행할 때 쓸 IDE(VS Code, STS, 둘 다)를 묻고 고른 IDE만 세팅한다. 고른 값은 기억하며, 다시 고르려면 `--ide`를 붙여 실행한다(`setup.bat --ide`).
 - JDK 25를 설치한다. 이미 있으면 표준 설치 위치, `JAVA_HOME`, `~/.jdks` 순서로 찾는다.
-- VS Code가 JDK를 찾는 일은 1차로 Java 확장의 자동 감지에 맡긴다. 자동 감지 위치가 아닌 곳(예: `~/.jdks`)에서 찾은 JDK만 VS Code 사용자 설정의 `java.configuration.runtimes`에 등록한다. 그 설정이 이미 있으면 고치지 않고 직접 할 일로 알려 준다.
+- VS Code: 확장(Java Pack, Spring Boot)을 설치한다. JDK는 1차로 Java 확장의 자동 감지에 맡기고, 자동 감지 위치가 아닌 곳(예: `~/.jdks`)에서 찾은 JDK만 사용자 설정의 `java.configuration.runtimes`에 등록한다. 그 설정이 이미 있으면 고치지 않고 직접 할 일로 알려 준다.
+- STS: 없으면 설치하고(Windows는 공식 zip을 `%LOCALAPPDATA%\Programs`에 풀고, 맥은 brew), Lombok을 넣는다. 실행 파일은 그 폴더의 `SpringToolsForEclipse.exe`다. 프로젝트 설정(`.settings/`, git 제외)에 공용 포맷(`eclipse-formatter.xml`), 저장 시 포맷, UTF-8, LF를 넣는다. 프로젝트 가져오기(File > Import > Gradle > Existing Gradle Project)는 처음 한 번 직접 한다. 이때 상위 폴더가 아니라 `gradlew`가 있는 `backend` 폴더를 고른다. 상위 폴더를 고르면 Gradle Wrapper가 없어 STS가 Java 25를 지원하지 않는 Gradle로 동기화하다 실패한다.
 - 팀 공용 DB 접속 정보가 든 `.env.local`이 있는지 확인한다. 이 파일은 디스코드로 공유하므로, 받아서 저장소 루트(`setup.sh` 옆)에 넣는다. 내려받을 때 이름이 `env.local`이나 `.env.local.txt`로 바뀌지 않았는지 확인한다. git에는 올리지 않는다. 공개 저장소이므로 서버 주소도 저장소에 두지 않는다.
 - 빌드하고, 공용 DB에 접속되는지와 서버가 뜨는지 확인한 뒤 끈다. DB 접속이 안 되면(학원 밖 네트워크 등) 멈추지 않고 직접 할 일로 알려 준다.
 

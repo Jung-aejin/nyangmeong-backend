@@ -21,10 +21,11 @@ Java 25, Spring Boot 4.1, Spring Security 7, MyBatis(Mapper 인터페이스 + XM
 
 ### 편집기와 포맷
 
-- 백엔드는 VS Code로 작업한다. 포맷 설정은 저장소의 `.vscode/settings.json`에 있고 저장할 때 자동으로 적용된다. 개인 설정으로 덮어쓰지 않는다.
+- 백엔드는 VS Code나 STS로 작업한다. setup이 고른 IDE만 세팅한다.
+- Java 포맷은 두 IDE 모두 저장소의 `eclipse-formatter.xml`을 쓰고 저장할 때 자동으로 적용된다. VS Code는 `.vscode/settings.json`이, STS는 setup이 만드는 `.settings/`(git 제외)가 이 파일을 가리킨다. 개인 설정으로 덮어쓰지 않는다.
 - Java는 공백 4칸으로 들여쓴다. 줄바꿈은 LF다(`.gitattributes`가 커밋할 때 맞춘다).
 - Mapper XML은 자동 포맷하지 않는다. 포매터가 SQL의 줄 배치를 바꾸기 때문이다.
-- 다른 IDE를 쓰면 파일 전체 포맷을 하지 않는다. 포매터가 달라서 다른 사람이 쓴 줄까지 바뀐다.
+- 그 밖의 IDE를 쓰면 파일 전체 포맷을 하지 않는다. 포매터가 달라서 다른 사람이 쓴 줄까지 바뀐다.
 
 ## 패키지 구조
 

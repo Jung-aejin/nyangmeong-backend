@@ -51,11 +51,14 @@ persist_path() {
     return
   fi
   # %USERPROFILE% 같은 항목이 풀리지 않도록 레지스트리 값을 ExpandString으로 그대로 다시 쓴다.
+  # 이미 있는지는 양쪽 값을 풀고 끝의 역슬래시와 대소문자를 무시해 비교한다(%USERPROFILE% 형태로 들어 있어도 같은 폴더로 본다)
   # 마지막 줄은 열려 있는 탐색기에 환경변수 변경을 알리려고 빈 변수를 지우는 것이다
   WIN_DIR="$(cygpath -w "$1")" powershell.exe -NoProfile -Command '
     $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Environment", $true)
     $parts = @(([string]$key.GetValue("Path", "", "DoNotExpandEnvironmentNames")) -split ";" | Where-Object { $_ })
-    if ($parts -notcontains $env:WIN_DIR) {
+    $norm = { param($p) [Environment]::ExpandEnvironmentVariables($p).TrimEnd("\").ToLowerInvariant() }
+    $want = & $norm $env:WIN_DIR
+    if (-not ($parts | Where-Object { (& $norm $_) -eq $want })) {
       $key.SetValue("Path", (($parts + $env:WIN_DIR) -join ";"), [Microsoft.Win32.RegistryValueKind]::ExpandString)
       [Environment]::SetEnvironmentVariable("NYANGMEONG_SETUP", $null, "User")
     }'
@@ -70,6 +73,24 @@ vscode_cli() {
     [ -n "$app" ] && [ -x "$app/Contents/Resources/app/bin/code" ] && echo "$app/Contents/Resources/app/bin/code"
   fi
   return 0
+}
+
+# .vscode/extensions.json의 확장을 설치한다. VS Code가 없으면 직접 할 일로 남긴다
+vscode_extensions() {
+  local code installed ext
+  code=$(vscode_cli)
+  if [ -z "$code" ]; then
+    todo "VS Code를 설치한 뒤 다시 실행해 주세요(확장 설치를 위해)."
+    return 0
+  fi
+  installed=$("$code" --list-extensions | tr '[:upper:]' '[:lower:]')
+  for ext in $(grep -o '"[^"]*\.[^"]*"' .vscode/extensions.json | tr -d '"'); do
+    if printf '%s\n' "$installed" | grep -qx "$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')"; then
+      skip "VS Code 확장 $ext"
+    else
+      "$code" --install-extension "$ext" >/dev/null && ok "VS Code 확장 $ext"
+    fi
+  done
 }
 
 step "공통"
@@ -91,20 +112,6 @@ else
   persist_path "$HOME/.local/bin"
   ok "Claude Code $(claude --version 2>/dev/null | awk '{print $1}')"
   todo "저장소 폴더에서 claude 를 실행해 로그인해 주세요"
-fi
-
-CODE=$(vscode_cli)
-if [ -z "$CODE" ]; then
-  todo "VS Code를 설치한 뒤 다시 실행해 주세요(확장 설치를 위해)."
-else
-  installed=$("$CODE" --list-extensions | tr '[:upper:]' '[:lower:]')
-  for ext in $(grep -o '"[^"]*\.[^"]*"' .vscode/extensions.json | tr -d '"'); do
-    if printf '%s\n' "$installed" | grep -qx "$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')"; then
-      skip "VS Code 확장 $ext"
-    else
-      "$CODE" --install-extension "$ext" >/dev/null && ok "VS Code 확장 $ext"
-    fi
-  done
 fi
 
 # 전역 git 설정(회사 계정 등)은 건드리지 않고 이 저장소에만 둔다. 전역 값이 있으면 그대로 쓸지 묻는다
@@ -155,6 +162,27 @@ fi
 
 step "백엔드"
 
+# IDE: VS Code·STS 중 쓰는 것만 세팅한다. 고른 값은 이 저장소의 git 설정(nyangmeong.ide)에 기억한다. 다시 고르려면 --ide 를 붙인다
+ide=$(git config --local nyangmeong.ide || true)
+for arg in "$@"; do
+  case "$arg" in --ide) ide="" ;; esac
+done
+if [ -z "$ide" ]; then
+  echo "  사용할 IDE를 고르세요: 1) VS Code  2) STS  3) 둘 다"
+  while :; do
+    read -rp "  번호 [1]: " answer
+    case "${answer:-1}" in
+      1) ide=vscode; break ;;
+      2) ide=sts; break ;;
+      3) ide=both; break ;;
+    esac
+  done
+  git config --local nyangmeong.ide "$ide"
+  ok "IDE $ide"
+else
+  skip "IDE $ide (다시 고르려면 --ide)"
+fi
+
 # JDK: build.gradle의 toolchain 버전. 배포판(Temurin, Oracle, Microsoft 등)은 가리지 않는다.
 # 버전은 폴더 이름이 아니라 JDK의 release 파일로 확인한다
 want_jdk=$(grep -o 'JavaLanguageVersion.of([0-9]*)' build.gradle | grep -o '[0-9][0-9]*')
@@ -189,7 +217,10 @@ fi
 
 # VS Code: 1차는 Java 확장의 자동 감지에 맡긴다. 자동 감지 위치가 아닌 JDK만 사용자 설정의 java.configuration.runtimes에 넣는다.
 # 경로가 PC마다 다르므로 저장소의 .vscode/settings.json이 아니라 사용자 설정에 쓴다
-if [ -n "$have_jdk" ] && [ "$jdk_auto" = y ]; then
+[ "$ide" = sts ] || vscode_extensions
+if [ "$ide" = sts ]; then
+  :  # VS Code를 쓰지 않는다
+elif [ -n "$have_jdk" ] && [ "$jdk_auto" = y ]; then
   skip "VS Code JDK $want_jdk (자동 감지)"
 elif [ -n "$have_jdk" ]; then
   if [ "$OS" = mac ]; then
@@ -220,6 +251,53 @@ elif [ -n "$have_jdk" ]; then
   fi
 fi
 
+# STS: 없으면 설치한다. 맥은 brew, Windows는 winget의 STS가 버전이 늦어서 공식 zip을 받아 사용자 폴더에 푼다.
+# Windows 버전은 맥 brew(springtoolsforeclipse)와 맞춰 둔다
+STS_VERSION=5.4.0
+STS_ECLIPSE=4.41.0
+find_sts() {
+  sts_dir=""
+  sts_exe=""
+  local base ini
+  if [ "$OS" = mac ]; then
+    [ -d /Applications/SpringToolsForEclipse.app ] && sts_dir=/Applications/SpringToolsForEclipse.app && sts_exe=$sts_dir
+    return 0
+  fi
+  # setup이 푸는 위치, 그리고 직접 압축을 푼 흔한 위치(사용자 폴더, C:\, Program Files)만 본다.
+  # 실행 파일 이름은 5.x가 SpringToolsForEclipse, 4.x가 SpringToolSuite4다
+  for base in "$(cygpath -u "$LOCALAPPDATA")/Programs" "$HOME" /c "/c/Program Files"; do
+    [ -d "$base" ] || continue
+    ini=$(find "$base" -maxdepth 3 -iname 'SpringTool*.ini' 2>/dev/null | head -1 || true)
+    if [ -n "$ini" ]; then sts_dir=$(dirname "$ini"); sts_exe=$(cygpath -w "${ini%.ini}.exe"); return 0; fi
+  done
+  return 0
+}
+install_sts_win() {
+  local url tmp dest
+  url="https://cdn.spring.io/spring-tools/release/dist/$STS_VERSION.RELEASE/e${STS_ECLIPSE%.*}/spring-tools-for-eclipse-$STS_VERSION.RELEASE-e$STS_ECLIPSE-win32.win32.x86_64.zip"
+  # zip 안에 sts-<버전>.RELEASE 폴더가 들어 있어서 Programs 아래에 바로 푼다
+  dest="$(cygpath -u "$LOCALAPPDATA")/Programs"
+  tmp=$(mktemp -d)
+  echo "  STS $STS_VERSION 내려받는 중(약 600MB)..."
+  curl -fL --progress-bar -o "$tmp/sts.zip" "$url" || { rm -rf "$tmp"; die "STS를 내려받지 못했습니다. 네트워크를 확인한 뒤 다시 실행해 주세요."; }
+  mkdir -p "$dest"
+  # Git Bash의 tar는 zip을 못 푸므로 Windows에 들어 있는 tar를 쓴다
+  /c/Windows/System32/tar.exe -xf "$(cygpath -w "$tmp/sts.zip")" -C "$(cygpath -w "$dest")" \
+    || { rm -rf "$tmp"; die "STS 압축을 풀지 못했습니다."; }
+  rm -rf "$tmp"
+}
+if [ "$ide" != vscode ]; then
+  find_sts
+  if [ -n "$sts_dir" ]; then
+    skip "STS ($sts_exe)"
+  else
+    if [ "$OS" = mac ]; then pkg springtoolsforeclipse cask; else install_sts_win; fi
+    find_sts
+    [ -n "$sts_dir" ] || die "STS를 설치했지만 설치 폴더를 찾지 못했습니다."
+    ok "STS ($sts_exe)"
+  fi
+fi
+
 if [ "$NEED_RESTART" = 1 ]; then
   printf '\n[다시 실행] 새로 설치한 프로그램은 새 창에서만 인식됩니다. 창을 닫았다가 새로 열고 같은 명령(setup.bat 또는 bash setup.sh)을 한 번 더 실행해 주세요.\n'
   exit 2
@@ -246,11 +324,104 @@ fi
 step "확인"
 ./gradlew build -q && ok "./gradlew build"
 
+to_native() { if [ "$OS" = win ]; then cygpath -w "$1"; else printf '%s' "$1"; fi; }
+# Gradle이 받아 둔 jar를 찾는다. 경로 중간에 해시 폴더가 있으므로 버전 폴더 이름으로 정렬해 가장 새 것을 고른다
+gradle_jar() {
+  find "${GRADLE_USER_HOME:-$HOME/.gradle}/caches/modules-2/files-2.1/$1/$2" -name "$2-*.jar" ! -name '*-sources.jar' ! -name '*-javadoc.jar' 2>/dev/null \
+    | awk -F/ '{ print $(NF-2) "\t" $0 }' | sort -V | tail -1 | cut -f2
+}
+# Eclipse 설정 파일(properties 형식)의 키 하나를 바꾸거나 추가한다. 값의 \n 같은 글자가 풀리지 않도록 ENVIRON으로 넘긴다
+set_pref() {
+  mkdir -p "$(dirname "$1")"
+  touch "$1"
+  grep -q '^eclipse.preferences.version=' "$1" || printf 'eclipse.preferences.version=1\n' >> "$1"
+  K="$2" V="$3" awk -F= '$1 == ENVIRON["K"] { print ENVIRON["K"] "=" ENVIRON["V"]; found = 1; next } { print }
+    END { if (!found) print ENVIRON["K"] "=" ENVIRON["V"] }' "$1" > "$1.tmp" && mv "$1.tmp" "$1"
+}
+
+# STS: Lombok을 넣고 프로젝트 설정(.settings, git 제외)을 VS Code와 맞춘다
+if [ "$ide" != vscode ] && [ -n "$sts_dir" ]; then
+  # Eclipse는 Lombok을 따로 넣어야 getter·생성자 등을 인식한다. 빌드 때 Gradle이 받아 둔 lombok.jar로 설치한다
+  # ini에 줄만 있고 jar가 없으면(STS 폴더를 옮긴 경우) STS가 실행되지 않으므로 jar가 실제로 있는지까지 본다
+  sts_ini=$(find "$sts_dir" -maxdepth 3 -iname 'SpringTool*.ini' | head -1)
+  lombok_agent() {
+    local p
+    p=$(sed -n 's/^-javaagent:\(.*lombok[^/\\]*\.jar\).*/\1/p' "$sts_ini" | tr -d '\r' | head -1)
+    [ -n "$p" ] && [ "$OS" = win ] && p=$(cygpath -u "$p")
+    [ -n "$p" ] && [ -f "$p" ]
+  }
+  if lombok_agent; then
+    skip "STS Lombok"
+  else
+    lombok=$(gradle_jar org.projectlombok lombok)
+    "$have_jdk/bin/java" -jar "$(to_native "$lombok")" install "$(to_native "$sts_dir")" > /dev/null 2>&1 || true
+    if lombok_agent; then ok "STS Lombok ($(basename "$lombok"))"
+    else todo "STS에 Lombok을 넣지 못했습니다. STS를 끈 뒤 다시 실행해 주세요"; fi
+  fi
+  # Windows 바탕화면 바로가기: setup이 설치한 STS(%LOCALAPPDATA%\Programs)만 만든다. zip을 풀기만 해서 시작 메뉴에도 없기 때문이다.
+  # 직접 설치한 STS는 바탕화면을 건드리지 않고 위에서 실행 파일 경로만 보여 준다. 맥은 /Applications에 있어 만들지 않는다.
+  # 바탕화면이 OneDrive로 옮겨졌을 수 있어 위치는 Windows에 묻는다. 이름이 달라도 STS를 가리키는 바로가기가 있으면 그것을 쓴다
+  sts_by_setup=n
+  if [ "$OS" = win ]; then
+    case "$sts_dir" in "$(cygpath -u "$LOCALAPPDATA")/Programs/"*) sts_by_setup=y ;; esac
+  fi
+  if [ "$sts_by_setup" = y ]; then
+    lnk=$(STS_EXE="$sts_exe" powershell.exe -NoProfile -Command '
+      $desk = [Environment]::GetFolderPath("Desktop")
+      $shell = New-Object -ComObject WScript.Shell
+      $lnk = Get-ChildItem $desk -Filter *.lnk -ErrorAction SilentlyContinue |
+        Where-Object { $shell.CreateShortcut($_.FullName).TargetPath -match "SpringTool[^\\]*\.exe$" } |
+        Select-Object -First 1 -ExpandProperty FullName
+      $state = "updated"
+      if (-not $lnk) { $lnk = Join-Path $desk "Spring Tools for Eclipse.lnk"; $state = "created" }
+      elseif ($shell.CreateShortcut($lnk).TargetPath -eq $env:STS_EXE) { "same"; exit }
+      $s = $shell.CreateShortcut($lnk)
+      $s.TargetPath = $env:STS_EXE
+      $s.WorkingDirectory = Split-Path $env:STS_EXE
+      $s.Save()
+      $state' | tr -d '\r')
+    case "$lnk" in
+      same) skip "STS 바탕화면 바로가기" ;;
+      created) ok "STS 바탕화면 바로가기 (Spring Tools for Eclipse)" ;;
+      updated) ok "STS 바탕화면 바로가기 (경로 고침)" ;;
+      *) todo "STS 바탕화면 바로가기를 만들지 못했습니다: $lnk" ;;
+    esac
+  fi
+  # 포맷은 VS Code와 같은 eclipse-formatter.xml을 쓰고, 저장할 때 포맷한다. 인코딩 UTF-8, 줄바꿈 LF
+  while IFS='|' read -r k v; do
+    set_pref .settings/org.eclipse.jdt.core.prefs "$k" "$v"
+  done < <(sed -n 's/.*<setting id="\([^"]*\)" value="\([^"]*\)".*/\1|\2/p' eclipse-formatter.xml)
+  set_pref .settings/org.eclipse.jdt.ui.prefs formatter_profile _nyangmeong
+  set_pref .settings/org.eclipse.jdt.ui.prefs formatter_settings_version 23
+  set_pref .settings/org.eclipse.jdt.ui.prefs editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup true
+  set_pref .settings/org.eclipse.jdt.ui.prefs sp_cleanup.format_source_code true
+  set_pref .settings/org.eclipse.jdt.ui.prefs sp_cleanup.format_source_code_changes_only false
+  set_pref .settings/org.eclipse.jdt.ui.prefs sp_cleanup.on_save_use_additional_actions false
+  set_pref .settings/org.eclipse.core.resources.prefs 'encoding/<project>' UTF-8
+  set_pref .settings/org.eclipse.core.runtime.prefs line.separator '\n'
+  ok "STS 프로젝트 설정 (eclipse-formatter.xml, 저장 시 포맷, UTF-8, LF)"
+  # 가져오기 여부: STS가 마지막으로 연 작업 공간에 이 프로젝트가 등록돼 있는지 본다.
+  # .project 파일은 다른 작업 공간에서 가져와도 생기므로 기준이 될 수 없다.
+  # 작업 공간 경로는 Java properties 이스케이프(\: \\ \uXXXX, 여러 개면 \n으로 구분)로 저장돼 있어 perl로 풀고 첫 번째를 쓴다
+  proj_name=$(sed -n "s/^rootProject.name *= *['\"]\([^'\"]*\)['\"].*/\1/p" settings.gradle)
+  ide_prefs=$(find "$sts_dir" -maxdepth 5 -path '*configuration/.settings/org.eclipse.ui.ide.prefs' 2>/dev/null | head -1)
+  sts_ws=""
+  [ -n "$ide_prefs" ] && sts_ws=$(perl -CS -ne 'next unless s/^RECENT_WORKSPACES=//; s/\r?\n$//; s{\\(?:u([0-9A-Fa-f]{4})|(.))}{defined $1 ? chr(hex $1) : ($2 eq "n" ? "\n" : $2)}ge; print((split /\n/)[0])' "$ide_prefs")
+  sts_ws_unix=$sts_ws
+  [ -n "$sts_ws" ] && [ "$OS" = win ] && sts_ws_unix=$(cygpath -u "$sts_ws")
+  if [ -n "$sts_ws" ] && [ -d "$sts_ws_unix/.metadata/.plugins/org.eclipse.core.resources/.projects/$proj_name" ]; then
+    skip "STS 프로젝트 가져오기 (작업 공간 $sts_ws)"
+  else
+    # 상위 폴더를 고르면 Gradle Wrapper가 없어 STS가 Java 25를 지원하지 않는 Gradle로 동기화하다 실패한다
+    project_path=$PWD
+    [ "$OS" = win ] && project_path=$(cygpath -w "$PWD")
+    todo "STS${sts_ws:+ 작업 공간($sts_ws)}에서 File > Import > Gradle > Existing Gradle Project 로 $project_path 폴더를 가져와 주세요(처음 한 번만). 상위 폴더가 아니라 gradlew 가 있는 이 폴더를 고릅니다"
+  fi
+fi
+
 # DB 접속: 서버는 첫 쿼리 때 DB에 붙으므로 기동만으로는 확인되지 않는다.
 # Spring과 같은 방식(Properties)으로 .env.local을 읽어 JDBC로 직접 접속해 본다. 드라이버는 Gradle이 받아 둔 것을 쓴다
-# 경로 중간에 해시 폴더가 있으므로 버전 폴더 이름으로 정렬해 가장 새 것을 고른다
-driver=$(find "${GRADLE_USER_HOME:-$HOME/.gradle}/caches/modules-2/files-2.1/com.mysql/mysql-connector-j" -name 'mysql-connector-j-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' 2>/dev/null \
-  | awk -F/ '{ print $(NF-2) "\t" $0 }' | sort -V | tail -1 | cut -f2)
+driver=$(gradle_jar com.mysql mysql-connector-j)
 check=$(mktemp -d)
 cat > "$check/DbCheck.java" <<'JAVA'
 import java.io.FileReader;
@@ -273,7 +444,6 @@ public class DbCheck {
   }
 }
 JAVA
-to_native() { if [ "$OS" = win ]; then cygpath -w "$1"; else printf '%s' "$1"; fi; }
 if [ "$has_env" = n ]; then
   :  # .env.local이 없거나 비어 있다는 안내는 위에서 했다
 elif [ -z "$driver" ]; then
