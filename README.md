@@ -9,7 +9,7 @@
 
 ```mermaid
 flowchart LR
-  E[.env.local 받기] --> A[setup 실행] --> B[앱 다시 켜기] --> C[MCP 인증 한 번] --> D["/start"]
+  E[application.properties 받기] --> A[setup 실행] --> B[앱 다시 켜기] --> C[MCP 인증 한 번] --> D["/start"]
 ```
 
 ### setup
@@ -37,27 +37,28 @@ flowchart LR
 
 직접 할 일:
 
-- `.env.local`을 디스코드에서 받아 `setup.sh` 옆에 둔다.
-  - 이름이 `env.local`, `.env.local.txt`로 바뀌지 않았는지 본다.
-  - git에 올리지 않는다.
+- `application.properties`를 디스코드에서 받아 `src/main/resources/`에 둔다.
+  - 이름이 `application.properties.txt`로 바뀌지 않았는지 본다.
+  - git에 올리지 않는다(`.gitignore`에 있다).
 - STS는 처음 한 번 프로젝트를 가져온다.
   - File > Import > Gradle > Existing Gradle Project
   - 상위 폴더가 아니라 `gradlew`가 있는 `backend` 폴더를 고른다.
 - DB 접속이 안 되면(학원 밖 등) setup이 할 일로 알려 준다.
 
-### .env.local
+### application.properties
 
-Java properties 형식(`키=값`)이다. 같은 이름의 환경변수가 있으면 환경변수가 우선한다.
+스프링 설정 파일이다. 비밀값이 들어 있어 git에 올리지 않고 디스코드로 공유한다. 키 목록은 커밋된 `application.properties.example`에 있다.
 
 | 키 | 예 |
 | --- | --- |
-| `DB_URL` | `jdbc:mysql://호스트:3306/PAWEVER` |
-| `DB_USERNAME` | |
-| `DB_PASSWORD` | |
-| `DMS_MCP_URL` | DMS MCP 서버 주소 |
+| `spring.datasource.url` | `jdbc:mysql://호스트:3306/PAWEVER` |
+| `spring.datasource.username` | |
+| `spring.datasource.password` | |
+| `dms.mcp-url` | DMS MCP 서버 주소 |
 
-- 값에 역슬래시(`\`)가 있으면 두 번 쓴다.
-- claude.ai 커넥터로 `dms`가 이미 연결돼 있으면 `DMS_MCP_URL`은 비워도 된다.
+- 키를 추가·변경하면 `application.properties.example`도 같은 PR에서 고치고, 디스코드의 파일도 갱신한다.
+- 운영 프로필 설정은 `application-prod.properties`(비밀값 없음, 커밋)에 둔다.
+- claude.ai 커넥터로 `dms`가 이미 연결돼 있으면 `dms.mcp-url`은 비워도 된다.
 
 ### MCP
 
@@ -143,7 +144,7 @@ flowchart LR
 ```
 
 1. `./gradlew bootRun` → `Started … in N seconds`가 나오면 준비 완료
-   - 기본 프로필 `local`, `.env.local`의 공용 DB에 붙는다.
+   - 기본 프로필 `local`, `application.properties`의 공용 DB에 붙는다.
 2. Swagger에서 목록의 API → Try it out → 값 입력 → Execute
 3. 응답 코드와 JSON을 기대 결과와 비교한다.
 4. 401이 나면: 로그인 API(AIC)가 아직 없어서다.

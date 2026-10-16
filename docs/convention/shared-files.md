@@ -1,8 +1,8 @@
 # 여러 명이 같이 고치는 파일
 
-`ErrorCode`, `application.yml`, `db/`의 SQL을 고칠 때 연다.
+`ErrorCode`, `application.properties.example`, `db/`의 SQL을 고칠 때 연다.
 
-`ErrorCode`와 `application.yml`은 모든 도메인 담당이 줄을 추가한다. 다들 맨 끝에 붙이면 병합할 때마다 충돌한다.
+`ErrorCode`와 `application.properties.example`(실제 `application.properties`는 git 제외, 디스코드로 공유)은 모든 도메인 담당이 줄을 추가한다. 다들 맨 끝에 붙이면 병합할 때마다 충돌한다.
 
 - 파일 안을 도메인별 구획으로 나누고(주석으로 구분), 자기 도메인 구획 안에 추가한다.
 - 이 파일들의 줄 정렬이나 순서 바꾸기를 기능 PR에 섞지 않는다.
