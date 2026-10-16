@@ -17,7 +17,7 @@ setup이 하는 일:
 - VS Code: 확장(Java Pack, Spring Boot)을 설치한다. JDK는 1차로 Java 확장의 자동 감지에 맡기고, 자동 감지 위치가 아닌 곳(예: `~/.jdks`)에서 찾은 JDK만 사용자 설정의 `java.configuration.runtimes`에 등록한다. 그 설정이 이미 있으면 고치지 않고 직접 할 일로 알려 준다.
 - STS: 없으면 설치하고(Windows는 공식 zip을 `%LOCALAPPDATA%\Programs`에 풀고, 맥은 brew), Lombok을 넣는다. 실행 파일은 그 폴더의 `SpringToolsForEclipse.exe`다. 프로젝트 설정(`.settings/`, git 제외)에 공용 포맷(`eclipse-formatter.xml`), 저장 시 포맷, UTF-8, LF를 넣는다. 프로젝트 가져오기(File > Import > Gradle > Existing Gradle Project)는 처음 한 번 직접 한다. 이때 상위 폴더가 아니라 `gradlew`가 있는 `backend` 폴더를 고른다. 상위 폴더를 고르면 Gradle Wrapper가 없어 STS가 Java 25를 지원하지 않는 Gradle로 동기화하다 실패한다.
 - 팀 공용 DB 접속 정보가 든 `.env.local`이 있는지 확인한다. 이 파일은 디스코드로 공유하므로, 받아서 저장소 루트(`setup.sh` 옆)에 넣는다. 내려받을 때 이름이 `env.local`이나 `.env.local.txt`로 바뀌지 않았는지 확인한다. git에는 올리지 않는다. 공개 저장소이므로 서버 주소도 저장소에 두지 않는다.
-- 감지한 AI 도구(Claude Code, Codex)에 DMS MCP를 사용자 범위로 등록한다. 주소는 `.env.local`의 `DMS_MCP_URL`에서 읽는다. Claude Code에 이름이나 주소가 같은 claude.ai 커넥터(`claude.ai dms`)가 이미 연결돼 있으면 Claude Code에는 등록하지 않는다. 인증은 처음 한 번 브라우저에서 한다. Claude Code는 `claude`를 실행해 `/mcp`에서 `dms`를 고르고 Authenticate, Codex는 등록할 때 로그인 창이 열린다(놓쳤으면 `codex mcp login dms`).
+- 감지한 AI 도구(Claude Code, Codex)에 DMS MCP를 사용자 범위로 등록한다. 주소는 `.env.local`의 `DMS_MCP_URL`에서 읽는다. Claude Code에 이름이나 주소가 같은 claude.ai 커넥터(`claude.ai dms`)가 이미 연결돼 있으면 Claude Code에는 등록하지 않는다. 감지한 도구 모두에 `dms`가 이미 있으면 `DMS_MCP_URL`은 비워 둬도 된다. 인증은 처음 한 번 브라우저에서 한다. Claude Code는 `claude`를 실행해 `/mcp`에서 `dms`를 고르고 Authenticate, Codex는 등록할 때 로그인 창이 열린다(놓쳤으면 `codex mcp login dms`).
 - 빌드하고, 공용 DB에 접속되는지와 서버가 뜨는지 확인한 뒤 끈다. DB 접속이 안 되면(학원 밖 네트워크 등) 멈추지 않고 직접 할 일로 알려 준다.
 
 `.env.local`은 Java properties 형식이다(`키=값`). Spring이 이 파일을 읽고, 같은 이름의 환경변수가 있으면 환경변수가 우선한다. 값에 역슬래시(`\`)가 있으면 두 번 쓴다.
@@ -36,6 +36,41 @@ setup이 하는 일:
 ```
 
 API 명세는 `http://localhost:8080/swagger-ui.html`에서 본다.
+
+## AI 도구로 작업하기
+
+setup을 먼저 실행한다. 아래 세 가지 중 편한 것을 쓴다. 셋 다 같은 설정(`~/.claude`의 MCP, 이 저장소의 `.claude/skills`)을 쓰므로 `/start`·`/verify`·`/done`이 똑같이 동작한다.
+
+| | 설치 | 이 저장소에서 시작 |
+| --- | --- | --- |
+| 데스크탑 앱 | https://claude.com/download | 로그인 → Code 탭 → + New session(Ctrl+N) → 환경 Local, 이 저장소 폴더 선택 |
+| VS Code 확장 | 확장 `anthropic.claude-code`(Anthropic의 Claude Code). IDE로 VS Code를 고르면 setup이 설치한다. STS만 쓰면 VS Code에서 직접 설치한다 | 이 저장소 폴더를 열고 왼쪽 막대의 Claude 아이콘 또는 상태 표시줄의 ✻ Claude Code |
+| 터미널 | setup이 설치한다 | 이 저장소 폴더에서 `claude` |
+
+setup을 실행한 뒤에는 앱을 다시 켠다. 새로 설치한 프로그램과 PATH는 다시 켜야 잡힌다.
+
+### 처음 한 번: MCP 인증
+
+claude.ai 계정으로 로그인하면 claude.ai에서 연결한 커넥터(`claude.ai dms`, `claude.ai Figma`)는 따로 인증하지 않아도 된다. setup이 등록한 서버 중 인증이 필요한 것은 터미널·VS Code에서 `/mcp`를 입력해 서버를 고르고 Authenticate 한다. 데스크탑 앱은 Connectors 화면에서 한다(확인 필요).
+
+### 작업 흐름
+
+1. `/start` — 할 작업을 고르고 기획을 핸드오프에 쓴 뒤 멈춘다. 특정 마일스톤은 `/start M3`.
+   - 마일스톤 파일이 없으면 `마일스톤 만들어줘`라고 요청해 만든 뒤 새 대화에서 `/start`.
+2. 기획을 확인한다. 고칠 점은 답하고, 그대로 가려면 모델을 Sonnet으로 바꾼 뒤 `승인`이라고 답한다. 구현은 기획에 적은 파일만 고친다.
+3. 검증 명령이 통과했다고 안내하면 `/verify` — 구현한 대화를 보지 않는 별도 에이전트(Opus)가 저장소만 보고 판정한다.
+4. 판정이 통과면 `/done` — 핸드오프와 마일스톤 상태를 갱신한다. 실패면 고친 뒤 다시 `/verify`.
+5. 새 대화를 열고 다음 작업을 `/start`로 시작한다. 이전 대화를 이어 쓰면 그만큼 토큰을 계속 쓴다.
+
+도구마다 다른 조작:
+
+| | 모델 바꾸기 | 새 대화(`/clear`) |
+| --- | --- | --- |
+| 데스크탑 앱 | 보내기 버튼 옆 모델 선택 | + New session(Ctrl+N) |
+| VS Code 확장 | `/model` 또는 입력창 아래 모델 이름 | `/clear` (확인 필요. 안 되면 명령 팔레트의 Open in New Tab) |
+| 터미널 | `/model sonnet` | `/clear` |
+
+`/start`는 기획하는 동안만 Opus로 돌고, 다음 입력부터는 원래 모델로 돌아간다. VS Code 확장은 터미널보다 쓸 수 있는 명령이 적다. 스킬이 `/` 목록에 없으면 새 대화를 연다.
 
 ## PR 전 확인
 

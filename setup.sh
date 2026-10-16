@@ -96,16 +96,26 @@ vscode_extensions() {
 # MCP 서버를 감지한 AI 도구에 사용자 범위로 등록한다. 원격 서버의 인증은 OAuth라 브라우저에서 한다
 # mcp_add <이름> <URL>              원격(HTTP) 서버
 # mcp_add <이름> -- <명령> [인자...]  이 PC에서 띄우는(stdio) 서버
+# claude.ai에서 연결한 커넥터(claude.ai <이름>) 중 이름(대소문자 무시)이나 주소가 같은 줄을 출력한다. 커넥터는 claude mcp get 으로 찾을 수 없다
+# claude_connector <이름> [URL]. $(...) 안에서 부르므로 목록은 그 전에 claude_ai_list_load 로 읽어 둔다
+claude_connector() {
+  claude_ai_list_load
+  printf '%s\n' "$claude_ai_list" | grep -i -m1 "^claude\.ai $1:" && return 0
+  [ -n "${2:-}" ] && printf '%s\n' "$claude_ai_list" | grep -F -m1 ": $2 " && return 0
+  return 0
+}
+# claude mcp list 는 서버마다 연결을 확인해 느리므로 한 번만 읽는다
+claude_ai_list_load() {
+  [ -n "${claude_ai_list+x}" ] || claude_ai_list=$(claude mcp list 2>/dev/null | grep '^claude\.ai ' || true)
+}
+
 mcp_add() {
   local name=$1 connector=""
   shift
   if use_claude; then
-    # claude.ai에서 연결한 커넥터(claude.ai <이름>)는 claude mcp get 으로 찾을 수 없다. 이름이나 주소가 같으면 다시 등록하지 않는다
-    [ -n "${claude_ai_list+x}" ] || claude_ai_list=$(claude mcp list 2>/dev/null | grep '^claude\.ai ' || true)
-    connector=$(printf '%s\n' "$claude_ai_list" | grep -i -m1 "^claude\.ai $name:" || true)
-    if [ -z "$connector" ] && [ "$1" != -- ]; then
-      connector=$(printf '%s\n' "$claude_ai_list" | grep -F -m1 ": $1 " || true)
-    fi
+    # 같은 커넥터가 이미 연결돼 있으면 다시 등록하지 않는다
+    claude_ai_list_load
+    if [ "$1" = -- ]; then connector=$(claude_connector "$name"); else connector=$(claude_connector "$name" "$1"); fi
     if [ -n "$connector" ]; then
       skip "Claude Code MCP $name (${connector%%:*} 커넥터)"
     elif claude mcp get "$name" >/dev/null 2>&1; then
@@ -430,10 +440,14 @@ fi
 # MCP: DMS(요구사항정의서·화면설계서·기능명세서). DMS 주소는 공개 저장소에 두지 않고 .env.local의 DMS_MCP_URL에서 읽는다
 step "MCP"
 dms_url=$(sed -n 's/^DMS_MCP_URL=//p' .env.local 2>/dev/null | tr -d '\r' | head -1 || true)
+! use_claude || claude_ai_list_load
 if [ ! -f .env.local ]; then
   :  # .env.local이 없다는 안내는 위에서 했다
 elif [ -n "$dms_url" ]; then
   mcp_add dms "$dms_url"
+# 주소가 없어도 감지한 도구에 dms가 이미 있으면(Claude Code는 claude.ai 커넥터, Codex는 등록된 것) 할 일로 남기지 않는다
+elif { ! use_claude || [ -n "$(claude_connector dms)" ]; } && { ! use_codex || codex mcp get dms >/dev/null 2>&1; }; then
+  skip "MCP dms (이미 연결돼 있어 DMS_MCP_URL 없이 건너뜀)"
 else
   todo ".env.local 에 DMS_MCP_URL 값이 없습니다. 디스코드의 최신 .env.local 로 바꿔 주세요"
 fi
