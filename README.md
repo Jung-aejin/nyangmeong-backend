@@ -17,7 +17,7 @@ setup이 하는 일:
 
 | 항목 | 내용 |
 | --- | --- |
-| Git | 이 저장소의 git 사용자 설정, 이니셜 브랜치 만들기·올리기 |
+| Git | 이 저장소의 git 사용자 설정, 커밋 훅(`Co-Authored-By` 줄 삭제), 이니셜 브랜치 만들기·올리기 |
 | AI 도구 | Claude Code·Codex 중 설치된 것을 감지. 둘 다 없으면 Claude Code 설치(Codex를 쓰려면 먼저 설치) |
 | IDE | 처음에 VS Code·STS·둘 다 중 고른다. 다시 고르려면 `setup.bat --ide` |
 | JDK 25 | 없으면 설치. 표준 위치 → `JAVA_HOME` → `~/.jdks` 순서로 찾는다 |

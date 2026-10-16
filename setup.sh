@@ -229,6 +229,14 @@ for key in user.name user.email; do
   fi
 done
 
+# 커밋 훅: 커밋 메시지에서 AI 도구가 붙인 Co-Authored-By 줄을 지운다(.githooks/commit-msg, docs/convention/git.md)
+if [ "$(git config --local core.hooksPath || true)" = .githooks ]; then
+  skip "git 커밋 훅 (.githooks)"
+else
+  git config --local core.hooksPath .githooks
+  ok "git 커밋 훅 (.githooks)"
+fi
+
 # 개인 브랜치 이름 = 이니셜. 핸드오프 파일 이름과 커밋 접두사가 여기서 나온다.
 # 쓸 수 있는 이니셜은 마일스톤 담당 표(docs/convention/milestone.md "담당" 절)의 첫 열이다
 INITIALS=$(awk '/^## /{f = ($0 == "## 담당")} f && /^\| [A-Z]+ \|/{print $2}' docs/convention/milestone.md | tr '\n' ' ' | sed 's/ $//')
