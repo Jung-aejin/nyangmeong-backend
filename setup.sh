@@ -427,37 +427,40 @@ if [ "$NEED_RESTART" = 1 ]; then
   exit 2
 fi
 
-# DB: 팀 공용 DB를 쓴다. 접속 정보는 디스코드로 공유하는 .env.local(git 제외)을 이 폴더에 넣어 쓰고 Spring이 읽는다(application.yml의 spring.config.import).
-# 공개 저장소이므로 서버 주소도 저장소에 두지 않는다
+# DB: 팀 공용 DB를 쓴다. 스프링 설정 src/main/resources/application.properties(git 제외)를 디스코드에서 받아 쓴다.
+# 공개 저장소이므로 서버 주소와 비밀값을 저장소에 두지 않는다. 키 목록은 application.properties.example 에 있다
+APP_PROPS=src/main/resources/application.properties
+# key=값 에서 값을 읽는다. 없으면 빈 문자열
+prop() { sed -n "s/^$1[[:space:]]*=[[:space:]]*//p" "$APP_PROPS" 2>/dev/null | tr -d '\r' | head -1 || true; }
 has_env=n
-if [ ! -f .env.local ]; then
-  todo "디스코드에서 받은 .env.local 을 이 폴더($(basename "$PWD"))에 넣고 다시 실행해 주세요. 내려받을 때 이름이 env.local 이나 .env.local.txt 로 바뀌지 않았는지 확인해 주세요"
+if [ ! -f "$APP_PROPS" ]; then
+  todo "디스코드에서 받은 application.properties 를 $APP_PROPS 에 넣고 다시 실행해 주세요. 내려받을 때 이름이 application.properties.txt 로 바뀌지 않았는지 확인해 주세요"
 else
   missing=""
-  for key in DB_URL DB_USERNAME DB_PASSWORD; do
-    grep -q "^$key=." .env.local || missing="$missing $key"
+  for key in spring.datasource.url spring.datasource.username spring.datasource.password; do
+    [ -n "$(prop "$key")" ] || missing="$missing $key"
   done
   if [ -n "$missing" ]; then
-    todo ".env.local 에 값이 없는 키가 있습니다:$missing. 디스코드의 최신 파일로 바꿔 주세요"
+    todo "application.properties 에 값이 없는 키가 있습니다:$missing. 디스코드의 최신 파일로 바꿔 주세요"
   else
     has_env=y
-    skip ".env.local (DB 접속 정보)"
+    skip "application.properties (DB 접속 정보)"
   fi
 fi
 
-# MCP: DMS(요구사항정의서·화면설계서·기능명세서). DMS 주소는 공개 저장소에 두지 않고 .env.local의 DMS_MCP_URL에서 읽는다
+# MCP: DMS(요구사항정의서·화면설계서·기능명세서). DMS 주소는 공개 저장소에 두지 않고 application.properties 의 dms.mcp-url 에서 읽는다
 step "MCP"
-dms_url=$(sed -n 's/^DMS_MCP_URL=//p' .env.local 2>/dev/null | tr -d '\r' | head -1 || true)
+dms_url=$(prop dms.mcp-url)
 ! use_claude || claude_ai_list_load
-if [ ! -f .env.local ]; then
-  :  # .env.local이 없다는 안내는 위에서 했다
+if [ ! -f "$APP_PROPS" ]; then
+  :  # application.properties가 없다는 안내는 위에서 했다
 elif [ -n "$dms_url" ]; then
   mcp_add dms "$dms_url"
 # 주소가 없어도 감지한 도구에 dms가 이미 있으면(Claude Code는 claude.ai 커넥터, Codex는 등록된 것) 할 일로 남기지 않는다
 elif { ! use_claude || [ -n "$(claude_connector dms)" ]; } && { ! use_codex || codex mcp get dms >/dev/null 2>&1; }; then
-  skip "MCP dms (이미 연결돼 있어 DMS_MCP_URL 없이 건너뜀)"
+  skip "MCP dms (이미 연결돼 있어 dms.mcp-url 없이 건너뜀)"
 else
-  todo ".env.local 에 DMS_MCP_URL 값이 없습니다. 디스코드의 최신 .env.local 로 바꿔 주세요"
+  todo "application.properties 에 dms.mcp-url 값이 없습니다. 디스코드의 최신 파일로 바꿔 주세요"
 fi
 
 step "확인"
@@ -559,7 +562,7 @@ if [ "$ide" != vscode ] && [ -n "$sts_dir" ]; then
 fi
 
 # DB 접속: 서버는 첫 쿼리 때 DB에 붙으므로 기동만으로는 확인되지 않는다.
-# Spring과 같은 방식(Properties)으로 .env.local을 읽어 JDBC로 직접 접속해 본다. 드라이버는 Gradle이 받아 둔 것을 쓴다
+# Spring과 같은 방식(Properties)으로 application.properties를 읽어 JDBC로 직접 접속해 본다. 드라이버는 Gradle이 받아 둔 것을 쓴다
 driver=$(gradle_jar com.mysql mysql-connector-j)
 check=$(mktemp -d)
 cat > "$check/DbCheck.java" <<'JAVA'
@@ -572,7 +575,7 @@ public class DbCheck {
     Properties env = new Properties();
     try (FileReader r = new FileReader(args[0])) { env.load(r); }
     DriverManager.setLoginTimeout(5);
-    try (var c = DriverManager.getConnection(env.getProperty("DB_URL"), env.getProperty("DB_USERNAME"), env.getProperty("DB_PASSWORD"));
+    try (var c = DriverManager.getConnection(env.getProperty("spring.datasource.url"), env.getProperty("spring.datasource.username"), env.getProperty("spring.datasource.password"));
          var rs = c.createStatement().executeQuery("SELECT DATABASE(), (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE())")) {
       rs.next();
       System.out.println(rs.getString(1) + ", 테이블 " + rs.getInt(2) + "개");
@@ -584,17 +587,17 @@ public class DbCheck {
 }
 JAVA
 if [ "$has_env" = n ]; then
-  :  # .env.local이 없거나 비어 있다는 안내는 위에서 했다
+  :  # application.properties가 없거나 비어 있다는 안내는 위에서 했다
 elif [ -z "$driver" ]; then
   todo "MySQL 드라이버를 찾지 못해 DB 접속을 확인하지 못했습니다"
-elif result=$("$have_jdk/bin/java" -Dstdout.encoding=UTF-8 -cp "$(to_native "$driver")" "$(to_native "$check/DbCheck.java")" "$(to_native "$PWD/.env.local")"); then
+elif result=$("$have_jdk/bin/java" -Dstdout.encoding=UTF-8 -cp "$(to_native "$driver")" "$(to_native "$check/DbCheck.java")" "$(to_native "$PWD/$APP_PROPS")"); then
   ok "DB 접속 ($result)"
 else
   todo "공용 DB에 접속하지 못했습니다: $result. 네트워크(학원 밖이면 접속이 막힐 수 있음)와 접속 정보를 확인한 뒤 다시 실행해 주세요"
 fi
 rm -rf "$check"
 
-# 서버가 .env.local을 읽고 뜨는지 보고 끈다. 포트는 비어 있는 아무 포트(0)를 쓴다
+# 서버가 application.properties를 읽고 뜨는지 보고 끈다. 포트는 비어 있는 아무 포트(0)를 쓴다
 if [ "$has_env" = y ]; then
   jar=$(ls build/libs/*.jar | grep -v -- '-plain\.jar$' | head -1)
   log=$(mktemp)

@@ -10,7 +10,7 @@
 
 어기면 되돌리기 어렵거나 오류 없이 조용히 잘못되는 것만 모았다. 나머지는 필요할 때 찾아본다.
 
-1. **비밀값을 커밋하지 않는다.** 이 저장소는 공개다. 비밀번호, 키, 토큰은 환경변수나 git에 올리지 않는 `.env.local`로만 넣는다. (`docs/convention/config.md`)
+1. **비밀값을 커밋하지 않는다.** 이 저장소는 공개다. 비밀번호, 키, 토큰은 git에 올리지 않는 `application.properties`(디스코드로 공유)에만 넣는다. (`docs/convention/config.md`)
 2. **의존은 한 방향이다.** 도메인이 `global`을 쓰고, 다른 도메인은 `service`로만, 자기보다 낮은 층만 부른다. 순환 참조 오류가 나면 `@Lazy`나 `ObjectProvider`로 덮지 않고 이벤트로 바꾸거나 기능을 위층으로 옮긴다. (의존 방향)
 3. **알림과 메일은 `@Transactional` 메서드 안에서 `EventPublisher.publish()`로 발행한다.** 트랜잭션 밖에서 부르면 예외가 난다. `ApplicationEventPublisher`를 직접 쓰면 이 검사가 빠져서 오류 없이 사라진다. (`docs/convention/service.md`)
 4. **테스트를 끄거나 지워서 통과시키지 않는다.** (`docs/convention/test.md`)
@@ -92,7 +92,7 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 | 관리자 기능, 여러 도메인 배치, 하위 패키지를 만들 때 | `docs/convention/architecture.md` |
 | 테스트를 쓰거나 실패한 테스트를 고칠 때 | `docs/convention/test.md` |
 | 설정 파일·비밀값·환경변수를 다룰 때, 핸드오프를 쓸 때 | `docs/convention/config.md` |
-| `ErrorCode`, `application.yml`, `db/` SQL을 고칠 때 | `docs/convention/shared-files.md` |
+| `ErrorCode`, `application.properties.example`, `db/` SQL을 고칠 때 | `docs/convention/shared-files.md` |
 | 브랜치·커밋·PR을 만들 때 | `docs/convention/git.md` |
 | 내 담당 화면·API를 마일스톤으로 나눌 때 | `docs/convention/milestone.md` |
 

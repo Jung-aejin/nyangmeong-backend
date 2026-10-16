@@ -60,3 +60,11 @@ out/
 
 # /start가 내려받는 DMS 문서 캐시(화면설계서 등). 각자 PC에만 둔다
 .cache/
+
+# 스프링 설정. 비밀값이 들어 있어 저장소에 올리지 않고 디스코드로 공유한다(키 목록은 application.properties.example)
+application.properties
+application-local.properties
+application-mail-local.properties
+
+# 업로드 파일(로컬 저장 경로)
+/uploads/
