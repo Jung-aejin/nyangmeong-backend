@@ -16,14 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * AGENTS.md 3장(의존 방향)과 4장 Service의 @Transactional 규칙을 검사한다.
+ * AGENTS.md의 의존 방향과 docs/convention/service.md의 @Transactional 규칙을 검사한다.
  * 실패하면 이 테스트가 아니라 메시지에 나온 코드를 고친다.
  */
 class ArchitectureTest {
 
     private static final String ROOT = "com.nyangmeong";
 
-    // AGENTS.md 3.1절의 층 표. 도메인을 새로 만들면 표와 여기를 같이 고친다
+    // AGENTS.md "도메인 간 호출은 낮은 층으로만"의 층 표. 도메인을 새로 만들면 표와 여기를 같이 고친다
     private static final Map<String, Integer> DOMAIN_LAYERS = domainLayers();
 
     // 트랜잭션이 필요 없는 Service public 메서드. "클래스이름.메서드이름"으로 적는다
@@ -43,37 +43,47 @@ class ArchitectureTest {
         layers.put("expense", 3);
         layers.put("community", 3);
         layers.put("support", 3);
-        layers.put("ai", 4);
-        layers.put("admin", 5);
-        layers.put("job", 5);
+        layers.put("admin", 4);
+        layers.put("job", 4);
         return layers;
     }
 
     private static String domainPackage(String domain) {
-        return ROOT + ".domain." + domain + "..";
+        return ROOT + "." + domain + "..";
+    }
+
+    // 모든 도메인에서 이름이 layer인 패키지. layer가 비어 있으면 도메인 전체
+    private static String[] domainPackages(String layer) {
+        String suffix = layer.isEmpty() ? ".." : ".." + layer + "..";
+        return DOMAIN_LAYERS.keySet().stream()
+                .map(domain -> ROOT + "." + domain + suffix)
+                .toArray(String[]::new);
     }
 
     @Test
-    void global은_domain을_참조하지_않는다() {
+    void global은_도메인을_참조하지_않는다() {
         noClasses().that().resideInAPackage(ROOT + ".global..")
-                .should().dependOnClassesThat().resideInAPackage(ROOT + ".domain..")
+                .should().dependOnClassesThat().resideInAnyPackage(domainPackages(""))
                 .allowEmptyShould(true)
                 .check(CLASSES);
     }
 
     @Test
     void 도메인_안에서는_controller_service_mapper_순서로만_부른다() {
-        noClasses().that().resideInAPackage(ROOT + ".domain..controller..")
-                .should().dependOnClassesThat().resideInAPackage(ROOT + ".domain..mapper..")
+        noClasses().that().resideInAnyPackage(domainPackages("controller"))
+                .should().dependOnClassesThat().resideInAnyPackage(domainPackages("mapper"))
                 .allowEmptyShould(true)
                 .check(CLASSES);
-        noClasses().that().resideInAPackage(ROOT + ".domain..service..")
-                .should().dependOnClassesThat().resideInAPackage(ROOT + ".domain..controller..")
+        noClasses().that().resideInAnyPackage(domainPackages("service"))
+                .should().dependOnClassesThat().resideInAnyPackage(domainPackages("controller"))
                 .allowEmptyShould(true)
                 .check(CLASSES);
-        noClasses().that().resideInAPackage(ROOT + ".domain..mapper..")
-                .should().dependOnClassesThat().resideInAnyPackage(
-                        ROOT + ".domain..controller..", ROOT + ".domain..service..")
+        noClasses().that().resideInAnyPackage(domainPackages("mapper"))
+                .should().dependOnClassesThat().resideInAnyPackage(domainPackages("controller"))
+                .allowEmptyShould(true)
+                .check(CLASSES);
+        noClasses().that().resideInAnyPackage(domainPackages("mapper"))
+                .should().dependOnClassesThat().resideInAnyPackage(domainPackages("service"))
                 .allowEmptyShould(true)
                 .check(CLASSES);
     }
@@ -83,7 +93,7 @@ class ArchitectureTest {
         for (String domain : DOMAIN_LAYERS.keySet()) {
             String[] otherMappers = DOMAIN_LAYERS.keySet().stream()
                     .filter(other -> !other.equals(domain))
-                    .map(other -> ROOT + ".domain." + other + "..mapper..")
+                    .map(other -> ROOT + "." + other + "..mapper..")
                     .toArray(String[]::new);
 
             noClasses().that().resideInAPackage(domainPackage(domain))
@@ -125,7 +135,7 @@ class ArchitectureTest {
         };
 
         methods().that().arePublic()
-                .and().areDeclaredInClassesThat().resideInAPackage(ROOT + ".domain..")
+                .and().areDeclaredInClassesThat().resideInAnyPackage(domainPackages(""))
                 .and().areDeclaredInClassesThat().areAnnotatedWith(Service.class)
                 .and(DescribedPredicate.not(listedAsException))
                 .should().beAnnotatedWith(Transactional.class)
