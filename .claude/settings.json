@@ -1,5 +1,10 @@
 {
   "model": "sonnet",
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "extraKnownMarketplaces": {
     "nyangmeong-backend": {
       "source": {
