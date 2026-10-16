@@ -6,19 +6,32 @@
 
 ## 실행
 
-처음 받으면 맥은 터미널에서 `bash setup.sh`, Windows는 cmd에서 `setup.bat`, PowerShell에서 `.\setup.bat`(탐색기에서 더블클릭해도 된다)로 개발 환경을 만든다. PowerShell·cmd에서 `bash setup.sh`를 치면 Git Bash가 아니라 WSL이 실행되므로 `setup.bat`를 쓴다. 여러 번 실행해도 된다.
+처음 받으면 setup을 실행한다. 여러 번 실행해도 된다.
 
-Codex를 쓰면 Codex CLI를 먼저 설치하고 setup을 실행한다. setup은 Claude Code와 Codex 중 설치된 것을 감지하고, 둘 다 없으면 Claude Code를 설치한다.
+| OS | 실행 |
+| --- | --- |
+| Windows | cmd `setup.bat`, PowerShell `.\setup.bat`, 또는 탐색기에서 더블클릭. `bash setup.sh`는 WSL이 실행되므로 쓰지 않는다 |
+| 맥 | 터미널에서 `bash setup.sh` |
 
 setup이 하는 일:
 
-- 처음 실행할 때 쓸 IDE(VS Code, STS, 둘 다)를 묻고 고른 IDE만 세팅한다. 고른 값은 기억하며, 다시 고르려면 `--ide`를 붙여 실행한다(`setup.bat --ide`).
-- JDK 25를 설치한다. 이미 있으면 표준 설치 위치, `JAVA_HOME`, `~/.jdks` 순서로 찾는다.
-- VS Code: 확장(Java Pack, Spring Boot)을 설치한다. JDK는 1차로 Java 확장의 자동 감지에 맡기고, 자동 감지 위치가 아닌 곳(예: `~/.jdks`)에서 찾은 JDK만 사용자 설정의 `java.configuration.runtimes`에 등록한다. 그 설정이 이미 있으면 고치지 않고 직접 할 일로 알려 준다.
-- STS: 없으면 설치하고(Windows는 공식 zip을 `%LOCALAPPDATA%\Programs`에 풀고, 맥은 brew), Lombok을 넣는다. 실행 파일은 그 폴더의 `SpringToolsForEclipse.exe`다. 프로젝트 설정(`.settings/`, git 제외)에 공용 포맷(`eclipse-formatter.xml`), 저장 시 포맷, UTF-8, LF를 넣는다. 프로젝트 가져오기(File > Import > Gradle > Existing Gradle Project)는 처음 한 번 직접 한다. 이때 상위 폴더가 아니라 `gradlew`가 있는 `backend` 폴더를 고른다. 상위 폴더를 고르면 Gradle Wrapper가 없어 STS가 Java 25를 지원하지 않는 Gradle로 동기화하다 실패한다.
-- 팀 공용 DB 접속 정보가 든 `.env.local`이 있는지 확인한다. 이 파일은 디스코드로 공유하므로, 받아서 저장소 루트(`setup.sh` 옆)에 넣는다. 내려받을 때 이름이 `env.local`이나 `.env.local.txt`로 바뀌지 않았는지 확인한다. git에는 올리지 않는다. 공개 저장소이므로 서버 주소도 저장소에 두지 않는다.
-- 감지한 AI 도구(Claude Code, Codex)에 DMS MCP를 사용자 범위로 등록한다. 주소는 `.env.local`의 `DMS_MCP_URL`에서 읽는다. Claude Code에 이름이나 주소가 같은 claude.ai 커넥터(`claude.ai dms`)가 이미 연결돼 있으면 Claude Code에는 등록하지 않는다. 감지한 도구 모두에 `dms`가 이미 있으면 `DMS_MCP_URL`은 비워 둬도 된다. 인증은 처음 한 번 브라우저에서 한다. Claude Code는 `claude`를 실행해 `/mcp`에서 `dms`를 고르고 Authenticate, Codex는 등록할 때 로그인 창이 열린다(놓쳤으면 `codex mcp login dms`).
-- 빌드하고, 공용 DB에 접속되는지와 서버가 뜨는지 확인한 뒤 끈다. DB 접속이 안 되면(학원 밖 네트워크 등) 멈추지 않고 직접 할 일로 알려 준다.
+| 항목 | 내용 |
+| --- | --- |
+| Git | 이 저장소의 git 사용자 설정, 이니셜 브랜치 만들기·올리기 |
+| AI 도구 | Claude Code·Codex 중 설치된 것을 감지. 둘 다 없으면 Claude Code 설치(Codex를 쓰려면 먼저 설치) |
+| IDE | 처음에 VS Code·STS·둘 다 중 고른다. 다시 고르려면 `setup.bat --ide` |
+| JDK 25 | 없으면 설치. 표준 위치 → `JAVA_HOME` → `~/.jdks` 순서로 찾는다 |
+| VS Code | 확장(Java Pack, Spring Boot, Claude Code). 자동 감지되지 않는 JDK만 사용자 설정 `java.configuration.runtimes`에 등록 |
+| STS | 없으면 설치(Windows `%LOCALAPPDATA%\Programs`, 맥 brew). Lombok, 프로젝트 설정(공용 포맷·저장 시 포맷·UTF-8·LF) |
+| `.env.local` | 있는지 확인 |
+| MCP | `dms`(요구사항정의서·화면설계서·기능명세서). 같은 claude.ai 커넥터가 이미 있으면 Claude Code에는 등록하지 않는다 |
+| 확인 | 빌드, 공용 DB 접속, 서버 기동 후 종료. DB에 접속하지 못하면(학원 밖 등) 할 일로 알려 준다 |
+
+직접 할 일:
+
+- `.env.local`을 디스코드에서 받아 `setup.sh` 옆에 둔다. 이름이 `env.local`이나 `.env.local.txt`로 바뀌지 않았는지 확인한다. git에 올리지 않는다.
+- STS는 처음 한 번 File > Import > Gradle > Existing Gradle Project로 `gradlew`가 있는 `backend` 폴더를 가져온다. 상위 폴더를 고르면 Gradle Wrapper가 없어 동기화가 실패한다.
+- MCP 인증은 아래 "처음 한 번: MCP 인증"을 따른다. 감지한 도구 모두에 `dms`가 이미 있으면 `DMS_MCP_URL`은 비워 둬도 된다.
 
 `.env.local`은 Java properties 형식이다(`키=값`). Spring이 이 파일을 읽고, 같은 이름의 환경변수가 있으면 환경변수가 우선한다. 값에 역슬래시(`\`)가 있으면 두 번 쓴다.
 
@@ -51,7 +64,7 @@ setup을 실행한 뒤에는 앱을 다시 켠다. 새로 설치한 프로그램
 
 ### 처음 한 번: MCP 인증
 
-claude.ai 계정으로 로그인하면 claude.ai에서 연결한 커넥터(`claude.ai dms`, `claude.ai Figma`)는 따로 인증하지 않아도 된다. setup이 등록한 서버 중 인증이 필요한 것은 터미널·VS Code에서 `/mcp`를 입력해 서버를 고르고 Authenticate 한다. 데스크탑 앱은 Connectors 화면에서 한다(확인 필요).
+claude.ai 계정으로 로그인하면 claude.ai에서 연결한 커넥터(`claude.ai dms`, `claude.ai Figma`)는 따로 인증하지 않아도 된다. setup이 등록한 서버 중 인증이 필요한 것은 터미널·VS Code에서 `/mcp`를 입력해 서버를 고르고 Authenticate 한다. 데스크탑 앱은 Connectors 화면에서 한다(확인 필요). Codex는 setup이 등록할 때 로그인 창이 열린다(놓쳤으면 `codex mcp login <이름>`).
 
 ### 작업 흐름
 
