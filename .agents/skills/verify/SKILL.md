@@ -36,7 +36,7 @@ background: false
 ```
 
 - 판정은 검증 명령이 모두 0, 모든 기능 ID에 변경 있음, 기획 밖 변경 없음일 때만 `통과`다.
-- "사람 확인"은 판정과 관계없이, 사람이 그대로 따라 할 수 있게 쓴다. 값은 코드에서 확인한 실제 값이다(README "사람 확인" 참고).
+- "사람 확인"은 판정과 관계없이, 사람이 그대로 따라 할 수 있게 쓴다. 기능 ID는 기획에 적힌 짝을 그대로 쓴다. 값은 코드에서 확인한 실제 값이다(README "사람 확인" 참고).
   - 프론트: `routes/paths.js`로 만든 전체 URL(`http://localhost:5173/...`), 누를 요소.
   - 백엔드: `http://localhost:8080/swagger-ui.html`에서 찾을 API, 넣을 값, 기대 응답. 로그인이 필요하면 그 조건의 테스트와 `./gradlew test --tests '<클래스>'`. 상태를 바꾸는 요청은 `X-Requested-With: XMLHttpRequest`를 넣은 `curl`도.
 - 마지막 줄:
