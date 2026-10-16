@@ -97,17 +97,25 @@ vscode_extensions() {
 # mcp_add <이름> <URL>              원격(HTTP) 서버
 # mcp_add <이름> -- <명령> [인자...]  이 PC에서 띄우는(stdio) 서버
 mcp_add() {
-  local name=$1
+  local name=$1 connector=""
   shift
   if use_claude; then
-    if claude mcp get "$name" >/dev/null 2>&1; then
+    # claude.ai에서 연결한 커넥터(claude.ai <이름>)는 claude mcp get 으로 찾을 수 없다. 이름이나 주소가 같으면 다시 등록하지 않는다
+    [ -n "${claude_ai_list+x}" ] || claude_ai_list=$(claude mcp list 2>/dev/null | grep '^claude\.ai ' || true)
+    connector=$(printf '%s\n' "$claude_ai_list" | grep -i -m1 "^claude\.ai $name:" || true)
+    if [ -z "$connector" ] && [ "$1" != -- ]; then
+      connector=$(printf '%s\n' "$claude_ai_list" | grep -F -m1 ": $1 " || true)
+    fi
+    if [ -n "$connector" ]; then
+      skip "Claude Code MCP $name (${connector%%:*} 커넥터)"
+    elif claude mcp get "$name" >/dev/null 2>&1; then
       skip "Claude Code MCP $name"
     elif [ "$1" = -- ]; then
       claude mcp add -s user "$name" "$@" >/dev/null && ok "Claude Code MCP $name"
     else
       claude mcp add -s user -t http "$name" "$1" >/dev/null && ok "Claude Code MCP $name"
     fi
-    if claude mcp get "$name" 2>/dev/null | grep -q 'Needs authentication'; then
+    if [ -z "$connector" ] && claude mcp get "$name" 2>/dev/null | grep -q 'Needs authentication'; then
       todo "claude 를 실행해 /mcp 에서 $name 를 고르고 Authenticate 해 주세요"
     fi
   fi
