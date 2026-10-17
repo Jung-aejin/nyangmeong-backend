@@ -85,7 +85,7 @@ flowchart LR
     B[VS Code 확장]
     C[터미널 claude]
   end
-  tools --> SK[".claude/skills<br/>/start · /verify · /done"]
+  tools --> SK[".claude/skills<br/>/start · /build · /verify · /done"]
   SK --> HO["handoff/이니셜.md<br/>기획 · 진행 상황"]
   SK --> MS["milestones/이니셜.md<br/>화면 ID별 할 일"]
   SK --> MCP["MCP<br/>dms"]
@@ -106,9 +106,10 @@ flowchart LR
 flowchart TD
   S["/start<br/>작업 고르기 · 기획 (Opus)"] --> P{기획 확인}
   P -- 고칠 점 --> S
-  P -- 승인 --> I["구현 (Sonnet)<br/>./gradlew build"]
-  I --> V["/verify<br/>별도 에이전트가 판정 (Opus)"]
-  V -- 실패 --> I
+  P -- 승인 --> I["/build 구현 (Sonnet)<br/>./gradlew build"]
+  I --> V["검증<br/>별도 에이전트가 판정 (Opus)"]
+  V -- 실패, 3회 미만 --> I
+  V -- 3회 실패 --> X["사람에게 넘김<br/>직접 수정 · /start 다시 기획 · 3회 더"]
   V -- 통과 --> H["사람 확인<br/>bootRun · Swagger"]
   H -- 문제 --> I
   H -- 확인 --> D["/done<br/>마일스톤 끝 · 커밋 제안"]
@@ -119,13 +120,13 @@ flowchart TD
 | --- | --- |
 | 다음 작업 시작 | `/start` |
 | 특정 화면 시작 | `/start COM-003` |
-| 기획 승인 | `승인` |
-| 검증 | `/verify` |
+| 기획 승인 (구현·검증 루프 시작) | `승인` 또는 `/build` |
+| 다시 검증 (직접 고친 뒤) | `/verify` |
 | 마무리 | `/done` → `확인` → `커밋` → `푸시` → (마일스톤이 끝나면) `PR`. 병합은 GitHub에서 사람이 |
 | 새 대화 | 터미널·VS Code `/clear`, 데스크탑 앱 Ctrl+N |
 
 - 마일스톤 파일이 없으면 첫 `/start`가 먼저 만든다. 시간이 더 걸린다.
-- 모델은 바꾸지 않는다. 기본은 Sonnet, `/start`·`/verify`만 Opus로 돈다.
+- 모델은 바꾸지 않는다. 기본은 Sonnet, `/start`와 검증(`/verify`, `/build` 안의 검증)만 Opus로 돈다.
 - 스킬이 `/` 목록에 없으면 새 대화를 연다.
 - VS Code의 `/clear`는 확인 필요. 안 되면 명령 팔레트의 Open in New Tab.
 
