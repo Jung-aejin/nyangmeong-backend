@@ -108,11 +108,11 @@ flowchart TD
   P -- 고칠 점 --> S
   P -- 승인 --> I["/build 구현 (Sonnet)<br/>./gradlew build"]
   I --> V["검증<br/>별도 에이전트가 판정 (Opus)"]
-  V -- 실패, 3회 미만 --> I
+  V -- "실패(확인 못 함·내 것 포함), 3회 미만" --> I
   V -- 3회 실패 --> X["사람에게 넘김<br/>직접 수정 · /start 다시 기획 · 3회 더"]
-  V -- 통과 --> H["사람 확인<br/>bootRun · Swagger"]
+  V -- "통과 · 연결 남음만" --> H["/done 전에 확인할 것<br/>사람 확인<br/>bootRun · Swagger"]
   H -- 문제 --> I
-  H -- 확인 --> D["/done<br/>마일스톤 끝 · 커밋 제안"]
+  H -- 확인 --> D["/done<br/>끝 판정 · 커밋 제안"]
   D --> N["새 대화 → /start"]
 ```
 
@@ -127,12 +127,13 @@ flowchart TD
 
 - 마일스톤 파일이 없으면 첫 `/start`가 먼저 만든다. 시간이 더 걸린다.
 - 모델은 바꾸지 않는다. 기본은 Sonnet, `/start`와 검증(`/verify`, `/build` 안의 검증)만 Opus로 돈다.
+- 마일스톤 `끝`은 `/done`만 정한다. 남의 API·화면을 기다려 연결만 남은 기능(연결 남음)은 `끝`을 막지 않고 마일스톤과 핸드오프 "다음에 할 것"에 남는다(`docs/convention/milestone.md`).
 - 스킬이 `/` 목록에 없으면 새 대화를 연다.
 - VS Code의 `/clear`는 확인 필요. 안 되면 명령 팔레트의 Open in New Tab.
 
 ### 사람 확인
 
-`/verify`가 끝에 주는 "사람 확인" 목록대로 확인한다.
+`/build`가 끝에 주는 "`/done` 전에 확인할 것"(직접 `/verify`를 돌렸으면 그 보고)의 "사람 확인" 목록대로 확인한다.
 
 ```mermaid
 flowchart LR
