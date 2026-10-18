@@ -85,7 +85,7 @@ flowchart LR
     B[VS Code 확장]
     C[터미널 claude]
   end
-  tools --> SK[".claude/skills<br/>/start · /verify · /done"]
+  tools --> SK[".claude/skills<br/>/start · /build · /verify · /done"]
   SK --> HO["handoff/이니셜.md<br/>기획 · 진행 상황"]
   SK --> MS["milestones/이니셜.md<br/>화면 ID별 할 일"]
   SK --> MCP["MCP<br/>dms"]
@@ -106,12 +106,13 @@ flowchart LR
 flowchart TD
   S["/start<br/>작업 고르기 · 기획 (Opus)"] --> P{기획 확인}
   P -- 고칠 점 --> S
-  P -- 승인 --> I["구현 (Sonnet)<br/>./gradlew build"]
-  I --> V["/verify<br/>별도 에이전트가 판정 (Opus)"]
-  V -- 실패 --> I
-  V -- 통과 --> H["사람 확인<br/>bootRun · Swagger"]
+  P -- 승인 --> I["/build 구현 (Sonnet)<br/>./gradlew build"]
+  I --> V["검증<br/>별도 에이전트가 판정 (Opus)"]
+  V -- "실패(확인 못 함·내 것 포함), 3회 미만" --> I
+  V -- 3회 실패 --> X["사람에게 넘김<br/>직접 수정 · /start 다시 기획 · 3회 더"]
+  V -- "통과 · 연결 남음만" --> H["/done 전에 확인할 것<br/>사람 확인<br/>bootRun · Swagger"]
   H -- 문제 --> I
-  H -- 확인 --> D["/done<br/>마일스톤 끝 · 커밋 제안"]
+  H -- 확인 --> D["/done<br/>끝 판정 · 커밋 제안"]
   D --> N["새 대화 → /start"]
 ```
 
@@ -119,19 +120,21 @@ flowchart TD
 | --- | --- |
 | 다음 작업 시작 | `/start` |
 | 특정 화면 시작 | `/start COM-003` |
-| 기획 승인 | `승인` |
-| 검증 | `/verify` |
+| 기획 승인 (구현·검증 루프 시작) | `승인` 또는 `/build` |
+| 다시 검증 (직접 고친 뒤) | `/verify` |
 | 마무리 | `/done` → `확인` → `커밋` → `푸시` → (마일스톤이 끝나면) `PR`. 병합은 GitHub에서 사람이 |
 | 새 대화 | 터미널·VS Code `/clear`, 데스크탑 앱 Ctrl+N |
 
 - 마일스톤 파일이 없으면 첫 `/start`가 먼저 만든다. 시간이 더 걸린다.
-- 모델은 바꾸지 않는다. 기본은 Sonnet, `/start`·`/verify`만 Opus로 돈다.
+- 모델은 바꾸지 않는다. 기본은 Sonnet, `/start`와 검증(`/verify`, `/build` 안의 검증)만 Opus로 돈다.
+- 마일스톤 `끝`은 `/done`만 정한다. 남의 API·화면을 기다려 연결만 남은 기능(연결 남음)은 `끝`을 막지 않고 마일스톤과 핸드오프 "다음에 할 것"에 남는다(`docs/convention/milestone.md`).
 - 스킬이 `/` 목록에 없으면 새 대화를 연다.
+- Codex(`$start`·`$build`·`$done`)도 같은 흐름이지만 두 가지가 다르다. 검증도 구현과 같은 모델(GPT)로 돈다(Opus 지정은 Claude Code 전용). 기준 파일 잠금 훅(`.codex/hooks.json`)은 처음 한 번 사람이 신뢰해야 돈다: 이 폴더를 처음 열 때 "신뢰" → `/hooks`에서 훅 승인. 훅 내용이 바뀌면 다시 승인한다.
 - VS Code의 `/clear`는 확인 필요. 안 되면 명령 팔레트의 Open in New Tab.
 
 ### 사람 확인
 
-`/verify`가 끝에 주는 "사람 확인" 목록대로 확인한다.
+`/build`가 끝에 주는 "`/done` 전에 확인할 것"(직접 `/verify`를 돌렸으면 그 보고)의 "사람 확인" 목록대로 확인한다.
 
 ```mermaid
 flowchart LR
