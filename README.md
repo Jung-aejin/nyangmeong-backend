@@ -129,6 +129,7 @@ flowchart TD
 - 모델은 바꾸지 않는다. 기본은 Sonnet, `/start`와 검증(`/verify`, `/build` 안의 검증)만 Opus로 돈다.
 - 마일스톤 `끝`은 `/done`만 정한다. 남의 API·화면을 기다려 연결만 남은 기능(연결 남음)은 `끝`을 막지 않고 마일스톤과 핸드오프 "다음에 할 것"에 남는다(`docs/convention/milestone.md`).
 - 스킬이 `/` 목록에 없으면 새 대화를 연다.
+- Codex(`$start`·`$build`·`$done`)도 같은 흐름이지만 두 가지가 다르다. 검증도 구현과 같은 모델(GPT)로 돈다(Opus 지정은 Claude Code 전용). 기준 파일 잠금 훅(`.codex/hooks.json`)은 처음 한 번 사람이 신뢰해야 돈다: 이 폴더를 처음 열 때 "신뢰" → `/hooks`에서 훅 승인. 훅 내용이 바뀌면 다시 승인한다.
 - VS Code의 `/clear`는 확인 필요. 안 되면 명령 팔레트의 Open in New Tab.
 
 ### 사람 확인

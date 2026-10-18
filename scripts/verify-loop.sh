@@ -7,7 +7,7 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || exit 0
 LOCK=.claude/verify-loop.lock
 TAB=$(printf '\t')
 # 잠그는 기준 파일. 없는 경로는 무시된다(프론트·백엔드 공용 목록)
-PROTECTED="handoff milestones AGENTS.md CLAUDE.md .claude scripts/verify-loop.sh package.json yarn.lock eslint.config.js vite.config.js build.gradle settings.gradle gradle src/test"
+PROTECTED="handoff milestones AGENTS.md CLAUDE.md .claude .agents .codex scripts/verify-loop.sh package.json yarn.lock eslint.config.js vite.config.js build.gradle settings.gradle gradle src/test"
 
 snapshot() {
   mkdir -p .claude
@@ -63,21 +63,27 @@ case "$1" in
       case "$json" in *verify-loop.lock*) block "$LOCK" ;; esac
       exit 0
     fi
-    # Edit·Write·MultiEdit 는 file_path, NotebookEdit 는 notebook_path. Windows 경로의 \\ 는 / 로 바꾼다
-    path=$(printf '%s' "$json" | grep -oE '"(file|notebook)_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 |
-      sed -e 's/^"[a-z_]*"[[:space:]]*:[[:space:]]*"//' -e 's/"$//' -e 's/\\\\/\//g' | tr 'A-Z' 'a-z')
-    [ -n "$path" ] || exit 0
+    # Claude: Edit·Write·MultiEdit 는 file_path, NotebookEdit 는 notebook_path. Codex: apply_patch 본문의 "*** Update File: <경로>" 줄
+    # JSON 의 \\(Windows 경로 구분자)를 먼저 / 로 바꿔, 남은 \n 이 경로 끝이 되게 한다
+    norm=$(printf '%s' "$json" | sed 's/\\\\/\//g')
+    paths=$( { printf '%s' "$norm" | grep -oE '"(file|notebook)_path"[[:space:]]*:[[:space:]]*"[^"]*"' |
+        sed -e 's/^"[a-z_]*"[[:space:]]*:[[:space:]]*"//' -e 's/"$//'
+      printf '%s' "$norm" | grep -oE '\*\*\* (Add File|Update File|Delete File|Move to): [^\\"]*' | sed 's/^\*\*\* [A-Za-z ]*: //'
+    } | tr 'A-Z' 'a-z')
+    [ -n "$paths" ] || exit 0
     root=$(pwd -W 2>/dev/null || pwd)
     root=$(printf '%s' "$root" | tr 'A-Z\\' 'a-z/')
-    case "$path" in
-      "$root"/*) rel=${path#"$root"/} ;;
-      /*|?:/*) exit 0 ;;
-      *) rel=${path#./} ;;
-    esac
-    case "$rel" in
-      handoff/*|milestones/*|.claude/*|agents.md|claude.md) block "$rel" ;;
-    esac
-    grep "^hash$TAB" "$LOCK" | cut -f3 | tr 'A-Z' 'a-z' | grep -qxF "$rel" && block "$rel"
+    printf '%s\n' "$paths" | while IFS= read -r path; do
+      case "$path" in
+        "$root"/*) rel=${path#"$root"/} ;;
+        /*|?:/*) continue ;;
+        *) rel=${path#./} ;;
+      esac
+      case "$rel" in
+        handoff/*|milestones/*|.claude/*|.agents/*|.codex/*|agents.md|claude.md) block "$rel" ;;
+      esac
+      if grep "^hash$TAB" "$LOCK" | cut -f3 | tr 'A-Z' 'a-z' | grep -qxF "$rel"; then block "$rel"; fi
+    done || exit 2
     exit 0
     ;;
   *)
