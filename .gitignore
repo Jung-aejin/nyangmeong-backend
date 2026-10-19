@@ -29,8 +29,6 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-!.claude/skills/build/
-!.agents/skills/build/
 
 ### STS ###
 .apt_generated
