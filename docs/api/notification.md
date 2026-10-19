@@ -6,11 +6,11 @@
 
 | 메서드 | 경로 | 설명 | 기능 ID | 담당 | 요청 DTO | 응답 DTO |
 | --- | --- | --- | --- | --- | --- | --- |
-| GET | /members/me/notification-settings | 알림 수신 설정 조회(채널·유형·사전 알림 시점·한도 설정 여부) | COM-008-02·03·05~10 | YAY | - | NotificationSettingResponse |
-| GET | /notifications | 내 인앱 알림 목록(최신순, 유형 필터, 7일 경과 숨김 제외, 조회만으로 읽음 처리 안 함) `?notiTypeCd=&size=5` | COM-004-03~05·11·12 | YAY | - | Page<NotificationSummary> |
-| GET | /notifications/unread-count | 미읽음 알림 수(헤더 배지·드롭다운 헤더) | COM-002-09, COM-004-02 | YAY | - | NotificationUnreadCountResponse |
-| POST | /notifications/{inappNotiSn}/read | 알림 개별 읽음 처리 | COM-004-06 | YAY | - | - |
-| PUT | /members/me/notification-settings | 알림 수신 설정 일괄 저장 | COM-008-02·05~09·14·20 | YAY | NotificationSettingSaveRequest | NotificationSettingResponse |
+| GET | /members/me/notification-settings | 알림 수신 설정 조회(채널·유형·사전 알림 시점·한도 설정 여부) | COM-008-02·03·05~10 | LJS | - | NotificationSettingResponse |
+| GET | /notifications | 내 인앱 알림 목록(최신순, 유형 필터, 7일 경과 숨김 제외, 조회만으로 읽음 처리 안 함) `?notiTypeCd=&size=5` | COM-004-03~05·11·12 | LJS | - | Page<NotificationSummary> |
+| GET | /notifications/unread-count | 미읽음 알림 수(헤더 배지·드롭다운 헤더) | COM-002-09, COM-004-02 | LJS | - | NotificationUnreadCountResponse |
+| POST | /notifications/{inappNotiSn}/read | 알림 개별 읽음 처리 | COM-004-06 | LJS | - | - |
+| PUT | /members/me/notification-settings | 알림 수신 설정 일괄 저장 | COM-008-02·05~09·14·20 | LJS | NotificationSettingSaveRequest | NotificationSettingResponse |
 
 ## DTO
 

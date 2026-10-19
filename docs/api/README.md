@@ -9,13 +9,13 @@
 | 도메인 | 파일 | API | DTO | 담당(API 수) |
 | --- | --- | --- | --- | --- |
 | 공통(global) | [`global.md`](global.md) | 1 | 1 | LJS 1 |
-| 회원(member) | [`member.md`](member.md) | 27 | 29 | AIC 22, SJM 2, YAY 2, LJS 1 |
+| 회원(member) | [`member.md`](member.md) | 27 | 29 | YAY 24, SJM 2, LJS 1 |
 | 반려동물(pet) | [`pet.md`](pet.md) | 24 | 19 | SJM 16, LJS 7, KSJ 1 |
 | 건강기록(health) | [`health.md`](health.md) | 50 | 49 | JAJ 50 |
-| 장소(place) | [`place.md`](place.md) | 4 | 4 | AIC 4 |
-| 알림(notification) | [`notification.md`](notification.md) | 5 | 4 | YAY 5 |
+| 장소(place) | [`place.md`](place.md) | 4 | 4 | YAY 4 |
+| 알림(notification) | [`notification.md`](notification.md) | 5 | 4 | LJS 5 |
 | 가계부(expense) | [`expense.md`](expense.md) | 9 | 10 | SJM 9 |
-| 영수증(도메인 미정) | [`receipt.md`](receipt.md) | 3 | 8 | YAY 3 |
+| 영수증(도메인 미정) | [`receipt.md`](receipt.md) | 3 | 8 | LJS 3 |
 | 커뮤니티(community) | [`community.md`](community.md) | 41 | 34 | KSJ 41 |
 | 고객센터(support) | [`support.md`](support.md) | 7 | 7 | KSJ 7 |
 | 합계 | | 171 | 165 | |
@@ -38,5 +38,5 @@
 
 ## 요약
 
-API 171개. 담당별: JAJ 50, KSJ 49, SJM 27, AIC 26, YAY 10, LJS 9.
+API 171개. 담당별: JAJ 50, KSJ 49, YAY 28, SJM 27, LJS 17. 2026-10-19에 AIC 담당 전부를 YAY로, YAY의 알림·영수증 API를 LJS로 옮겼다(`docs/convention/milestone.md` 담당 표).
 기능 683건의 분류: API 348, FRONT 211, OTHER 46, AISERVER 40, BATCH 17, EVENT 15, UNCLEAR 6.

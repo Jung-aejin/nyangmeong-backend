@@ -6,33 +6,33 @@
 
 | 메서드 | 경로 | 설명 | 기능 ID | 담당 | 요청 DTO | 응답 DTO |
 | --- | --- | --- | --- | --- | --- | --- |
-| GET | /auth/login-attempt-limits | 입력 아이디 기준 실패 횟수·캡챠 요구 상태 조회(`?email=`, 가입 여부 비공개) | ACC-002-03·22 | AIC | - | LoginAttemptLimitResponse |
-| GET | /email-certifications/{emlCertSn} | 인증·재설정 권한의 유효(만료·사용 완료) 상태 조회 | ACC-012-06 | AIC | - | EmailCertificationResponse |
+| GET | /auth/login-attempt-limits | 입력 아이디 기준 실패 횟수·캡챠 요구 상태 조회(`?email=`, 가입 여부 비공개) | ACC-002-03·22 | YAY | - | LoginAttemptLimitResponse |
+| GET | /email-certifications/{emlCertSn} | 인증·재설정 권한의 유효(만료·사용 완료) 상태 조회 | ACC-012-06 | YAY | - | EmailCertificationResponse |
 | GET | /members/me | 회원정보 수정 화면 조회. 이메일·닉네임·휴대전화·프로필 사진·가입 경로·연동 SNS | MYP-040-02·03·08·09 | SJM | - | MemberResponse |
 | GET | /members/me/dashboard-widgets | 메인 건강 지표 위젯의 표시 여부·순서 조회 | MAN-006·007 | YAY | - | List<DashboardWidgetSummary> |
-| GET | /members/me/recovery | 복구 대상 이메일·닉네임·남은 복구 기간·필요 동의·보관 번호 조회(복구 확인 권한) | ACC-001-44 | AIC | - | MemberRecoveryResponse |
+| GET | /members/me/recovery | 복구 대상 이메일·닉네임·남은 복구 기간·필요 동의·보관 번호 조회(복구 확인 권한) | ACC-001-44 | YAY | - | MemberRecoveryResponse |
 | GET | /members/me/summary | 회원 요약(닉네임·프로필 사진·마스킹 이메일) 조회 | COM-002-15, COM-005-02 | LJS | - | MemberSummaryResponse |
-| GET | /members/nickname-availability | 닉네임 형식(한글·영문·숫자 1~10자)·중복 확인 | ACC-001-08, MYP-040-04·10 (기능 분배 3.1절 2번) | AIC | - | MemberNicknameAvailabilityResponse |
-| GET | /members/phone-availability | 휴대전화번호 정규화(+82·하이픈)·형식·중복 확인 | ACC-001-29·30·44, MYP-040-05·11 (기능 분배 3.1절 3번) | AIC | - | MemberPhoneAvailabilityResponse |
-| GET | /terms | 현재 사용 중인 약관 목록(필수 여부·버전) | ACC-001-12·44 | AIC | - | List<TermsSummary> |
-| GET | /terms/{trmsSn} | 약관 전문 조회 | ACC-001-13 | AIC | - | TermsResponse |
-| POST | /auth/captchas | 보안코드(캡챠) 발급·새로고침, 이전 코드 무효화 | ACC-002-18·19 | AIC | CaptchaCreateRequest | CaptchaResponse |
-| POST | /auth/login | 이메일 로그인(캡챠·ID/PW 검증, 실패 누적, 첫 로그인 닉네임 재안내 여부 반환) | ACC-002-05·16·20, ACC-001-22 | AIC | LoginRequest | LoginResponse |
-| POST | /auth/logout | 로그아웃(Refresh 토큰 폐기) | COM-005-07·08, AIM-011-17 (기능 분배 3.1절 28번) | AIC | - | - |
-| POST | /auth/refresh | Access 토큰 재발급 | (명세 기능 ID 없음) | AIC | - | TokenResponse |
-| POST | /auth/sns-login | 네이버·카카오·구글 인가 결과 처리: 기존 회원 로그인 / 신규 가입 확인 / 이메일 중복 / 30일 복구 분기 | ACC-002-09~11, ACC-001-22·31·38·40 | AIC | SnsLoginRequest | SnsLoginResponse |
-| POST | /email-certifications | 이메일 인증번호 발송·재전송(목적: 가입·비밀번호 찾기·복구). 가입 목적은 정상 회원 이메일 중복이면 거절 | ACC-001-03·04·38·41, ACC-011-03·07 | AIC | EmailCertificationCreateRequest | EmailCertificationResponse |
-| POST | /email-certifications/{emlCertSn}/invalidate | 인증번호·재설정 권한·복구 확인 권한 무효화 | ACC-011-05, ACC-012-04, ACC-001-46 | AIC | - | - |
-| POST | /email-certifications/{emlCertSn}/password-reset | 본인확인 결과로 비밀번호 재설정, 대상 계정 기존 로그인 종료 | ACC-012-01~03 | AIC | EmailCertificationPasswordResetRequest | - |
-| POST | /email-certifications/{emlCertSn}/verify | 인증번호 확인. 목적별 결과(가입 진행 / 재설정 대상·SNS 전용·미가입·탈퇴 보관 분기 / 복구 확인 권한) 반환 | ACC-001-06·40·43, ACC-011-08~10 | AIC | EmailCertificationVerifyRequest | EmailCertificationResponse |
-| POST | /members | 회원가입(이메일·SNS 공통). 약관별 동의·번호 암호문/HMAC·기본 닉네임·최초 상태 이력·SNS 연결 저장, 서버 재검사 | ACC-001-09·10·12·14·22·24·27·29·32·38 | AIC | MemberCreateRequest | MemberResponse |
-| POST | /members/me/password-verification | 현재 비밀번호 확인(회원정보 수정 진입·비밀번호 변경 전) *통합 때 추가* | MYP-040-01 | AIC | PasswordVerifyRequest | - |
-| POST | /members/me/recover | 30일 이내 탈퇴 회원 기존 정보 복구 실행(탈퇴 → 정상 이력) | ACC-001-45 | AIC | MemberRecoverRequest | - |
-| POST | /members/me/withdraw | 회원탈퇴(상태·이력 반영, 모든 로그인·인증 권한 종료, 30일 보관) | ACC-020-03·14·16, AIM-011-19, MYP-002-08 (기능 분배 3.1절 5번) | AIC | MemberWithdrawRequest | - |
+| GET | /members/nickname-availability | 닉네임 형식(한글·영문·숫자 1~10자)·중복 확인 | ACC-001-08, MYP-040-04·10 (기능 분배 3.1절 2번) | YAY | - | MemberNicknameAvailabilityResponse |
+| GET | /members/phone-availability | 휴대전화번호 정규화(+82·하이픈)·형식·중복 확인 | ACC-001-29·30·44, MYP-040-05·11 (기능 분배 3.1절 3번) | YAY | - | MemberPhoneAvailabilityResponse |
+| GET | /terms | 현재 사용 중인 약관 목록(필수 여부·버전) | ACC-001-12·44 | YAY | - | List<TermsSummary> |
+| GET | /terms/{trmsSn} | 약관 전문 조회 | ACC-001-13 | YAY | - | TermsResponse |
+| POST | /auth/captchas | 보안코드(캡챠) 발급·새로고침, 이전 코드 무효화 | ACC-002-18·19 | YAY | CaptchaCreateRequest | CaptchaResponse |
+| POST | /auth/login | 이메일 로그인(캡챠·ID/PW 검증, 실패 누적, 첫 로그인 닉네임 재안내 여부 반환) | ACC-002-05·16·20, ACC-001-22 | YAY | LoginRequest | LoginResponse |
+| POST | /auth/logout | 로그아웃(Refresh 토큰 폐기) | COM-005-07·08, AIM-011-17 (기능 분배 3.1절 28번) | YAY | - | - |
+| POST | /auth/refresh | Access 토큰 재발급 | (명세 기능 ID 없음) | YAY | - | TokenResponse |
+| POST | /auth/sns-login | 네이버·카카오·구글 인가 결과 처리: 기존 회원 로그인 / 신규 가입 확인 / 이메일 중복 / 30일 복구 분기 | ACC-002-09~11, ACC-001-22·31·38·40 | YAY | SnsLoginRequest | SnsLoginResponse |
+| POST | /email-certifications | 이메일 인증번호 발송·재전송(목적: 가입·비밀번호 찾기·복구). 가입 목적은 정상 회원 이메일 중복이면 거절 | ACC-001-03·04·38·41, ACC-011-03·07 | YAY | EmailCertificationCreateRequest | EmailCertificationResponse |
+| POST | /email-certifications/{emlCertSn}/invalidate | 인증번호·재설정 권한·복구 확인 권한 무효화 | ACC-011-05, ACC-012-04, ACC-001-46 | YAY | - | - |
+| POST | /email-certifications/{emlCertSn}/password-reset | 본인확인 결과로 비밀번호 재설정, 대상 계정 기존 로그인 종료 | ACC-012-01~03 | YAY | EmailCertificationPasswordResetRequest | - |
+| POST | /email-certifications/{emlCertSn}/verify | 인증번호 확인. 목적별 결과(가입 진행 / 재설정 대상·SNS 전용·미가입·탈퇴 보관 분기 / 복구 확인 권한) 반환 | ACC-001-06·40·43, ACC-011-08~10 | YAY | EmailCertificationVerifyRequest | EmailCertificationResponse |
+| POST | /members | 회원가입(이메일·SNS 공통). 약관별 동의·번호 암호문/HMAC·기본 닉네임·최초 상태 이력·SNS 연결 저장, 서버 재검사 | ACC-001-09·10·12·14·22·24·27·29·32·38 | YAY | MemberCreateRequest | MemberResponse |
+| POST | /members/me/password-verification | 현재 비밀번호 확인(회원정보 수정 진입·비밀번호 변경 전) *통합 때 추가* | MYP-040-01 | YAY | PasswordVerifyRequest | - |
+| POST | /members/me/recover | 30일 이내 탈퇴 회원 기존 정보 복구 실행(탈퇴 → 정상 이력) | ACC-001-45 | YAY | MemberRecoverRequest | - |
+| POST | /members/me/withdraw | 회원탈퇴(상태·이력 반영, 모든 로그인·인증 권한 종료, 30일 보관) | ACC-020-03·14·16, AIM-011-19, MYP-002-08 (기능 분배 3.1절 5번) | YAY | MemberWithdrawRequest | - |
 | PUT | /members/me/dashboard-widgets | 메인 건강 지표 위젯 표시 여부·순서 전체 저장 | MAN-007 | YAY | DashboardWidgetSaveRequest | List<DashboardWidgetSummary> |
 | PATCH | /members/me | 회원정보 수정. 휴대전화(저장 시 중복 재검사)·프로필 사진 | MYP-040-02·05·08·11 | SJM | MemberUpdateRequest | MemberResponse |
-| PATCH | /members/me/nickname | 닉네임 설정 확정(가입 직후 제한 권한 또는 로그인 회원), 설정 완료 여부 반영 | ACC-001-26 | AIC | MemberNicknameUpdateRequest | MemberResponse |
-| PATCH | /members/me/password | 로그인 상태에서 비밀번호 변경 *통합 때 추가* | MYP-040-06 | AIC | PasswordChangeRequest | - |
+| PATCH | /members/me/nickname | 닉네임 설정 확정(가입 직후 제한 권한 또는 로그인 회원), 설정 완료 여부 반영 | ACC-001-26 | YAY | MemberNicknameUpdateRequest | MemberResponse |
+| PATCH | /members/me/password | 로그인 상태에서 비밀번호 변경 *통합 때 추가* | MYP-040-06 | YAY | PasswordChangeRequest | - |
 
 ## DTO
 
