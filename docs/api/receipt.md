@@ -8,9 +8,9 @@
 
 | 메서드 | 경로 | 설명 | 기능 ID | 담당 | 요청 DTO | 응답 DTO |
 | --- | --- | --- | --- | --- | --- | --- |
-| POST | /receipts | 영수증 이미지 업로드(multipart, 형식·용량 검증) → 서버 내부 OCR 호출(Google Vision, LJS 호출부) → 상태·추출 결과 반환 | AIM-008-04~06·09, AIM-009-04·16·20·21, AIM-010-01·05 | YAY | ReceiptCreateRequest | ReceiptResponse |
-| POST | /receipts/{recptSn}/cancel | 분석 취소(영수증 상태 '취소') | AIM-008-07 | YAY | - | - |
-| POST | /receipts/{recptSn}/checkups | 영수증 결과 일괄 저장 — 반려동물별 검진기록·병원 일정 연결/생성·처방약·가계부 지출을 한 트랜잭션, 멱등 ID, 영수증 상태 저장완료 | AIM-009-07~11·24·26·27, AIM-010-06, HLT-002-31·35·37~41·45 | YAY | ReceiptCheckupCreateRequest | List<CheckupResponse> |
+| POST | /receipts | 영수증 이미지 업로드(multipart, 형식·용량 검증) → 서버 내부 OCR 호출(Google Vision, LJS 호출부) → 상태·추출 결과 반환 | AIM-008-04~06·09, AIM-009-04·16·20·21, AIM-010-01·05 | LJS | ReceiptCreateRequest | ReceiptResponse |
+| POST | /receipts/{recptSn}/cancel | 분석 취소(영수증 상태 '취소') | AIM-008-07 | LJS | - | - |
+| POST | /receipts/{recptSn}/checkups | 영수증 결과 일괄 저장 — 반려동물별 검진기록·병원 일정 연결/생성·처방약·가계부 지출을 한 트랜잭션, 멱등 ID, 영수증 상태 저장완료 | AIM-009-07~11·24·26·27, AIM-010-06, HLT-002-31·35·37~41·45 | LJS | ReceiptCheckupCreateRequest | List<CheckupResponse> |
 
 ## DTO
 

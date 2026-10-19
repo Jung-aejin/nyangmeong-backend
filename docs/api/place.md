@@ -6,10 +6,10 @@
 
 | 메서드 | 경로 | 설명 | 기능 ID | 담당 | 요청 DTO | 응답 DTO |
 | --- | --- | --- | --- | --- | --- | --- |
-| GET | /place-bookmarks | 내 장소 즐겨찾기 목록(`?plcClsfCd=`) | HOS-001-17·29·32 | AIC | - | List<PlaceBookmarkSummary> |
-| GET | /places | 장소 검색(카테고리·키워드·지도 범위·정렬, 거리는 검색 시점 지도 중앙 기준). 커뮤니티 지도 선택도 사용 | HOS-001-03~07·16·19·20·30, PLC-001-01, PLC-002-01, PLC-003-01, PLC-004-01, CMU-002-11, CMU-004-10, CMU-005-05 | AIC | - | Page<PlaceSummary> |
-| POST | /place-bookmarks | 장소 즐겨찾기 저장 | HOS-001-09·23 | AIC | PlaceBookmarkCreateRequest | PlaceBookmarkResponse |
-| DELETE | /place-bookmarks/{plcBkmkSn} | 장소 즐겨찾기 해제 | HOS-001-09·23 | AIC | - | - |
+| GET | /place-bookmarks | 내 장소 즐겨찾기 목록(`?plcClsfCd=`) | HOS-001-17·29·32 | YAY | - | List<PlaceBookmarkSummary> |
+| GET | /places | 장소 검색(카테고리·키워드·지도 범위·정렬, 거리는 검색 시점 지도 중앙 기준). 커뮤니티 지도 선택도 사용 | HOS-001-03~07·16·19·20·30, PLC-001-01, PLC-002-01, PLC-003-01, PLC-004-01, CMU-002-11, CMU-004-10, CMU-005-05 | YAY | - | Page<PlaceSummary> |
+| POST | /place-bookmarks | 장소 즐겨찾기 저장 | HOS-001-09·23 | YAY | PlaceBookmarkCreateRequest | PlaceBookmarkResponse |
+| DELETE | /place-bookmarks/{plcBkmkSn} | 장소 즐겨찾기 해제 | HOS-001-09·23 | YAY | - | - |
 
 ## DTO
 

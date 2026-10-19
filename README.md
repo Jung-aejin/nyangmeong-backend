@@ -150,7 +150,7 @@ flowchart LR
    - 기본 프로필 `local`, `application.properties`의 공용 DB에 붙는다.
 2. Swagger에서 목록의 API → Try it out → 값 입력 → Execute
 3. 응답 코드와 JSON을 기대 결과와 비교한다.
-4. 401이 나면: 로그인 API(AIC)가 아직 없어서다.
+4. 401이 나면: 로그인 API(YAY)가 아직 없어서다.
    - 목록의 테스트로 확인한다: `./gradlew test --tests '<클래스>'`
    - 결과: `build/reports/tests/test/index.html`
 5. 403이 나면: POST·PUT·PATCH·DELETE에 `X-Requested-With` 헤더가 없어서다.
