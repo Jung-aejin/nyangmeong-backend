@@ -9,15 +9,13 @@
 | 브랜치·커밋·PR 규칙 전체(`docs/convention/git.md`) | 그 제안을 따른다 |
 | 개인 브랜치 이름 형식 | 이니셜 대문자 |
 | 커밋 설명을 한국어로 쓸지 | 한국어 |
-| 응답 JSON 형식, 오류 코드 이름(프론트와 합의) | 공통 모듈이 정해 둔 형식 |
 | 응답 JSON에서 코드 컬럼을 `"01"`로 줄지 이름으로 줄지(프론트에 영향). Y/N 컬럼은 `true`/`false`로 정했다(`docs/convention/dto.md`) | 정해지지 않음. DTO가 쌓이기 전에 정해야 한다 |
 | 목록의 `sort` 값: 대소문자(`popular` / `POPULAR`), 목록에 없는 값이 왔을 때(400 / 기본 정렬). 프론트에 영향 | 정해지지 않음. 정렬이 있는 목록을 처음 만드는 사람이 프론트 담당과 정한다 |
 | service 사이에 넘기는 값처럼 요청·응답·목록이 아닌 DTO의 이름. `docs/convention/common.md`의 이름 짓기는 DTO 접미어를 `Request`·`Response`·`Summary`·`SearchCond`로 한정한다 | 정해지지 않음 |
 | VO·Mapper·Service의 **클래스 이름**을 테이블 약어로 지을지(`Pst`), 뜻이 드러나는 영어로 지을지(`Post`). 필드 이름은 DB 컬럼 그대로로 정해졌다 | 뜻이 드러나는 영어 |
 | 기능 이슈를 어느 저장소에 둘지(기능 하나가 백엔드와 프론트 양쪽에 걸친다) | 정해지지 않음 |
 | `develop`을 `main`으로 올리는 시점과 담당 | 정해지지 않음 |
-| CI(PR마다 빌드)를 누가 언제 설정할지 | 정해지지 않음. 그 전에는 PR을 올리는 사람이 로컬에서 `./gradlew build`를 돌린다 |
-| 로그인(Spring Security) 구현 시점. 프론트에 영향 | 백엔드 구현 중 가장 마지막. 그 전에는 `global/security/DevSecurityConfig`가 `prod`가 아닌 프로필에서 모든 요청을 허용한다(CSRF 끔). 운영은 반드시 `prod` 프로필로 띄운다. 프로필을 빠뜨리면 기본 프로필 `local`로 떠서 모든 요청이 열린다. 로그인을 구현할 때 이 클래스를 지운다 |
+| 로그인·로그아웃·재발급 API 구현 시점(YAY). 프론트에 영향 | 토큰 기반(JWT httpOnly 쿠키, 검증 필터, `SecurityConfig`)은 `global/security`에 있다(2026-10-20). 로그인 API가 나오기 전에는 `prod`가 아닌 프로필에서만 뜨는 `POST /api/auth/dev-tokens`(회원 번호 → 쿠키)로 개발한다. 로그인이 생기면 `auth/controller/DevTokenController`·`auth/dto/DevTokenRequest`를 지운다. 운영은 반드시 `prod` 프로필로 띄운다 |
 
 ## 공통 모듈 담당이 정할 것
 

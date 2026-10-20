@@ -37,6 +37,7 @@ class ArchitectureTest {
         Map<String, Integer> layers = new LinkedHashMap<>();
         layers.put("member", 0);
         layers.put("pet", 1);
+        layers.put("auth", 1);
         layers.put("health", 2);
         layers.put("place", 2);
         layers.put("notification", 2);

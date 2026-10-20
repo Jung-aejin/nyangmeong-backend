@@ -30,9 +30,9 @@ Java 25, Spring Boot 4.1, Spring Security 7, MyBatis(Mapper 인터페이스 + XM
 com.nyangmeong
 ├─ global/                 공통 모듈. 도메인을 모른다
 │  ├─ response/  error/  security/  auth/  validation/  file/
-│  ├─ notification/  mail/  mybatis/  code/  setting/
+│  ├─ notification/  mail/  code/  setting/
 │  └─ external/  batch/  config/  log/
-├─ member/  pet/  health/  community/  place/
+├─ member/  auth/  pet/  health/  community/  place/
 ├─ support/  notification/  expense/
 │                          업무 기능. 도메인 1개 = 패키지 1개
 ├─ admin/                  여러 도메인을 합치는 관리자 조회만
@@ -67,7 +67,7 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 | 층 | 도메인 | 부를 수 있는 곳 |
 | --- | --- | --- |
 | 0 | `member` | 없음 |
-| 1 | `pet` | 0층 |
+| 1 | `pet`, `auth` | 0층 |
 | 2 | `health`, `place`, `notification` | 0~1층 |
 | 3 | `expense`, `community`, `support` | 0~2층 |
 | 4 | `admin`, `job` | 전부 |

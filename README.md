@@ -110,7 +110,7 @@ flowchart TD
   I --> V["검증<br/>별도 에이전트가 판정 (Opus)"]
   V -- "실패(확인 못 함·내 것 포함), 3회 미만" --> I
   V -- 3회 실패 --> X["사람에게 넘김<br/>직접 수정 · /start 다시 기획 · 3회 더"]
-  V -- "통과 · 연결 남음만" --> H["/end 전에 확인할 것<br/>사람 확인<br/>bootRun · Swagger"]
+  V -- "통과 · 연결 남음만" --> H["/end 전에 확인할 것<br/>사람 확인<br/>bootRun · Postman"]
   H -- 문제 --> I
   H -- 확인 --> D["/end<br/>끝 판정 · 커밋 제안"]
   D --> N["새 대화 → /start"]
@@ -139,26 +139,30 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-  R["./gradlew bootRun"] --> W["Swagger<br/>localhost:8080/swagger-ui.html"]
-  W -- 200 · 4xx 응답 --> OK[기대 결과와 비교]
-  W -- 401 로그인 필요 --> T["./gradlew test --tests"]
-  W -- 403 헤더 필요 --> CU[목록의 curl 명령]
+  R["./gradlew bootRun"] --> L["Postman<br/>POST /api/auth/dev-tokens<br/>(로그인이 필요할 때)"]
+  L --> P["Postman<br/>목록의 요청"]
+  P -- 200 · 4xx 응답 --> OK[기대 결과와 비교]
+  P -- 만료·정지처럼 만들기 어려운 조건 --> T["./gradlew test --tests"]
   T --> OK
-  CU --> OK
 ```
+
+확인은 Postman 데스크톱 앱으로 한다(웹 버전은 `localhost`에 닿지 않는다).
 
 1. `./gradlew bootRun` → `Started … in N seconds`가 나오면 준비 완료
    - 기본 프로필 `local`, `application.properties`의 공용 DB에 붙는다.
-2. Swagger에서 목록의 API → Try it out → 값 입력 → Execute
-3. 응답 코드와 JSON을 기대 결과와 비교한다.
-4. 401이 나면: 로그인 API(YAY)가 아직 없어서다.
-   - 목록의 테스트로 확인한다: `./gradlew test --tests '<클래스>'`
+2. Postman 컬렉션의 Variables에 `baseUrl` = `http://localhost:8080`을 넣는다. 요청 주소는 `{{baseUrl}}/api/...`로 쓴다.
+3. 로그인이 필요한 API면 먼저 토큰 쿠키를 받는다. 로그인 API(YAY)가 생기기 전까지는 개발용 발급을 쓴다.
+   - `POST {{baseUrl}}/api/auth/dev-tokens`, Headers `X-Requested-With: XMLHttpRequest`, Body → raw → JSON `{"mbrSn": <MBR에 있는 번호>}` → 200
+   - Postman이 `access_token`·`refresh_token` 쿠키를 저장해 다음 요청부터 자동으로 붙인다. 요청 오른쪽의 Cookies에서 보고 지울 수 있다.
+4. 목록의 요청을 그대로 보낸다: 메서드·URL, Headers, Body.
+   - POST·PUT·PATCH·DELETE에는 Headers에 `X-Requested-With: XMLHttpRequest`를 넣는다. 없으면 403 `FORBIDDEN`이다.
+5. 응답 코드와 JSON을 기대 결과와 비교한다.
+6. 만료 토큰·정지 회원처럼 Postman으로 만들기 어려운 조건은 목록의 테스트로 확인한다: `./gradlew test --tests '<클래스>'`
    - 결과: `build/reports/tests/test/index.html`
-5. 403이 나면: POST·PUT·PATCH·DELETE에 `X-Requested-With` 헤더가 없어서다.
-   - 목록의 `curl` 명령으로 부른다.
-6. 확인용으로 만든 데이터는 목록의 정리 방법대로 지운다. 공용 DB다.
-7. 목록의 "바뀐 파일"을 훑어본다. 기획에 없는 파일이면 문제로 답한다.
-8. Ctrl+C로 끈다.
+7. 참고: Swagger(`http://localhost:8080/swagger-ui.html`)에서 API 목록과 요청·응답 모양을 볼 수 있다. 쿠키와 `X-Requested-With`가 필요한 요청은 Postman으로 확인한다.
+8. 확인용으로 만든 데이터는 목록의 정리 방법대로 지운다. 공용 DB다. Postman Cookies의 `localhost` 쿠키도 지운다.
+9. 목록의 "바뀐 파일"을 훑어본다. 기획에 없는 파일이면 문제로 답한다.
+10. Ctrl+C로 끈다.
 
 ## PR 전 확인
 

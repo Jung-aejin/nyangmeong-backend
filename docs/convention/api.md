@@ -2,7 +2,7 @@
 
 `AGENTS.md`에서 이어지는 문서다.
 
-- 접두어는 `/api/v1`이다. 리소스는 복수형 kebab-case로 쓴다. 식별자는 경로에, 필터·정렬·페이지는 쿼리에 둔다.
+- 접두어는 `/api`이다. 버전(`/v1`)은 경로에 넣지 않는다. 리소스는 복수형 kebab-case로 쓴다. 식별자는 경로에, 필터·정렬·페이지는 쿼리에 둔다.
   - 예: `/members/me`, `/pets/{petSn}/checkups`, `/places?plcClsfCd={공통코드}&keyword=병원`
 - 로그인한 회원 자신의 자원은 `me`를 쓴다(`/members/me`). 경로에 회원 일련번호를 넣지 않는다.
 - 반려동물에 속한 자원은 `/pets/{petSn}/...` 아래에 둔다(예: `/pets/{petSn}/checkups/{ckupRcdSn}`). `PetAuthorizer`가 `petSn`으로 권한을 검사하기 때문이다.
@@ -31,20 +31,26 @@
 | 상황 | 상태 코드 | 예 |
 | --- | --- | --- |
 | 입력값이 틀렸거나 업무 규칙에 어긋남 | 400 | `PET_LIMIT_EXCEEDED` |
-| 토큰이 없거나 만료됨(이 경우에만) | 401 | `UNAUTHORIZED` |
+| 토큰이 없거나 틀림, 만료됨(이 경우에만) | 401 | `UNAUTHORIZED`, `TOKEN_EXPIRED` |
 | 권한이 없음, 정지·탈퇴 회원 | 403 | `PET_PRIMARY_ONLY`, `MEMBER_INACTIVE` |
 | 대상이 없음 | 404 | `NOT_FOUND` |
 | 이미 있음 | 409 | `EMAIL_ALREADY_REGISTERED` |
 | 로그인 5회 실패로 보안코드 확인이 필요함 | 429 | `LOGIN_CAPTCHA_REQUIRED` |
 
-보호 파일 다운로드(파일 자체를 돌려준다)를 제외한 모든 응답은 아래 모양이다. 프론트는 이 모양에 맞춰 `data`를 꺼내고 `error.code`로 분기한다. 이 형식은 프론트와의 합의가 남아 있으므로(`docs/OPEN_ISSUES.md`), 바꿀 때는 프론트 저장소의 `docs/convention/api.md`와 같이 고친다.
+보호 파일 다운로드(파일 자체를 돌려준다)를 제외한 모든 응답은 아래 모양이다(2026-10-20 확정, nct-backend와 같다). 프론트는 `status`로 성공을 판정하고 `data`를 꺼내며 `code`로 분기한다. 바꿀 때는 프론트 저장소의 `docs/convention/api.md`와 같이 고친다.
 
 ```json
-{"success":true,"data":{ ... }}
-{"success":false,"error":{"code":"MEMBER_NOT_FOUND","message":"일치하는 회원정보를 찾을 수 없습니다.","fields":null}}
+{"timestamp":"2026-10-20T09:10:00","status":"success","httpCode":200,"message":"ok","data":{ ... }}
+{"timestamp":"2026-10-20T09:10:00","status":"success","httpCode":201,"message":"created","data":{ ... }}
+{"timestamp":"2026-10-20T09:10:00","status":"error","httpCode":404,"message":"일치하는 회원정보를 찾을 수 없습니다.","path":"/api/auth/me","code":"MEMBER_NOT_FOUND"}
+{"timestamp":"2026-10-20T09:10:00","status":"error","httpCode":400,"message":"입력값이 올바르지 않습니다.","path":"/api/pets","code":"INVALID_INPUT_VALUE","data":[{"field":"petNm","message":"이름을 입력해 주세요"}]}
 ```
 
-- `error.fields`는 입력값 검증 오류일 때만 `[{"field":"...","message":"..."}]`로 채운다.
+- null 필드는 JSON에서 빠진다. 성공 응답에는 `path`·`code`가 없고, `data`가 없는 성공(삭제·상태 변경)에는 `data`도 없다.
+- 응답의 `code`는 `ErrorCode` 상수 이름(`errorCode.name()`)이다. `message`는 문구가 바뀔 수 있으므로 프론트는 `code`로만 분기한다. 자바의 `ErrorCode.code()`는 HTTP 상태 숫자(400)라 응답 `code`와 뜻이 다르다. 응답을 만들 때는 `ApiResponse.error(errorCode, path)`를 쓰고 두 값을 손으로 조합하지 않는다.
+- 입력값 검증 오류(`INVALID_INPUT_VALUE`)만 `data`에 `[{"field":"...","message":"..."}]`를 담는다.
+- 컨트롤러는 `ResponseEntity<ApiResponse<T>>`를 돌려준다(`ResponseEntity.ok(ApiResponse.success(data))`, 생성은 `ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(data))`). 실패 응답은 `GlobalExceptionHandler`와 `global/security`의 응답기가 만들며 컨트롤러가 직접 만들지 않는다.
+- 인증 토큰(Access·Refresh)은 httpOnly 쿠키로만 오간다. 응답 본문에 토큰을 넣지 않는다. 토큰이 만료되면 401 `TOKEN_EXPIRED`가 오고 프론트가 `POST /auth/refresh`로 재발급한 뒤 다시 보낸다.
 - 상태를 바꾸는 요청(GET·HEAD·OPTIONS가 아닌 요청)은 `X-Requested-With: XMLHttpRequest` 헤더가 없으면 403이 된다. 프론트는 모든 요청에 이 헤더를 붙인다. curl이나 Swagger UI로 시험할 때 403이 나오면 이 헤더부터 확인한다.
 
 날짜와 시간은 아래 형식으로만 주고받는다.

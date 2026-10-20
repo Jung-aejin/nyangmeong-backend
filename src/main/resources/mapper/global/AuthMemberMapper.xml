@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nyangmeong.global.security.AuthMemberMapper">
+
+    <resultMap id="authMemberResultMap" type="com.nyangmeong.global.security.domain.AuthMember">
+        <id     column="MBR_SN"        property="mbrSn" />
+        <result column="MBR_STTS_CD"   property="mbrSttsCd" />
+        <result column="MBR_AUTHRT_CD" property="mbrAuthrtCd" />
+        <result column="MBR_NCNM"      property="mbrNcnm" />
+        <result column="ATCH_FILE_SN"  property="atchFileSn" />
+        <result column="ACNT_EML_ENC"  property="acntEmlEnc" />
+    </resultMap>
+
+    <!-- MBR 은 DEL_YN 없음, 탈퇴는 MBR_STTS_CD 로 구분 -->
+    <select id="selectForAuth" parameterType="long" resultMap="authMemberResultMap">
+        SELECT MBR_SN
+             , MBR_STTS_CD
+             , MBR_AUTHRT_CD
+          FROM MBR
+         WHERE MBR_SN = #{mbrSn}
+    </select>
+
+    <select id="selectForMe" parameterType="long" resultMap="authMemberResultMap">
+        SELECT MBR_SN
+             , MBR_STTS_CD
+             , MBR_AUTHRT_CD
+             , MBR_NCNM
+             , ATCH_FILE_SN
+             , ACNT_EML_ENC
+          FROM MBR
+         WHERE MBR_SN = #{mbrSn}
+    </select>
+
+</mapper>

@@ -28,7 +28,7 @@
 
 - 근거: DMS 기능명세서 9종 최신 판(2026-10-16 확인, 683건), `db/20261012_create_tables_v0.9.sql`(테이블 85개), `docs/convention/api.md`. DTO 필드마다 근거(`테이블.컬럼` 또는 기능 ID)를 적었고, 근거가 없는 필드는 넣지 않았다
 - **구현된 API와 DTO는 Swagger(`/swagger-ui.html`)가 정본이다.** 구현 전에는 이 문서를 먼저 고치고 코드를 고친다. 구현한 뒤에는 이 문서를 고치지 않는다
-- 경로 앞의 `/api/v1`은 생략했다. 응답은 모두 `ApiResponse`(`{success,data,error}`)로 감싸고, 목록(`Page<…>`)은 `PageResponse`(`content`에 행 DTO)다. 도메인 파일에는 껍데기를 적지 않는다
+- 경로 앞의 `/api`는 생략했다. 응답은 모두 `ApiResponse`(`{timestamp,status,httpCode,message,path,code,data}`, `docs/convention/api.md`)로 감싸고, 목록(`Page<…>`)은 `PageResponse`(`{content,page,size,totalElements,totalPages,hasNext}`, `content`에 행 DTO)다. 도메인 파일에는 껍데기를 적지 않는다
 - 요청·응답 DTO는 `record`다(`docs/convention/dto.md`)
 - 필수: 요청은 반드시 보내야 하는 것, 응답은 항상 값이 있는 것(null 아님). 수정(PATCH) 요청은 모두 선택이다
 - `Yn` 필드는 이름을 컬럼 그대로 두고 값은 `true`/`false`다. 응답 DTO는 `boolean`, 요청 DTO는 `Boolean`(PATCH에서 보내지 않음을 `null`로 나타낸다). VO는 `String`이고(`docs/convention/mapper.md`), 바꾸는 코드는 응답은 `XxxResponse.from()`에서 `"Y".equals(...)`, 요청은 service에서 `? "Y" : "N"`로 쓴다(`docs/convention/dto.md`)
