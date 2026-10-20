@@ -15,5 +15,11 @@ spring:
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
-  configuration:
-    map-underscore-to-camel-case: true
+
+# 테스트 전용 더미 키. 실제 키가 아니며 운영 값과 무관하다(각 32바이트를 Base64로 적은 것)
+app:
+  crypto:
+    aes-key-base64: dGVzdC1hZXMta2V5LTMyLWJ5dGVzLWxvbmctMDAwMDA=
+    hmac-key-base64: dGVzdC1obWFjLWtleS0zMi1ieXRlcy1sb25nLTAwMDA=
+  jwt:
+    secret-base64: dGVzdC1qd3Qtc2VjcmV0LTMyLWJ5dGVzLWxvbmctMDAwMA==

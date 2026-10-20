@@ -13,7 +13,7 @@
 
 ```java
 @Data
-public class Post {                                      // 테이블 1:1 VO. MyBatis가 채운다
+public class Post {                                      // 테이블 1:1 VO. MyBatis가 채우는 객체
     private Long pstSn;
     private String pstTtl;
     private LocalDateTime regDt;

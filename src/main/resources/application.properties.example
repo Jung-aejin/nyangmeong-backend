@@ -8,13 +8,24 @@ spring.profiles.default=local
 spring.mvc.format.date=iso
 spring.mvc.format.date-time=iso
 mybatis.mapper-locations=classpath:mapper/**/*.xml
-mybatis.configuration.map-underscore-to-camel-case=true
 logging.level.com.nyangmeong=debug
 
 # 공용 DB(비밀값, 디스코드로 받는다)
 spring.datasource.url=
 spring.datasource.username=
 spring.datasource.password=
+
+# 보안(비밀값, 디스코드로 받는다). Base64 값이며 AES는 32바이트, HMAC·JWT는 32바이트 이상. 없으면 서버가 뜨지 않는다
+app.crypto.aes-key-base64=
+app.crypto.hmac-key-base64=
+app.jwt.secret-base64=
+# 만료(밀리초). 생략하면 Access 30분, Refresh 1일
+app.jwt.access-token-expiry-ms=1800000
+app.jwt.refresh-token-expiry-ms=86400000
+# 쿠키 Secure 플래그. 운영(HTTPS)만 true
+app.cookie.secure=false
+# 쿠키를 실어 보낼 수 있는 프론트 오리진(쉼표 구분). 개발은 Vite 주소
+app.cors.allowed-origins=http://localhost:5173
 
 # DMS MCP 서버 주소. setup이 읽어 AI 도구에 등록한다. claude.ai dms 커넥터가 연결돼 있으면 비워도 된다
 dms.mcp-url=

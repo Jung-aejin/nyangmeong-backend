@@ -22,7 +22,7 @@ public class PostService {
   - 반려동물 권한은 `PetAuthorizer`로 메서드 첫 줄에서 검사한다.
   - 작성자 권한은 대상을 조회한 바로 다음에 `OwnerAuthorizer.checkOwner`로 검사한다.
 
-- 오류는 `ErrorCode`에 추가하고 `BusinessException`을 던진다. 도메인별 예외 클래스를 만들지 않는다. 메시지는 화면설계서 문구를 그대로 쓴다.
+- 오류는 `ErrorCode`에 추가하고 `CustomException`을 던진다(`throw new CustomException(ErrorCode.PET_NOT_FOUND)`). 도메인별 예외 클래스를 만들지 않고 `BaseException`을 직접 던지지도 않는다. 메시지는 화면설계서 문구를 그대로 쓴다.
 - 암호화 컬럼은 `FieldCryptoService`의 `encrypt()`·`decrypt()`·`hmac()`을 서비스에서 호출한다. XML에는 암호문이 들어가고 암호문이 나온다.
 - 이메일과 전화번호는 암호화하거나 비교하기 전에 정규화한다(이메일은 `normalizeEmail()`: 앞뒤 공백 제거와 소문자 변환, 전화번호는 `PhoneNumberNormalizer.normalize()`).
 - 파일은 `FileStore`를 쓴다. 크기와 확장자 검사는 `FileStore`가 저장할 때 한다. 도메인 코드에서 다시 검사하지 않는다.
@@ -40,5 +40,5 @@ public void invite(Long memberId, InviteCreateRequest req) {
     // ... 초대 저장 ...
     eventPublisher.publish(new NotificationEvent(...));
 }
-// NG: notificationMapper.insert(...)  -- 알림은 직접 insert하지 않는다
+// NG: notificationMapper.insert(...)  -- 알림 직접 insert 금지
 ```

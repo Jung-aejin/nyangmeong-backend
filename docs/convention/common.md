@@ -6,7 +6,7 @@
 
 - 로그는 `@Slf4j`의 `log`로만 남긴다. `System.out.println`과 `e.printStackTrace()`를 쓰지 않는다.
 - 이메일, 전화번호, 비밀번호, 토큰을 로그에 남기지 않는다.
-- 예외를 잡았으면 다시 던지거나 `BusinessException`으로 바꿔 던진다. `catch` 블록을 비워 두지 않는다.
+- 예외를 잡았으면 다시 던지거나 `CustomException`으로 바꿔 던진다. `catch` 블록을 비워 두지 않는다.
 - 예상하지 못한 예외의 로그는 `GlobalExceptionHandler`가 남긴다. 도메인 코드에서 같은 예외를 또 로그로 남기지 않는다.
 
 ## 주석
@@ -14,11 +14,34 @@
 - 주석은 한글로 쓴다.
 - 코드를 읽으면 아는 것은 적지 않는다. 왜 이렇게 했는지, 놓치기 쉬운 조건만 적는다.
 - AI 도구가 붙인 주석은 그대로 커밋하지 않는다. 코드를 말로 옮긴 주석, 고친 과정을 적은 주석("~로 변경", "기존 로직 유지"), 구분선과 이모지는 지운다.
+- 주석은 명사형으로 끝낸다. `~한다`·`~이다`·`~있다`로 끝나는 서술형 문장을 쓰지 않는다. 서술형 주석은 코드를 말로 옮긴 설명이 되기 쉽고 AI 도구가 붙인 티가 난다. XML 주석도 같다.
+- 형식은 수업 프로젝트(`ksmybatis`)와 같다.
+  - 클래스 Javadoc: `[이름]` 한 줄과 `- ` 항목 최대 세 줄. 결과는 `->`, 부연은 `:`로 잇는다.
+  - 메서드 Javadoc: 역할을 명사형 한 줄로 쓴다(세 줄 틀). 조건·결과·상태 코드를 적지 않는다. 본문을 읽으면 보이는 것이기 때문이다.
+  - 필드 Javadoc: `/** 라벨 */` 한 줄.
+  - 인라인 `//`: 라벨 한 줄. 문장을 쓰지 않는다.
+  - 왜 그렇게 했는지가 꼭 필요한 곳만 항목 하나를 더한다. 문서 참조(`docs/...`)는 클래스 주석에만 둔다.
 
 ```java
-// 정지 회원은 재발급하지 않고 바로 막는다
-// NG: // 회원을 조회한다         -- 코드와 같은 말
-// NG: // 수정: null 체크 추가    -- 고친 과정
+/**
+ * [비즈니스 예외]
+ * - 사용 예: throw new CustomException(ErrorCode.PET_NOT_FOUND);
+ */
+public class CustomException extends BaseException {
+
+    /**
+     * 업무 예외 처리 핸들러 메소드
+     */
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBase(BaseException e, HttpServletRequest request) {
+        // 권한은 DB 값 기준
+        ...
+    }
+}
+// NG: /** 업무 예외 -> ErrorCode의 상태·메시지·이름 그대로 */   -- 조건·결과를 적음
+// NG: // 정지 회원은 재발급하지 않고 바로 막는다              -- 서술형
+// NG: // 회원을 조회한다                                     -- 코드와 같은 말
+// NG: // 수정: null 체크 추가                                -- 고친 과정
 ```
 
 ## 이름 짓기
@@ -72,11 +95,11 @@
 | 이름 | 패키지 | 하는 일 |
 | --- | --- | --- |
 | `ApiResponse`, `PageResponse` | `global/response` | 모든 응답과 목록 응답을 감싼다 |
-| `ErrorCode`, `BusinessException` | `global/error` | 오류 코드 목록과, 그 코드를 담아 던지는 예외 |
-| `LoginMember` | `global/security` | 로그인한 회원(회원 번호와 권한) |
+| `ErrorCode`, `CustomException` | `global/error` | 오류 코드 목록과, 그 코드를 담아 던지는 예외. `CustomException`은 `BaseException`(최상위)을 상속하며 도메인은 `CustomException`만 던진다 |
+| `LoginMember` | `global/security/domain` | 로그인한 회원(`id()` 회원 번호, `mbrAuthrtCd()` 권한 코드, `isAdmin()`). JWT 쿠키를 검증한 필터가 넣는다 |
 | `FieldCryptoService` | `global/security/crypto` | 컬럼 암호화·복호화, 중복 확인용 해시, 이메일 정규화 |
 | `PetAuthorizer`, `OwnerAuthorizer` | `global/auth` | 반려동물 권한과 작성자 권한 검사 |
-| `PageQuery` | `global/mybatis` | 목록 요청의 페이지·크기·정렬 |
+| `PageQuery` | `global/response` | 목록 요청의 페이지·크기·정렬 |
 | `FileStore` | `global/file` | 파일 저장과 읽기 |
 | `NotificationEvent`, `MailEvent` | `global/notification` | 알림과 메일을 보내 달라는 이벤트 |
 | `EventPublisher` | `global/notification` | 이벤트를 발행한다. 트랜잭션이 없으면 예외를 던진다 |

@@ -5,6 +5,8 @@
 ## Mapper와 XML
 
 - SQL은 XML에만 쓴다. `@Select` 같은 어노테이션 SQL을 쓰지 않는다.
+- 조회 결과는 `<resultMap>`으로 컬럼과 필드를 짝짓는다(수업 프로젝트와 같다). PK는 `<id>`, 나머지는 `<result>`다. `resultType`에 VO·DTO를 바로 쓰지 않는다. `map-underscore-to-camel-case`를 켜지 않으므로, `resultType`으로 받으면 컬럼이 하나도 매핑되지 않아 행이 있어도 `null`이 된다. 숫자·문자 하나를 돌려주는 조회(`COUNT(*)` 등)만 `resultType="long"`처럼 쓴다.
+  - 같은 VO를 돌려주는 select는 resultMap 하나를 같이 쓴다. select가 일부 컬럼만 고르면 나머지 필드는 `null`이다.
 - 정렬 컬럼은 enum으로만 받는다. 요청값을 SQL에 그대로 붙이지 않는다.
 - 감사 컬럼(`REG_DT`, `MDFCN_DT`, `RGTR_ID`, `MDFR_ID`)은 XML에 직접 적는다. **테이블마다 가진 감사 컬럼이 다르다.** `REG_DT`만 있는 테이블도 있고 `MDFR_ID`가 없는 테이블도 있으므로, ERD에서 그 테이블에 있는 컬럼만 적는다.
   - 네 컬럼이 모두 있는 테이블의 수정 예: `MDFR_ID = #{actorId}, MDFCN_DT = NOW()`
@@ -19,11 +21,11 @@
 ```java
 @Transactional(readOnly = true)
 public PageResponse<PostSummary> search(PostSearchCond cond, PageQuery pq) {
-    PageHelper.startPage(pq.pageOrDefault(), pq.sizeOr(10));   // 바로 다음 select 한 번에만 적용된다
+    PageHelper.startPage(pq.pageOrDefault(), pq.sizeOr(10));   // 바로 다음 select 한 번에만 적용
     List<PostSummary> rows = postMapper.selectList(cond, PostSort.from(pq.sort()));
     return PageResponse.of(new PageInfo<>(rows));
 }
-// NG: rows.stream().map(PostResponse::from).toList()  -- 전체 건수가 사라진다
+// NG: rows.stream().map(PostResponse::from).toList()  -- 전체 건수 유실
 ```
 
 ## VO와 enum
@@ -42,5 +44,5 @@ public enum MatchStatus {
     public boolean is(String code) { return this.code.equals(code); }
 }
 // 비교: MatchStatus.REQUESTED.is(match.getMtchDlngSttsCd())
-// NG: "01".equals(match.getMtchDlngSttsCd())  -- 코드 값을 직접 적지 않는다
+// NG: "01".equals(match.getMtchDlngSttsCd())  -- 코드 값 직접 사용 금지
 ```
