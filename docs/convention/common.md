@@ -19,7 +19,7 @@
   - 클래스 Javadoc: `[이름]` 한 줄과 `- ` 항목 최대 세 줄. 결과는 `->`, 부연은 `:`로 잇는다.
   - 메서드 Javadoc: 역할을 명사형 한 줄로 쓴다(세 줄 틀). 조건·결과·상태 코드를 적지 않는다. 본문을 읽으면 보이는 것이기 때문이다.
   - 필드 Javadoc: `/** 라벨 */` 한 줄.
-  - 인라인 `//`: 라벨 한 줄. 문장을 쓰지 않는다.
+  - 메서드 안 주석: `/** 라벨 */` 한 줄. 문장을 쓰지 않는다. Java 주석은 모두 `/** */`로 쓰고 `//`를 쓰지 않는다(확인: `grep -rnE '^\s*//' src/main/java src/test/java` → 출력 없음).
   - 왜 그렇게 했는지가 꼭 필요한 곳만 항목 하나를 더한다. 문서 참조(`docs/...`)는 클래스 주석에만 둔다.
 
 ```java
@@ -34,15 +34,17 @@ public class CustomException extends BaseException {
      */
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ApiResponse<Void>> handleBase(BaseException e, HttpServletRequest request) {
-        // 권한은 DB 값 기준
+        /** 권한은 DB 값 기준 */
         ...
     }
 }
-// NG: /** 업무 예외 -> ErrorCode의 상태·메시지·이름 그대로 */   -- 조건·결과를 적음
-// NG: // 정지 회원은 재발급하지 않고 바로 막는다              -- 서술형
-// NG: // 회원을 조회한다                                     -- 코드와 같은 말
-// NG: // 수정: null 체크 추가                                -- 고친 과정
 ```
+
+- NG `/** 업무 예외 -> ErrorCode의 상태·메시지·이름 그대로 */`: 조건·결과를 적음
+- NG `/** 정지 회원은 재발급하지 않고 바로 막는다 */`: 서술형
+- NG `/** 회원을 조회한다 */`: 코드와 같은 말
+- NG `/** 수정: null 체크 추가 */`: 고친 과정
+- NG `// 권한은 DB 값 기준`: `//` 대신 `/** */`
 
 ## 이름 짓기
 

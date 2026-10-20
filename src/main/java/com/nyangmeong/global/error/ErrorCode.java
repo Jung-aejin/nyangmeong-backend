@@ -13,13 +13,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-    // 공통(global). 입력값 검증 오류는 INVALID_INPUT_VALUE 하나, 틀린 항목은 응답 data의 필드 목록
+    /** 공통(global). 입력값 검증 오류는 INVALID_INPUT_VALUE 하나, 틀린 항목은 응답 data의 필드 목록 */
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "파일 크기는 10MB 이하여야 합니다."),
     FILE_TYPE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "허용하지 않는 파일 형식입니다."),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."),
-    // 401은 토큰이 없거나 틀리거나 만료된 경우만. 권한 부족과 정지·탈퇴 회원은 403
+    /** 401은 토큰이 없거나 틀리거나 만료된 경우만. 권한 부족과 정지·탈퇴 회원은 403 */
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "로그인이 만료되었습니다. 다시 로그인해 주세요."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
@@ -28,14 +28,14 @@ public enum ErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 정보를 찾을 수 없습니다."),
     COMMON_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 공통코드입니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "허용하지 않는 요청 방식입니다."),
-    // 멱등 요청 ID(idmptDmndId)가 같은 요청이 처리 중이거나 끝난 경우
+    /** 멱등 요청 ID(idmptDmndId)가 같은 요청이 처리 중이거나 끝난 경우 */
     ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 요청입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."),
     EXTERNAL_API_ERROR(HttpStatus.BAD_GATEWAY, "외부 서비스 호출에 실패했습니다. 잠시 후 다시 시도해 주세요."),
 
-    // member
+    /** member */
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "일치하는 회원정보를 찾을 수 없습니다."),
-    // 이메일·비밀번호 불일치는 토큰 문제가 아니라 400
+    /** 이메일·비밀번호 불일치는 토큰 문제가 아니라 400 */
     LOGIN_FAILED(HttpStatus.BAD_REQUEST, "이메일 또는 비밀번호가 일치하지 않습니다."),
     LOGIN_CAPTCHA_REQUIRED(HttpStatus.TOO_MANY_REQUESTS, "로그인 5회 실패로 보안코드 확인이 필요합니다."),
     CAPTCHA_MISMATCH(HttpStatus.BAD_REQUEST, "보안코드가 일치하지 않습니다."),
@@ -57,7 +57,7 @@ public enum ErrorCode {
     MEMBER_RECOVERY_EXPIRED(HttpStatus.BAD_REQUEST, "복구 가능 기간이 지난 계정입니다."),
     DASHBOARD_WIDGET_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "메인에 표시할 위젯은 최대 5개입니다."),
 
-    // pet
+    /** pet */
     PET_NOT_FOUND(HttpStatus.NOT_FOUND, "반려동물 정보를 찾을 수 없습니다."),
     PET_ACCESS_DENIED(HttpStatus.FORBIDDEN, "양육 중인 반려동물만 볼 수 있습니다."),
     PET_PRIMARY_ONLY(HttpStatus.FORBIDDEN, "주양육자만 할 수 있습니다."),
@@ -78,7 +78,7 @@ public enum ErrorCode {
     ITEM_SLOT_DUPLICATED(HttpStatus.BAD_REQUEST, "같은 부위에는 아이템을 하나만 착용할 수 있습니다."),
     POINT_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "포인트가 부족합니다."),
 
-    // health
+    /** health */
     CARE_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "케어 항목을 찾을 수 없습니다."),
     CARE_ITEM_DEFAULT_LIMITED(HttpStatus.BAD_REQUEST, "기본 케어 항목은 주기만 수정할 수 있습니다."),
     CARE_ITEM_DEFAULT_NOT_DELETABLE(HttpStatus.BAD_REQUEST, "기본 케어 항목은 삭제할 수 없습니다."),
@@ -101,25 +101,25 @@ public enum ErrorCode {
     PRESCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "처방약을 찾을 수 없습니다."),
     REPEAT_PREVENTION_NOT_FOUND(HttpStatus.NOT_FOUND, "반복 예방 관리 항목을 찾을 수 없습니다."),
 
-    // place
+    /** place */
     PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "장소를 찾을 수 없습니다."),
     PLACE_BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "즐겨찾기를 찾을 수 없습니다."),
     PLACE_BOOKMARK_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 즐겨찾기한 장소입니다."),
 
-    // notification
+    /** notification */
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),
 
-    // expense
+    /** expense */
     EXPENSE_NOT_FOUND(HttpStatus.NOT_FOUND, "지출 내역을 찾을 수 없습니다."),
     EXPENSE_PET_REQUIRED(HttpStatus.BAD_REQUEST, "병원 카테고리는 반려동물을 선택해야 합니다."),
     EXPENSE_LIMIT_NOT_FOUND(HttpStatus.NOT_FOUND, "월 지출 한도가 설정되지 않았습니다."),
-    // 영수증 인식(docs/api/receipt.md). 도메인 확정 뒤 그 구획으로 이동
+    /** 영수증 인식(docs/api/receipt.md). 도메인 확정 뒤 그 구획으로 이동 */
     RECEIPT_NOT_FOUND(HttpStatus.NOT_FOUND, "영수증을 찾을 수 없습니다."),
     RECEIPT_RECOGNITION_FAILED(HttpStatus.BAD_REQUEST, "영수증을 인식하지 못했습니다. 다시 촬영해 주세요."),
     RECEIPT_ALREADY_CANCELED(HttpStatus.CONFLICT, "이미 취소한 영수증입니다."),
     RECEIPT_ALREADY_SAVED(HttpStatus.CONFLICT, "이미 저장한 영수증입니다."),
 
-    // community
+    /** community */
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
     POST_IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "사진은 최대 10장까지 올릴 수 있습니다."),
     POST_LIKE_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 좋아요한 게시글입니다."),
@@ -142,7 +142,7 @@ public enum ErrorCode {
     CARE_MATCH_ALREADY_ACCEPTED(HttpStatus.CONFLICT, "이미 매칭이 확정된 모집글입니다."),
     CARE_MATCH_INVALID_STATUS(HttpStatus.CONFLICT, "현재 매칭 상태에서는 할 수 없는 요청입니다."),
 
-    // support
+    /** support */
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "문의를 찾을 수 없습니다."),
     INQUIRY_NOT_EDITABLE(HttpStatus.BAD_REQUEST, "접수 상태의 문의만 수정할 수 있습니다."),
@@ -151,17 +151,17 @@ public enum ErrorCode {
     private final HttpStatus status;
     private final String message;
 
-    // 사용자 메시지
+    /** 사용자 메시지 */
     public String message() {
         return message;
     }
 
-    // http 상태 객체
+    /** http 상태 객체 */
     public HttpStatus status() {
         return status;
     }
 
-    // http 상태 코드 숫자 (응답 JSON 의 code 와 다름)
+    /** http 상태 코드 숫자 (응답 JSON 의 code 와 다름) */
     public int code() {
         return status.value();
     }

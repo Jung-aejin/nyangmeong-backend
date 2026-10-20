@@ -24,10 +24,10 @@ class ArchitectureTest {
 
     private static final String ROOT = "com.nyangmeong";
 
-    // 도메인 층 표 (AGENTS.md "도메인 간 호출은 낮은 층으로만"과 함께 수정)
+    /** 도메인 층 표 (AGENTS.md "도메인 간 호출은 낮은 층으로만"과 함께 수정) */
     private static final Map<String, Integer> DOMAIN_LAYERS = domainLayers();
 
-    // 트랜잭션 불필요 Service public 메서드 ("클래스이름.메서드이름")
+    /** 트랜잭션 불필요 Service public 메서드 ("클래스이름.메서드이름") */
     private static final Set<String> TRANSACTIONAL_EXCEPTIONS = Set.of();
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
@@ -54,7 +54,7 @@ class ArchitectureTest {
         return ROOT + "." + domain + "..";
     }
 
-    // 도메인별 layer 패키지 (빈 layer는 도메인 전체)
+    /** 도메인별 layer 패키지 (빈 layer는 도메인 전체) */
     private static String[] domainPackages(String layer) {
         String suffix = layer.isEmpty() ? ".." : ".." + layer + "..";
         return DOMAIN_LAYERS.keySet().stream()
@@ -110,7 +110,7 @@ class ArchitectureTest {
         for (Map.Entry<String, Integer> entry : DOMAIN_LAYERS.entrySet()) {
             String domain = entry.getKey();
             int layer = entry.getValue();
-            // 같은 층끼리 호출 금지
+            /** 같은 층끼리 호출 금지 */
             String[] sameOrHigher = DOMAIN_LAYERS.entrySet().stream()
                     .filter(other -> !other.getKey().equals(domain) && other.getValue() >= layer)
                     .map(other -> domainPackage(other.getKey()))

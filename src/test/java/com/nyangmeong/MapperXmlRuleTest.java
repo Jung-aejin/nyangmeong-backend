@@ -31,7 +31,7 @@ class MapperXmlRuleTest {
 
     private static final Path MAPPER_DIR = Path.of("src/main/resources/mapper");
 
-    // 삭제된 행까지 읽는 조회 ("namespace.id")
+    /** 삭제된 행까지 읽는 조회 ("namespace.id") */
     private static final Set<String> EXCEPTIONS = Set.of();
 
     private static final Pattern TABLE = Pattern.compile("\\b(?:FROM|JOIN)\\s+`?(\\w+)`?", Pattern.CASE_INSENSITIVE);
@@ -59,7 +59,7 @@ class MapperXmlRuleTest {
                 .isEmpty();
     }
 
-    // DEL_YN 컬럼 보유 테이블 (DDL 변경 시 함께 수정)
+    /** DEL_YN 컬럼 보유 테이블 (DDL 변경 시 함께 수정) */
     private static Set<String> delYnTables() throws IOException {
         try (InputStream in = MapperXmlRuleTest.class.getResourceAsStream("/del-yn-tables.txt")) {
             return new String(in.readAllBytes(), StandardCharsets.UTF_8).lines()
@@ -94,7 +94,7 @@ class MapperXmlRuleTest {
         return violations;
     }
 
-    // FROM·JOIN에 나온 DEL_YN 테이블 수만큼 조건 필요 (<include> SQL은 검사 밖)
+    /** FROM·JOIN에 나온 DEL_YN 테이블 수만큼 조건 필요 (<include> SQL은 검사 밖) */
     private static boolean isMissingCondition(String sql, Set<String> delYnTables) {
         int tableCount = 0;
         Matcher table = TABLE.matcher(sql);
@@ -109,7 +109,7 @@ class MapperXmlRuleTest {
 
     private static Document parse(Path file) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        // MyBatis DTD 외부 다운로드 차단
+        /** MyBatis DTD 외부 다운로드 차단 */
         factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         DocumentBuilder builder = factory.newDocumentBuilder();
         return builder.parse(file.toFile());

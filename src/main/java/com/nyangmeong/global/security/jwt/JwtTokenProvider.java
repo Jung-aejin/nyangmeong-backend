@@ -74,7 +74,7 @@ public class JwtTokenProvider {
         try {
             return Long.valueOf(claims.getSubject());
         } catch (NumberFormatException e) {
-            // subject 형식 불일치
+            /** subject 형식 불일치 */
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
     }

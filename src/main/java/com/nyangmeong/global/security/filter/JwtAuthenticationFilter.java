@@ -63,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         AuthMember member = authMemberMapper.selectForAuth(mbrSn);
         if (member == null) {
-            // 회원 행 없음
+            /** 회원 행 없음 */
             request.setAttribute(AUTH_ERROR_CODE, ErrorCode.UNAUTHORIZED);
             chain.doFilter(request, response);
             return;
@@ -76,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         LoginMember loginMember = new LoginMember(member.getMbrSn(), member.getMbrAuthrtCd());
-        // 권한은 DB 값 기준
+        /** 권한은 DB 값 기준 */
         UsernamePasswordAuthenticationToken authentication = UsernamePasswordAuthenticationToken.authenticated(
                 loginMember, null,
                 List.of(new SimpleGrantedAuthority(MemberAuthority.roleOf(member.getMbrAuthrtCd()))));
