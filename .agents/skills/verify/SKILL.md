@@ -47,7 +47,7 @@ background: false
 - 판정은 하나만 고른다. 검증 명령이 0이 아니거나, 변경 없는 기능 ID가 있거나, 기획 밖 변경이나 기준 변경이 있거나, 확인 못 함(내 것)이 있으면 `실패`(내 것은 고칠 곳에 "확인할 수 있게 하는 방법"을 적는다). 그렇지 않고 연결 남음이 있으면 `확인 못 함 있음`. 둘 다 아니면 `통과`.
 - "사람 확인"은 판정과 관계없이, 사람이 그대로 따라 할 수 있게 쓴다. 기능 ID는 기획에 적힌 짝을 그대로 쓴다. 값은 코드에서 확인한 실제 값이다(README "사람 확인" 참고).
   - 프론트: `routes/paths.js`로 만든 전체 URL(`http://localhost:5173/...`), 누를 요소.
-  - 백엔드: `http://localhost:8080/swagger-ui.html`에서 찾을 API, 넣을 값, 기대 응답. 로그인이 필요하면 그 조건의 테스트와 `./gradlew test --tests '<클래스>'`. 상태를 바꾸는 요청은 `X-Requested-With: XMLHttpRequest`를 넣은 `curl`도.
+  - 백엔드: Postman으로 보낼 요청. 메서드와 전체 URL(`http://localhost:8080/api/...`), Headers, Body(raw JSON), 기대 응답 코드와 JSON. 상태를 바꾸는 요청은 Headers에 `X-Requested-With: XMLHttpRequest`를 적는다. 로그인이 필요하면 첫 줄에 `POST http://localhost:8080/api/auth/dev-tokens`(Headers `X-Requested-With: XMLHttpRequest`, Body `{"mbrSn": <번호>}`)로 쿠키를 받는 단계를 적는다. 만료·정지처럼 Postman으로 만들기 어려운 조건은 그 테스트와 `./gradlew test --tests '<클래스>'`. 참고로 Swagger(`http://localhost:8080/swagger-ui.html`)에서 찾을 API 이름도 적는다.
 - 마지막 줄:
   - 통과: "위 '사람 확인'대로 확인한 뒤 `/end`로 마무리하세요"
   - 실패: "고칠 곳을 고친 뒤 `/verify`를 다시 실행하세요"
