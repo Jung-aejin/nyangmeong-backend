@@ -29,7 +29,7 @@ public enum MemberAuthority {
     }
 
     /**
-     * 코드에 대응하는 권한 이름 (미지정은 ROLE_USER)
+     * 코드에 대응하는 권한 이름
      */
     public static String roleOf(String code) {
         return ADMIN.is(code) ? ADMIN.role : USER.role;

@@ -47,7 +47,7 @@ public class TokenCookies {
     }
 
     /**
-     * 요청 쿠키 값 추출 (없으면 null)
+     * 요청 쿠키 값 추출
      */
     public String read(HttpServletRequest request, String name) {
         Cookie[] cookies = request.getCookies();
