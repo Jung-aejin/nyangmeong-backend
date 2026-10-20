@@ -36,14 +36,14 @@ public class LoggingFilter extends OncePerRequestFilter {
         try {
             chain.doFilter(request, response);
         } finally {
-            // URI 마스킹
+            /** URI 마스킹 */
             log.info("{} {} -> {} ({}ms)", request.getMethod(), masker.maskUri(request.getRequestURI()),
                     response.getStatus(), System.currentTimeMillis() - start);
             MdcUtils.clear();
         }
     }
 
-    // 프록시 뒤 실제 클라이언트 IP
+    /** 프록시 뒤 실제 클라이언트 IP */
     private String resolveClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {

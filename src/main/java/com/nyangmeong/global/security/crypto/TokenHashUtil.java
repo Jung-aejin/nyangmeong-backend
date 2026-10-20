@@ -19,7 +19,7 @@ public class TokenHashUtil {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(digest.digest(rawToken.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
-            // JDK 표준 알고리즘
+            /** JDK 표준 알고리즘 */
             throw new IllegalStateException("SHA-256을 쓸 수 없습니다.", e);
         }
     }

@@ -23,14 +23,15 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * DEL_YN이 있는 테이블을 조회하는 select에 DEL_YN = 'N' 조건이 있는지 Mapper XML을 읽어 검사한다(AGENTS.md "코드를 쓰기 전에 꼭 알 것" 5번).
- * DB에 붙지 않는다. 실패하면 SQL에 조건을 넣는다.
+ * [검사 - DEL_YN 조회 조건]
+ * - DEL_YN 테이블 select의 DEL_YN = 'N' 조건 : AGENTS.md "코드를 쓰기 전에 꼭 알 것" 5번
+ * - Mapper XML만 읽음 : DB 미사용, 실패 시 SQL에 조건 추가
  */
 class MapperXmlRuleTest {
 
     private static final Path MAPPER_DIR = Path.of("src/main/resources/mapper");
 
-    // 삭제된 행까지 읽어야 하는 조회. "namespace.id"로 적는다
+    /** 삭제된 행까지 읽는 조회 ("namespace.id") */
     private static final Set<String> EXCEPTIONS = Set.of();
 
     private static final Pattern TABLE = Pattern.compile("\\b(?:FROM|JOIN)\\s+`?(\\w+)`?", Pattern.CASE_INSENSITIVE);
@@ -58,7 +59,7 @@ class MapperXmlRuleTest {
                 .isEmpty();
     }
 
-    // DEL_YN 컬럼이 있는 테이블 목록. DDL이 바뀌면 이 파일을 같이 고친다
+    /** DEL_YN 컬럼 보유 테이블 (DDL 변경 시 함께 수정) */
     private static Set<String> delYnTables() throws IOException {
         try (InputStream in = MapperXmlRuleTest.class.getResourceAsStream("/del-yn-tables.txt")) {
             return new String(in.readAllBytes(), StandardCharsets.UTF_8).lines()
@@ -93,7 +94,7 @@ class MapperXmlRuleTest {
         return violations;
     }
 
-    // DEL_YN 테이블이 FROM·JOIN에 나온 횟수만큼 조건이 있어야 한다. <include>로 끌어온 SQL은 보지 못한다
+    /** FROM·JOIN에 나온 DEL_YN 테이블 수만큼 조건 필요 (<include> SQL은 검사 밖) */
     private static boolean isMissingCondition(String sql, Set<String> delYnTables) {
         int tableCount = 0;
         Matcher table = TABLE.matcher(sql);
@@ -108,7 +109,7 @@ class MapperXmlRuleTest {
 
     private static Document parse(Path file) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        // MyBatis DTD를 네트워크에서 받아 오지 않게 한다
+        /** MyBatis DTD 외부 다운로드 차단 */
         factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         DocumentBuilder builder = factory.newDocumentBuilder();
         return builder.parse(file.toFile());

@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<List<FieldErrorResponse>>> handleValidation(MethodArgumentNotValidException e,
             HttpServletRequest request) {
-        // 로그에는 필드명/규칙 코드만
+        /** 로그에는 필드명/규칙 코드만 */
         String violations = e.getBindingResult().getFieldErrors().stream()
                 .map(fieldError -> fieldError.getField() + ":" + fieldError.getCode())
                 .distinct()

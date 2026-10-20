@@ -44,7 +44,7 @@ public class FieldCryptoService {
     private byte[] hmacKey;
 
     /**
-     * 키 검증 및 초기화 (실패 시 기동 중단)
+     * 키 검증 및 초기화
      */
     @PostConstruct
     public void initializeKeys() {

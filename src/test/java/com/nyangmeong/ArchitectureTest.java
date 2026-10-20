@@ -16,17 +16,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * AGENTS.md의 의존 방향과 docs/convention/service.md의 @Transactional 규칙을 검사한다.
- * 실패하면 이 테스트가 아니라 메시지에 나온 코드를 고친다.
+ * [검사 - 의존 방향·@Transactional 규칙]
+ * - 기준 : AGENTS.md 의존 방향, docs/convention/service.md
+ * - 실패 시 수정 대상 : 이 테스트가 아니라 메시지의 코드
  */
 class ArchitectureTest {
 
     private static final String ROOT = "com.nyangmeong";
 
-    // AGENTS.md "도메인 간 호출은 낮은 층으로만"의 층 표. 도메인을 새로 만들면 표와 여기를 같이 고친다
+    /** 도메인 층 표 (AGENTS.md "도메인 간 호출은 낮은 층으로만"과 함께 수정) */
     private static final Map<String, Integer> DOMAIN_LAYERS = domainLayers();
 
-    // 트랜잭션이 필요 없는 Service public 메서드. "클래스이름.메서드이름"으로 적는다
+    /** 트랜잭션 불필요 Service public 메서드 ("클래스이름.메서드이름") */
     private static final Set<String> TRANSACTIONAL_EXCEPTIONS = Set.of();
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
@@ -53,7 +54,7 @@ class ArchitectureTest {
         return ROOT + "." + domain + "..";
     }
 
-    // 모든 도메인에서 이름이 layer인 패키지. layer가 비어 있으면 도메인 전체
+    /** 도메인별 layer 패키지 (빈 layer는 도메인 전체) */
     private static String[] domainPackages(String layer) {
         String suffix = layer.isEmpty() ? ".." : ".." + layer + "..";
         return DOMAIN_LAYERS.keySet().stream()
@@ -109,7 +110,7 @@ class ArchitectureTest {
         for (Map.Entry<String, Integer> entry : DOMAIN_LAYERS.entrySet()) {
             String domain = entry.getKey();
             int layer = entry.getValue();
-            // 같은 층끼리도 부르지 않는다
+            /** 같은 층끼리 호출 금지 */
             String[] sameOrHigher = DOMAIN_LAYERS.entrySet().stream()
                     .filter(other -> !other.getKey().equals(domain) && other.getValue() >= layer)
                     .map(other -> domainPackage(other.getKey()))
