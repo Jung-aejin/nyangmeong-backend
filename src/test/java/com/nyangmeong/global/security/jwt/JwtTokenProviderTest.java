@@ -3,16 +3,21 @@ package com.nyangmeong.global.security.jwt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
 import java.util.Base64;
-import java.util.Date;
+
+import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nyangmeong.global.error.CustomException;
 import com.nyangmeong.global.error.ErrorCode;
-
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 /**
  * [검사 - JWT 발급/검증]
@@ -61,9 +66,11 @@ class JwtTokenProviderTest {
     @Test
     void subject가_숫자가_아니면_UNAUTHORIZED다() {
         JwtTokenProvider provider = create(SECRET, 60_000);
-        String token = Jwts.builder().subject("jinseong@gmail.com")
-                .expiration(new Date(System.currentTimeMillis() + 60_000))
-                .signWith(Keys.hmacShaKeyFor(SECRET)).compact();
+        JwtClaimsSet claims = JwtClaimsSet.builder().subject("jinseong@gmail.com")
+                .expiresAt(Instant.now().plusMillis(60_000)).build();
+        String token = new NimbusJwtEncoder(new ImmutableSecret<>(new SecretKeySpec(SECRET, "HmacSHA256")))
+                .encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims))
+                .getTokenValue();
 
         assertErrorCode(() -> provider.parseMbrSn(token), ErrorCode.UNAUTHORIZED);
     }
