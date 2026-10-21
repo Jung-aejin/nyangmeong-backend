@@ -37,7 +37,7 @@ disable-model-invocation: true
    - `Co-Authored-By:` 같은 AI 도구 줄은 넣지 않는다. 사람이 `커밋`이라고 답하면 커밋한다.
    - 커밋한 뒤 푸시를 제안한다: 올릴 커밋 목록(`git log origin/<이름>..HEAD --oneline`)을 보여 주고 "푸시하려면 `푸시`라고 답해 주세요". 답하면 `git push origin <이름>`만 한다. `develop`·`main`에는 푸시하지 않는다.
    - 푸시한 뒤 PR: `gh pr list --head <이름> --state open`으로 열린 PR이 있으면 "이 커밋은 열린 PR #N에 들어갑니다"라고만 알린다. 없고 이번 마일스톤이 `끝`이면 "PR을 만들려면 `PR`이라고 답해 주세요"라고 묻는다(`진행`이면 묻지 않는다).
-   - `PR`이라고 답하면: `git fetch` 후 `origin/develop`을 merge한다(rebase 하지 않는다. 충돌이 나면 멈추고 알린다) → 검증 명령을 다시 돌린다 → 푸시 → `gh pr create --base develop --head <이름>`. 제목은 커밋 형식이다. 본문은 `.github/pull_request_template.md`를 읽어 섹션 제목·순서를 그대로 채운다(규칙은 `docs/convention/git.md` "PR"). 해당 없는 섹션은 `없음`이라고 쓴다. `Features` 표는 마일스톤의 기능 ID와 검증 보고로, `Test Plan`의 `Result:`는 검증 판정과 회차로, 호출 체크박스는 사람 확인으로 채운다. `Design Decisions`는 기획과 달라진 것과 다른 담당에 영향 가는 선택만 쓴다. AI 도구 문구는 넣지 않는다. `gh`가 없으면 `https://github.com/<저장소>/compare/develop...<이름>` 주소와 본문을 보여 준다.
+   - `PR`이라고 답하면: `git fetch` 후 `origin/develop`을 merge한다(rebase 하지 않는다. 충돌이 나면 `git merge --abort` 하지 않고 충돌 상태 그대로 충돌 파일을 보여 주며 멈춘다) → 검증 명령을 다시 돌린다 → 푸시 → `gh pr create --base develop --head <이름>`. 제목은 커밋 형식이다. 본문은 `.github/pull_request_template.md`를 읽어 섹션 제목·순서를 그대로 채운다(규칙은 `docs/convention/git.md` "PR"). 해당 없는 섹션은 `없음`이라고 쓴다. `Features` 표는 마일스톤의 기능 ID와 검증 보고로, `Test Plan`의 `Result:`는 검증 판정과 회차로, 호출 체크박스는 사람 확인으로 채운다. `Design Decisions`는 기획과 달라진 것과 다른 담당에 영향 가는 선택만 쓴다. AI 도구 문구는 넣지 않는다. `gh`가 없으면 `https://github.com/<저장소>/compare/develop...<이름>` 주소와 본문을 보여 준다.
    - 병합은 하지 않는다. 사람이 GitHub에서 한다.
 8. 보고: 검증 명령별 종료 코드, 사람 확인 결과, 바뀐 절, 동기화 결과, 확인 못 한 것. 마지막 줄:
    - 끝났으면 "다음 작업은 `/clear` 한 뒤 `/start`로 시작하세요"
