@@ -92,15 +92,15 @@ class JwtAuthenticationFilterTest {
 
         assertThat(chain.getRequest()).isNotNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-        verify(mapper, never()).selectForAuth(anyLong());
+        verify(mapper, never()).selectForSession(anyLong(), anyLong());
     }
 
     @Test
     void 유효한_토큰과_정상_회원이면_LoginMember가_principal이_된다() throws Exception {
-        when(mapper.selectForAuth(7L)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.ADMIN.getCode()));
+        when(mapper.selectForSession(7L, 3L)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.ADMIN.getCode()));
         MockFilterChain chain = new MockFilterChain();
 
-        filter.doFilter(requestWith(provider.createAccessToken(7L)), new MockHttpServletResponse(), chain);
+        filter.doFilter(requestWith(provider.createAccessToken(7L, 3L)), new MockHttpServletResponse(), chain);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertThat(authentication).isNotNull();
@@ -115,7 +115,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void 만료된_토큰은_TOKEN_EXPIRED를_요청_속성에_남기고_미인증으로_통과한다() throws Exception {
-        MockHttpServletRequest request = requestWith(expiredProvider.createAccessToken(7L));
+        MockHttpServletRequest request = requestWith(expiredProvider.createAccessToken(7L, 3L));
         MockFilterChain chain = new MockFilterChain();
 
         filter.doFilter(request, new MockHttpServletResponse(), chain);
@@ -123,13 +123,13 @@ class JwtAuthenticationFilterTest {
         assertThat(request.getAttribute(JwtAuthenticationFilter.AUTH_ERROR_CODE)).isEqualTo(ErrorCode.TOKEN_EXPIRED);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         assertThat(chain.getRequest()).isNotNull();
-        verify(mapper, never()).selectForAuth(anyLong());
+        verify(mapper, never()).selectForSession(anyLong(), anyLong());
     }
 
     @Test
     void 회원_행이_없으면_UNAUTHORIZED를_남기고_미인증으로_통과한다() throws Exception {
-        when(mapper.selectForAuth(7L)).thenReturn(null);
-        MockHttpServletRequest request = requestWith(provider.createAccessToken(7L));
+        when(mapper.selectForSession(7L, 3L)).thenReturn(null);
+        MockHttpServletRequest request = requestWith(provider.createAccessToken(7L, 3L));
 
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
 
@@ -138,12 +138,37 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void 폐기되거나_만료된_세션이면_UNAUTHORIZED를_남기고_미인증으로_통과한다() throws Exception {
+        when(mapper.selectForSession(7L, 3L)).thenReturn(null);
+        MockHttpServletRequest request = requestWith(provider.createAccessToken(7L, 3L));
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, new MockHttpServletResponse(), chain);
+
+        verify(mapper).selectForSession(7L, 3L);
+        assertThat(request.getAttribute(JwtAuthenticationFilter.AUTH_ERROR_CODE)).isEqualTo(ErrorCode.UNAUTHORIZED);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(chain.getRequest()).isNotNull();
+    }
+
+    @Test
+    void Refresh_토큰을_Access_쿠키에_넣으면_조회_없이_UNAUTHORIZED다() throws Exception {
+        MockHttpServletRequest request = requestWith(provider.createRefreshToken(7L, 3L));
+
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        assertThat(request.getAttribute(JwtAuthenticationFilter.AUTH_ERROR_CODE)).isEqualTo(ErrorCode.UNAUTHORIZED);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(mapper, never()).selectForSession(anyLong(), anyLong());
+    }
+
+    @Test
     void 정지_탈퇴_회원은_403_MEMBER_INACTIVE와_쿠키_삭제로_끝낸다() throws Exception {
-        when(mapper.selectForAuth(7L)).thenReturn(member(MemberStatus.SUSPENDED.getCode(), MemberAuthority.USER.getCode()));
+        when(mapper.selectForSession(7L, 3L)).thenReturn(member(MemberStatus.SUSPENDED.getCode(), MemberAuthority.USER.getCode()));
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
 
-        filter.doFilter(requestWith(provider.createAccessToken(7L)), response, chain);
+        filter.doFilter(requestWith(provider.createAccessToken(7L, 3L)), response, chain);
 
         assertThat(response.getStatus()).isEqualTo(403);
         assertThat(response.getContentAsString()).contains("\"code\":\"MEMBER_INACTIVE\"");

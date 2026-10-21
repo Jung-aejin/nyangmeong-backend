@@ -1,7 +1,6 @@
 package com.nyangmeong.auth.controller;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,8 +11,7 @@ import com.nyangmeong.auth.dto.DevTokenRequest;
 import com.nyangmeong.auth.service.AuthService;
 import com.nyangmeong.global.response.ApiResponse;
 import com.nyangmeong.global.security.domain.AuthMember;
-import com.nyangmeong.global.security.jwt.JwtTokenProvider;
-import com.nyangmeong.global.security.jwt.TokenCookies;
+import com.nyangmeong.global.security.session.LoginSessionManager;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,18 +30,14 @@ import lombok.RequiredArgsConstructor;
 public class DevTokenController {
 
     private final AuthService authService;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final TokenCookies tokenCookies;
+    private final LoginSessionManager loginSessionManager;
 
     @Operation(summary = "[개발용] 회원 번호로 토큰 쿠키 발급")
     @PostMapping("/dev-tokens")
     public ResponseEntity<ApiResponse<Void>> issue(@Valid @RequestBody DevTokenRequest req,
             HttpServletResponse response) {
         AuthMember member = authService.getForAuth(req.mbrSn());
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                tokenCookies.accessToken(jwtTokenProvider.createAccessToken(member.getMbrSn())).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                tokenCookies.refreshToken(jwtTokenProvider.createRefreshToken(member.getMbrSn())).toString());
+        loginSessionManager.issue(member.getMbrSn(), response);
         return ResponseEntity.ok(ApiResponse.success());
     }
 }

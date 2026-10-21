@@ -10,6 +10,13 @@
 - 연결 남음: 개발용 토큰 발급 (로그인·로그아웃·재발급 API가 생기면 DevTokenController 삭제, YAY)
 - 연결 남음: FN-COM-002-15 (프로필 이미지 URL, 파일 조회 API SCR-MYP-010, LJS)
 
+## SCR-ACC-002 로그인 준비 (토큰 세션 기반, 로그인 API는 YAY) — 끝
+- 기능: 없음(화면 기능은 YAY). SCR-ACC-002 로그인·재발급·로그아웃이 쓸 `global/security` 기반만 만든다
+- 함께 만드는 것: JWT 라이브러리 Nimbus 교체, 토큰 `sid`(RFRSH_TKN_SN)·`typ`, `LoginSessionManager`(세션 발급·회전·폐기), 필터의 세션 확인, `PasswordEncoder`, DevTokenController를 새 발급 방식으로
+- 기다리는 것: 없음
+- 완료 조건: 발급한 세션을 폐기하면 그 Access로 `/api/auth/me`가 401. 같은 Refresh로 두 번 회전하면 두 번째는 `UNAUTHORIZED`
+- 추가 요청: 추가-1 SecurityConfigTest sid 시그니처, 추가-2 스타터 방식 화이트리스트(`app.security.permit-all-paths`)
+
 ## SCR-COM-004 알림 드롭다운 — 대기
 - 기능: FN-COM-002-09 알림 아이콘·미확인 배지(화면은 SCR-COM-002), FN-COM-004-02 미읽음 개수 표시, FN-COM-004-03 유형 탭 노출, FN-COM-004-04 유형 탭 필터, FN-COM-004-05 알림 목록 조회, FN-COM-004-06 알림 클릭·읽음 처리, FN-COM-004-07 유형별 이동 대상 분기, FN-COM-004-08 공동양육 초대 즉시 처리, FN-COM-004-09 펫돌봄 거래 상태 알림 처리, FN-COM-004-10 캐릭터 완료 알림 처리, FN-COM-004-11 자동 읽음 미처리, FN-COM-004-12 7일 경과 자동 숨김, FN-COM-004-13 수신 OFF 유형 미생성, FN-COM-008-16 수신 OFF = 미생성(화면은 SCR-COM-008), FN-AIM-006-06 유형 수신 설정 확인(화면은 SCR-AIM-006), FN-AIM-006-12 헤더 뱃지 갱신(화면은 SCR-AIM-006)
 - API가 남의 것: FN-COM-004-08 초대 수락·거절 (SJM)

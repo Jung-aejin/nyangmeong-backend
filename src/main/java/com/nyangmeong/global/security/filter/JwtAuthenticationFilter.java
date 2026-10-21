@@ -19,6 +19,7 @@ import com.nyangmeong.global.security.domain.MemberAuthority;
 import com.nyangmeong.global.security.domain.MemberStatus;
 import com.nyangmeong.global.security.handler.ErrorResponseWriter;
 import com.nyangmeong.global.security.jwt.JwtTokenProvider;
+import com.nyangmeong.global.security.jwt.TokenClaims;
 import com.nyangmeong.global.security.jwt.TokenCookies;
 
 import jakarta.servlet.FilterChain;
@@ -30,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * [JWT 인증 필터]
  * - access_token 쿠키 검증 후 SecurityContext 에 LoginMember 저장
- * - 토큰 없음/무효/만료는 미인증 통과 (만료는 요청 속성 AUTH_ERROR_CODE)
+ * - 토큰 없음/무효/만료/폐기된 세션은 미인증 통과 (사유는 요청 속성 AUTH_ERROR_CODE)
  * - 정지/탈퇴 회원은 403 + 쿠키 삭제
  */
 @RequiredArgsConstructor
@@ -52,18 +53,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        Long mbrSn;
+        TokenClaims claims;
         try {
-            mbrSn = jwtTokenProvider.parseMbrSn(token);
+            claims = jwtTokenProvider.parseAccess(token);
         } catch (BaseException e) {
             request.setAttribute(AUTH_ERROR_CODE, e.getErrorCode());
             chain.doFilter(request, response);
             return;
         }
 
-        AuthMember member = authMemberMapper.selectForAuth(mbrSn);
+        AuthMember member = authMemberMapper.selectForSession(claims.mbrSn(), claims.sid());
         if (member == null) {
-            /** 회원 행 없음 */
+            /** 회원 행 없음 또는 폐기·만료된 세션 */
             request.setAttribute(AUTH_ERROR_CODE, ErrorCode.UNAUTHORIZED);
             chain.doFilter(request, response);
             return;

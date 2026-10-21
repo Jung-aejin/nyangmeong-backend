@@ -15,7 +15,7 @@
 | VO·Mapper·Service의 **클래스 이름**을 테이블 약어로 지을지(`Pst`), 뜻이 드러나는 영어로 지을지(`Post`). 필드 이름은 DB 컬럼 그대로로 정해졌다 | 뜻이 드러나는 영어 |
 | 기능 이슈를 어느 저장소에 둘지(기능 하나가 백엔드와 프론트 양쪽에 걸친다) | 정해지지 않음 |
 | `develop`을 `main`으로 올리는 시점과 담당 | 정해지지 않음 |
-| 로그인·로그아웃·재발급 API 구현 시점(YAY). 프론트에 영향 | 토큰 기반(JWT httpOnly 쿠키, 검증 필터, `SecurityConfig`)은 `global/security`에 있다(2026-10-20). 로그인 API가 나오기 전에는 `prod`가 아닌 프로필에서만 뜨는 `POST /api/auth/dev-tokens`(회원 번호 → 쿠키)로 개발한다. 로그인이 생기면 `auth/controller/DevTokenController`·`auth/dto/DevTokenRequest`를 지운다. 운영은 반드시 `prod` 프로필로 띄운다 |
+| 로그인·로그아웃·재발급 API 구현 시점(YAY). 프론트에 영향 | 토큰 기반(JWT httpOnly 쿠키, 검증 필터, `SecurityConfig`)은 `global/security`에 있다(2026-10-20). 로그인 API가 나오기 전에는 `prod`가 아닌 프로필에서만 뜨는 `POST /api/auth/dev-tokens`(회원 번호 → 쿠키)로 개발한다. 로그인이 생기면 `auth/controller/DevTokenController`·`auth/dto/DevTokenRequest`를 지운다. 운영은 반드시 `prod` 프로필로 띄운다. 세션은 `global/security/session/LoginSessionManager`로 다룬다(2026-10-21): 로그인 성공 시 `issue(mbrSn, response)`(RFRSH_TKN 행 + 쿠키 2개), 재발급 `rotate(request, response)`(옛 세션 폐기 + 새 쿠키, 재사용·실패는 `UNAUTHORIZED`와 쿠키 삭제), 로그아웃 `revoke(request, response)`(Refresh 쿠키만으로 폐기, 쿠키가 없어도 예외 없음). 열린 경로는 `app.security.permit-all-paths`(기본값 `SecurityPathProperties`)에 하나씩 적고, 목록 밖은 전부 인증이 필요하다. `/api/auth/login`·`/refresh`·`/logout`은 이미 목록에 있고, 로그인 상태 확인·보안코드처럼 새로 여는 경로는 목록에 추가한다. 로그아웃은 Access 없이 Refresh 쿠키로 동작한다. 폐기된 세션의 Access는 필터가 바로 401로 막는다 |
 
 ## 공통 모듈 담당이 정할 것
 

@@ -25,10 +25,8 @@ dependencies {
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.1.0'
 	implementation 'com.github.pagehelper:pagehelper-spring-boot-starter:4.1.1'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
-	// JWT 발급·검증(global/security/jwt). jjwt-jackson은 Jackson 2를 따로 끌어오지만 Boot 4의 Jackson 3와 패키지가 달라 충돌하지 않는다
-	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	// JWT 발급·검증(global/security/jwt). Spring Security 내장 NimbusJwtEncoder/Decoder, 버전은 Boot 관리
+	implementation 'org.springframework.security:spring-security-oauth2-jose'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
