@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Param;
 
 import com.nyangmeong.notification.domain.InappNotification;
 import com.nyangmeong.notification.domain.NotificationReceiveSetting;
+import com.nyangmeong.notification.domain.NotificationRecipient;
+import com.nyangmeong.notification.domain.NotificationTemplate;
 import com.nyangmeong.notification.dto.NotificationSummary;
 
 /**
@@ -19,6 +21,17 @@ public interface NotificationMapper {
      * 회원 알림 수신 설정 조회
      */
     NotificationReceiveSetting selectReceiveSetting(Long mbrSn);
+
+    /**
+     * 메일 수신자 조회
+     */
+    NotificationRecipient selectRecipient(Long mbrSn);
+
+    /**
+     * 사용 중인 알림 템플릿 조회
+     */
+    NotificationTemplate selectTemplate(@Param("notiTypeCd") String notiTypeCd,
+            @Param("notiChnlCd") String notiChnlCd);
 
     /**
      * 회원 알림 수신 설정 수정

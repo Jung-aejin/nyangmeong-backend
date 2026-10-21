@@ -46,7 +46,7 @@ class ArchitectureTest {
         layers.put("community", 3);
         layers.put("support", 3);
         layers.put("admin", 4);
-        layers.put("job", 4);
+        layers.put("scheduler", 4);
         return layers;
     }
 

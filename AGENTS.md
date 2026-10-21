@@ -36,7 +36,7 @@ com.nyangmeong
 ├─ support/  notification/  expense/
 │                          업무 기능. 도메인 1개 = 패키지 1개
 ├─ admin/                  여러 도메인을 합치는 관리자 조회만
-└─ job/                    여러 도메인에 걸친 배치만
+└─ scheduler/              여러 도메인에 걸친 배치만
 
 src/main/resources/mapper/{도메인}/{이름}Mapper.xml   (공통 모듈은 mapper/global/)
 db/                        테이블 생성·변경 SQL (저장소 루트). 사람이 직접 실행한다.
@@ -60,7 +60,7 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 3. 다른 도메인은 그 도메인의 `service`로만 부른다. 다른 도메인의 `mapper`를 직접 부르지 않는다.
 4. 알림과 메일은 호출하지 않고 이벤트를 발행한다.
 
-1~3번, 아래 층 표, `admin`·`job` import 규칙은 ArchUnit 테스트(`ArchitectureTest`)가 검사한다. `./gradlew build`에서 이 테스트가 실패하면 메시지에 나온 import를 고친다. 테스트를 고치거나 꺼서 통과시키지 않는다. 도메인을 새로 만들면 층 표와 이 테스트를 같이 고친다.
+1~3번, 아래 층 표, `admin`·`scheduler` import 규칙은 ArchUnit 테스트(`ArchitectureTest`)가 검사한다. `./gradlew build`에서 이 테스트가 실패하면 메시지에 나온 import를 고친다. 테스트를 고치거나 꺼서 통과시키지 않는다. 도메인을 새로 만들면 층 표와 이 테스트를 같이 고친다.
 
 ### 도메인 간 호출은 낮은 층으로만
 
@@ -70,7 +70,7 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 | 1 | `pet`, `auth` | 0층 |
 | 2 | `health`, `place`, `notification` | 0~1층 |
 | 3 | `expense`, `community`, `support` | 0~2층 |
-| 4 | `admin`, `job` | 전부 |
+| 4 | `admin`, `scheduler` | 전부 |
 
 - 자기보다 낮은 층의 service만 부른다. 같은 층끼리는 부르지 않는다. 이 규칙이면 두 도메인이 서로를 부르는 순환이 생기지 않는다.
 - 위층의 기능이 필요하면 위층을 부르지 않는다. 위층이 아래층을 부르도록 방향을 바꾸거나, 이벤트를 발행하거나, 그 기능을 위층으로 옮긴다.
