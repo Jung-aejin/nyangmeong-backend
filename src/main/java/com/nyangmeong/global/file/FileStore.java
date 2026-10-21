@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * [파일 저장·읽기]
- * - 디스크(app.file.root-dir) + ATCH_FILE 행, 확장자 jpg·jpeg·png·webp, 크기 상한 SYS_STNG.FILE_MAX_SZ
+ * - 디스크(app.file.root-dir) + ATCH_FILE 행, 확장자 jpg·jpeg·png·webp + 실제 형식, 크기 상한 SYS_STNG.FILE_MAX_SZ
  * - 트랜잭션 롤백 시 디스크 파일도 삭제
  */
 @Slf4j
@@ -50,11 +50,16 @@ public class FileStore {
         if (file.getSize() > systemSettingService.get().getFileMaxSz()) {
             throw new CustomException(ErrorCode.FILE_TOO_LARGE);
         }
+        byte[] content;
         try {
-            return save(file.getBytes(), extension, file.getOriginalFilename(), actorId);
+            content = file.getBytes();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+        if (!extension.matchesContent(content)) {
+            throw new CustomException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        }
+        return save(content, extension, file.getOriginalFilename(), actorId);
     }
 
     /**
