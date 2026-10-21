@@ -66,6 +66,9 @@ class SecurityConfigTest {
         }
     }
 
+    /** 로그인 세션 번호 */
+    private static final Long SID = 5L;
+
     @Autowired
     MockMvc mockMvc;
 
@@ -87,7 +90,7 @@ class SecurityConfigTest {
     }
 
     private Cookie accessCookie(Long mbrSn) {
-        return new Cookie(TokenCookies.ACCESS_TOKEN, jwtTokenProvider.createAccessToken(mbrSn));
+        return new Cookie(TokenCookies.ACCESS_TOKEN, jwtTokenProvider.createAccessToken(mbrSn, SID));
     }
 
     private Cookie expiredCookie() {
@@ -96,7 +99,7 @@ class SecurityConfigTest {
         expired.setAccessTokenExpiryMs(-1_000);
         JwtTokenProvider provider = new JwtTokenProvider(expired);
         provider.initializeKey();
-        return new Cookie(TokenCookies.ACCESS_TOKEN, provider.createAccessToken(1L));
+        return new Cookie(TokenCookies.ACCESS_TOKEN, provider.createAccessToken(1L, SID));
     }
 
     @Test
@@ -119,7 +122,7 @@ class SecurityConfigTest {
 
     @Test
     void 유효한_토큰과_정상_회원이면_LoginMember를_받는다() throws Exception {
-        when(authMemberMapper.selectForAuth(1L)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.USER.getCode()));
+        when(authMemberMapper.selectForSession(1L, SID)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.USER.getCode()));
 
         mockMvc.perform(get("/api/ping").cookie(accessCookie(1L)))
                 .andExpect(status().isOk())
@@ -127,8 +130,17 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 폐기된_세션의_토큰은_401_UNAUTHORIZED다() throws Exception {
+        when(authMemberMapper.selectForSession(1L, SID)).thenReturn(null);
+
+        mockMvc.perform(get("/api/ping").cookie(accessCookie(1L)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
     void 정지_탈퇴_회원은_403_MEMBER_INACTIVE와_쿠키_삭제_헤더다() throws Exception {
-        when(authMemberMapper.selectForAuth(1L)).thenReturn(member(MemberStatus.WITHDRAWN.getCode(), MemberAuthority.USER.getCode()));
+        when(authMemberMapper.selectForSession(1L, SID)).thenReturn(member(MemberStatus.WITHDRAWN.getCode(), MemberAuthority.USER.getCode()));
 
         mockMvc.perform(get("/api/ping").cookie(accessCookie(1L)))
                 .andExpect(status().isForbidden())
@@ -140,12 +152,12 @@ class SecurityConfigTest {
 
     @Test
     void 관리자_경로는_일반회원이면_403_ADMIN_ONLY_관리자면_200이다() throws Exception {
-        when(authMemberMapper.selectForAuth(1L)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.USER.getCode()));
+        when(authMemberMapper.selectForSession(1L, SID)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.USER.getCode()));
         mockMvc.perform(get("/api/admin/ping").cookie(accessCookie(1L)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("ADMIN_ONLY"));
 
-        when(authMemberMapper.selectForAuth(1L)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.ADMIN.getCode()));
+        when(authMemberMapper.selectForSession(1L, SID)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.ADMIN.getCode()));
         mockMvc.perform(get("/api/admin/ping").cookie(accessCookie(1L)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("admin"));
@@ -153,7 +165,7 @@ class SecurityConfigTest {
 
     @Test
     void 변경_요청에_X_Requested_With가_없으면_403_FORBIDDEN이다() throws Exception {
-        when(authMemberMapper.selectForAuth(1L)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.USER.getCode()));
+        when(authMemberMapper.selectForSession(1L, SID)).thenReturn(member(MemberStatus.NORMAL.getCode(), MemberAuthority.USER.getCode()));
 
         mockMvc.perform(post("/api/ping").cookie(accessCookie(1L)))
                 .andExpect(status().isForbidden())
@@ -167,6 +179,24 @@ class SecurityConfigTest {
     void 열린_경로는_쿠키_없이_인증에_막히지_않는다() throws Exception {
         for (String path : new String[] {"/v3/api-docs", "/swagger-ui/index.html", "/api/auth/dev-tokens"}) {
             int status = mockMvc.perform(get(path)).andReturn().getResponse().getStatus();
+            assertThat(status).as(path).isNotIn(401, 403);
+        }
+    }
+
+    @Test
+    void 화이트리스트_밖은_auth_아래나_api_밖이어도_401이다() throws Exception {
+        for (String path : new String[] {"/api/auth/unknown", "/files/1", "/"}) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+        }
+    }
+
+    @Test
+    void 화이트리스트의_인증_경로는_쿠키_없이_인증에_막히지_않는다() throws Exception {
+        for (String path : new String[] {"/api/auth/login", "/api/auth/refresh", "/api/auth/logout"}) {
+            int status = mockMvc.perform(post(path).header("X-Requested-With", "XMLHttpRequest"))
+                    .andReturn().getResponse().getStatus();
             assertThat(status).as(path).isNotIn(401, 403);
         }
     }

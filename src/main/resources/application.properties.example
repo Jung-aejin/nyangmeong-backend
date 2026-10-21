@@ -26,6 +26,8 @@ app.jwt.refresh-token-expiry-ms=86400000
 app.cookie.secure=false
 # 쿠키를 실어 보낼 수 있는 프론트 오리진(쉼표 구분). 개발은 Vite 주소
 app.cors.allowed-origins=http://localhost:5173
+# 로그인 없이 여는 경로(쉼표 구분). 목록 밖은 전부 인증이 필요하다. 생략하면 아래와 같은 기본값
+app.security.permit-all-paths=/api/auth/dev-tokens,/api/auth/login,/api/auth/refresh,/api/auth/logout,/swagger-ui/**,/swagger-ui.html,/v3/api-docs/**
 
 # DMS MCP 서버 주소. setup이 읽어 AI 도구에 등록한다. claude.ai dms 커넥터가 연결돼 있으면 비워도 된다
 dms.mcp-url=

@@ -1,8 +1,8 @@
 package com.nyangmeong.global.security;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,12 +27,13 @@ import lombok.RequiredArgsConstructor;
 /**
  * [설정 - Spring Security]
  * - STATELESS : JWT 쿠키 기반, 세션 미사용
- * - 열린 경로 : /api/auth/** (/auth/me 제외), Swagger
- * - /api/admin/** 은 ROLE_ADMIN, 나머지 /api/** 는 인증 필요
+ * - 열린 경로 : app.security.permit-all-paths (SecurityPathProperties)
+ * - /api/admin/** 은 ROLE_ADMIN, 목록 밖은 전부 인증 필요
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties(SecurityPathProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -42,6 +43,7 @@ public class SecurityConfig {
     private final ErrorResponseWriter errorResponseWriter;
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
+    private final SecurityPathProperties securityPathProperties;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -58,13 +60,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         /** 에러 페이지 포워딩 허용 */
                         .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.ASYNC).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers(RestAccessDeniedHandler.ADMIN_PATH_PREFIX + "**")
                         .hasAuthority(MemberAuthority.ADMIN.getRole())
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll())
+                        .requestMatchers(securityPathProperties.getPermitAllPaths().toArray(String[]::new)).permitAll()
+                        .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))

@@ -20,6 +20,19 @@
          WHERE MBR_SN = #{mbrSn}
     </select>
 
+    <!-- 로그아웃·회전으로 폐기된 세션의 Access 차단 -->
+    <select id="selectForSession" resultMap="authMemberResultMap">
+        SELECT M.MBR_SN
+             , M.MBR_STTS_CD
+             , M.MBR_AUTHRT_CD
+          FROM MBR M
+          JOIN RFRSH_TKN T
+            ON T.MBR_SN = M.MBR_SN
+         WHERE M.MBR_SN = #{mbrSn}
+           AND T.RFRSH_TKN_SN = #{rfrshTknSn}
+           AND T.DSCD_DT IS NULL
+           AND T.EXPRY_DT &gt; NOW()
+    </select>
     <select id="selectForMe" parameterType="long" resultMap="authMemberResultMap">
         SELECT MBR_SN
              , MBR_STTS_CD

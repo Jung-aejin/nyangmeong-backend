@@ -3,16 +3,21 @@ package com.nyangmeong.global.security.jwt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
 import java.util.Base64;
-import java.util.Date;
+
+import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nyangmeong.global.error.CustomException;
 import com.nyangmeong.global.error.ErrorCode;
-
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 /**
  * [검사 - JWT 발급/검증]
@@ -30,22 +35,43 @@ class JwtTokenProviderTest {
         return provider;
     }
 
+    /** 같은 키로 직접 서명한 토큰 */
+    private static String sign(String subject, String sid, String typ) {
+        JwtClaimsSet.Builder claims = JwtClaimsSet.builder().subject(subject)
+                .expiresAt(Instant.now().plusSeconds(60));
+        if (sid != null) {
+            claims.claim("sid", sid);
+        }
+        if (typ != null) {
+            claims.claim("typ", typ);
+        }
+        NimbusJwtEncoder encoder = new NimbusJwtEncoder(
+                new ImmutableSecret<>(new SecretKeySpec(SECRET, MacAlgorithm.HS256.getName())));
+        return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims.build()))
+                .getTokenValue();
+    }
+
     @Test
-    void 발급한_Access_토큰의_subject는_회원_번호다() {
+    void 발급한_토큰에서_회원_번호와_세션_번호를_꺼낸다() {
         JwtTokenProvider provider = create(SECRET, 60_000);
 
-        assertThat(provider.parseMbrSn(provider.createAccessToken(42L))).isEqualTo(42L);
-        assertThat(provider.parseMbrSn(provider.createRefreshToken(42L))).isEqualTo(42L);
+        assertThat(provider.parseAccess(provider.createAccessToken(42L, 9L))).isEqualTo(new TokenClaims(42L, 9L));
+        assertThat(provider.parseRefresh(provider.createRefreshToken(42L, 9L))).isEqualTo(new TokenClaims(42L, 9L));
+    }
+
+    @Test
+    void 헤더는_HS256이고_kid가_없다() {
+        String token = create(SECRET, 60_000).createAccessToken(1L, 1L);
+        String header = new String(Base64.getUrlDecoder().decode(token.split("\\.")[0]));
+
+        assertThat(header).contains("\"alg\":\"HS256\"").doesNotContain("kid");
     }
 
     @Test
     void 만료된_토큰은_TOKEN_EXPIRED다() {
         JwtTokenProvider provider = create(SECRET, -1_000);
 
-        assertThatThrownBy(() -> provider.parseMbrSn(provider.createAccessToken(1L)))
-                .isInstanceOf(CustomException.class)
-                .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.TOKEN_EXPIRED);
+        assertErrorCode(() -> provider.parseAccess(provider.createAccessToken(1L, 1L)), ErrorCode.TOKEN_EXPIRED);
     }
 
     @Test
@@ -53,19 +79,28 @@ class JwtTokenProviderTest {
         JwtTokenProvider provider = create(SECRET, 60_000);
         JwtTokenProvider other = create("another-secret-for-tests-32-bytes!!!".getBytes(), 60_000);
 
-        assertErrorCode(() -> provider.parseMbrSn(other.createAccessToken(1L)), ErrorCode.UNAUTHORIZED);
-        assertErrorCode(() -> provider.parseMbrSn("not.a.jwt"), ErrorCode.UNAUTHORIZED);
-        assertErrorCode(() -> provider.parseMbrSn(""), ErrorCode.UNAUTHORIZED);
+        assertErrorCode(() -> provider.parseAccess(other.createAccessToken(1L, 1L)), ErrorCode.UNAUTHORIZED);
+        assertErrorCode(() -> provider.parseAccess("not.a.jwt"), ErrorCode.UNAUTHORIZED);
+        assertErrorCode(() -> provider.parseAccess(""), ErrorCode.UNAUTHORIZED);
     }
 
     @Test
-    void subject가_숫자가_아니면_UNAUTHORIZED다() {
+    void 토큰_종류가_다르면_UNAUTHORIZED다() {
         JwtTokenProvider provider = create(SECRET, 60_000);
-        String token = Jwts.builder().subject("jinseong@gmail.com")
-                .expiration(new Date(System.currentTimeMillis() + 60_000))
-                .signWith(Keys.hmacShaKeyFor(SECRET)).compact();
 
-        assertErrorCode(() -> provider.parseMbrSn(token), ErrorCode.UNAUTHORIZED);
+        assertErrorCode(() -> provider.parseAccess(provider.createRefreshToken(1L, 1L)), ErrorCode.UNAUTHORIZED);
+        assertErrorCode(() -> provider.parseRefresh(provider.createAccessToken(1L, 1L)), ErrorCode.UNAUTHORIZED);
+        assertErrorCode(() -> provider.parseAccess(sign("1", "1", null)), ErrorCode.UNAUTHORIZED);
+    }
+
+    @Test
+    void subject나_sid가_숫자가_아니거나_없으면_UNAUTHORIZED다() {
+        JwtTokenProvider provider = create(SECRET, 60_000);
+
+        assertThat(provider.parseAccess(sign("1", "2", "access"))).isEqualTo(new TokenClaims(1L, 2L));
+        assertErrorCode(() -> provider.parseAccess(sign("jinseong@gmail.com", "1", "access")), ErrorCode.UNAUTHORIZED);
+        assertErrorCode(() -> provider.parseAccess(sign("1", "abc", "access")), ErrorCode.UNAUTHORIZED);
+        assertErrorCode(() -> provider.parseAccess(sign("1", null, "access")), ErrorCode.UNAUTHORIZED);
     }
 
     @Test
