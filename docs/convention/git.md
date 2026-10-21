@@ -38,7 +38,7 @@
 [LJS] fix: 체중 기록 삭제 시 프로필 체중이 갱신되지 않는 문제 수정
 ```
 
-종류는 `feat`, `fix`, `refactor`, `test`, `docs`, `chore`다. 이니셜은 자기 브랜치 이름과 같게 쓴다. 관련 기능명세서 ID가 있으면 본문에 적는다(예: `FN-MYP-003-01`).
+종류는 `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `chore`, `ci`, `revert`다. Conventional Commits의 범위 표기(`feat(pet):`)와 `!`는 쓰지 않는다. 이니셜은 자기 브랜치 이름과 같게 쓴다. 관련 기능명세서 ID가 있으면 본문에 적는다(예: `FN-MYP-003-01`).
 
 커밋 메시지에 `Co-Authored-By:` 줄을 넣지 않는다. AI 도구가 자동으로 붙인 줄은 setup이 등록하는 커밋 훅(`.githooks/commit-msg`)이 지운다. GitHub은 이 줄에 적힌 계정을 그 커밋의 공동 작성자로 표시한다.
 
@@ -47,7 +47,24 @@
 - 대상은 `develop`이다(`hotfix/`만 `main`과 `develop` 양쪽). 승인 없이 누구나 병합할 수 있다. CI 통과 후 merge 커밋으로 병합한다.
 - 제목은 커밋 형식과 같게 쓴다.
 - PR을 열면(초안은 리뷰 가능으로 바꿀 때) `.github/workflows/pr-notify.yml`이 디스코드 채널로 알린다. 병합·닫힘은 알리지 않는다. 웹훅 주소는 저장소 시크릿 `DISCORD_WEBHOOK_URL`에만 둔다(공개 저장소라 파일에 적지 않는다). 프론트와 백엔드는 채널이 다르다.
-- 본문에 관련 FN ID, 무엇을 왜 바꿨는지, 어떻게 확인했는지를 적는다.
+- 본문은 `.github/pull_request_template.md`를 채운다. 프론트 저장소와 같은 규칙이다(프론트는 `Features` 자리에 `Screenshots`).
+  - 섹션 제목은 영어, 내용은 한국어로 쓴다. 순서를 바꾸지 않는다.
+  - 해당 없는 섹션은 지우지 않고 `없음`이라고 쓴다. 더 적을 것이 있으면 섹션을 추가해도 된다.
+  - 리뷰어 섹션은 두지 않는다(리뷰어 없이 병합한다).
+
+| 섹션 | 쓰는 것 |
+| --- | --- |
+| `## Summary` | 화면 ID·기능 ID와 이 PR이 하는 일 1~3줄 |
+| `## Changes` | 파일·모듈 단위 변경 목록 |
+| `## Features` | 구현한 기능 표 `\| 기능 ID \| 내용 \|` (아래 규칙) |
+| `## Test Plan` | 체크박스(`./gradlew build`, Swagger·Postman으로 호출한 API)와 `Result:`(검증 판정) |
+| `## Design Decisions` | `Decision`·`Why`·`Alternatives Considered` (아래 규칙) |
+| `## Breaking Changes` | 프론트·다른 담당에 영향 가는 변경: 응답 필드·형식, DB·ERD, 공유 설정 키 |
+| `## Related Issues` | `Closes #번호` |
+
+- `Features` 표: 공통 기반 코드는 기능 ID 칸에 `(기반)`이라고 쓴다. 여러 ID는 `FN-COM-004-03·04·05·12`처럼 묶는다. 다른 담당에게 넘긴 것은 내용에 `연결 남음: … (담당)`이라고 쓴다.
+  - 예: `| FN-COM-004-06·11 | POST /api/notifications/{inappNotiSn}/read, 남의·없는 알림은 404 NOTIFICATION_NOT_FOUND |`
+- `Design Decisions`에는 기획과 달라진 것과 다른 담당·프론트에 영향 가는 선택만 쓴다. 사소한 구현 선택은 쓰지 않는다. `Alternatives Considered`는 실제로 비교한 대안이 있을 때만 쓴다.
 
 ## 작업 상태 공유
 
