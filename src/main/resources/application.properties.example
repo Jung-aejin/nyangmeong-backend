@@ -29,5 +29,12 @@ app.cors.allowed-origins=http://localhost:5173
 # 로그인 없이 여는 경로(쉼표 구분). 목록 밖은 전부 인증이 필요하다. 생략하면 아래와 같은 기본값
 app.security.permit-all-paths=/api/auth/dev-tokens,/api/auth/login,/api/auth/refresh,/api/auth/logout,/swagger-ui/**,/swagger-ui.html,/v3/api-docs/**
 
+# 파일 저장(SCR-MYP-010). 저장 루트 폴더(git 제외 uploads 권장, 개인 PC 경로는 커밋하지 않는다). 업로드 상한은 SYS_STNG.FILE_MAX_SZ(10MB)와 맞춘다
+app.file.root-dir=uploads
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+# 캐릭터 생성기. 외부 API가 정해지기 전에는 fake(가짜 성공), 실패 시험은 fake-fail
+app.character.generator=fake
+
 # DMS MCP 서버 주소. setup이 읽어 AI 도구에 등록한다. claude.ai dms 커넥터가 연결돼 있으면 비워도 된다
 dms.mcp-url=

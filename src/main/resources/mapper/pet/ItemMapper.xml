@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nyangmeong.pet.mapper.ItemMapper">
+
+    <!-- 판매 종료(NTSL_YN = 'N') 아이템도 보유 중이면 이미지 필요 -->
+    <select id="selectAtchFileSn" parameterType="long" resultType="long">
+        SELECT ATCH_FILE_SN
+          FROM ITEM
+         WHERE ITEM_SN = #{itemSn}
+    </select>
+</mapper>

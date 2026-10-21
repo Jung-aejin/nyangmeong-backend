@@ -29,6 +29,7 @@
 | 신고 테이블의 소유 도메인 | `community`, `support` |
 | `@Scheduled` 클래스의 위치와 이름 | 배치를 만드는 도메인 |
 | 메일 패키지와 `MailEvent`, `global`의 `external`·`batch`·`setting` 패키지, `checkOwner`의 이름과 위치(아직 제안) | 이 이름을 쓰는 도메인. 바뀔 수 있다 |
+| 범용 파일 조회 API(`GET /files/{atchFileSn}`)를 둘지. 번호만으로 열면 로그인한 누구나 남의 반려동물 원본 사진·영수증을 볼 수 있다. 지금은 자원별 경로로만 연다(`/pets/{petSn}/character-image`는 `PetAuthorizer`, `/items/{itemSn}/image`는 상점 공용, 2026-10-21) | 프로필 이미지(FN-COM-002-15), 게시글·문의 첨부, 검진 첨부 |
 
 ## 필요해질 때까지 미룬 것
 

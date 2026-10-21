@@ -28,6 +28,7 @@ public enum ErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 정보를 찾을 수 없습니다."),
     COMMON_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 공통코드입니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "허용하지 않는 요청 방식입니다."),
+    IDEMPOTENCY_KEY_REQUIRED(HttpStatus.BAD_REQUEST, "요청 식별값(Idempotency-Key)이 필요합니다."),
     /** 멱등 요청 ID(idmptDmndId)가 같은 요청이 처리 중이거나 끝난 경우 */
     ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 요청입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."),
@@ -72,6 +73,8 @@ public enum ErrorCode {
     PIXEL_CHARACTER_NOT_FOUND(HttpStatus.NOT_FOUND, "캐릭터를 찾을 수 없습니다."),
     PIXEL_CHARACTER_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 캐릭터가 있는 반려동물입니다."),
     PIXEL_CHARACTER_CREATING(HttpStatus.CONFLICT, "캐릭터를 생성하는 중입니다. 잠시 후 다시 시도해 주세요."),
+    PIXEL_CHARACTER_UNDER_REVIEW(HttpStatus.BAD_REQUEST, "오류 확인 중인 캐릭터는 꾸밀 수 없습니다."),
+    PIXEL_CHARACTER_INQUIRY_ALREADY_RECEIVED(HttpStatus.CONFLICT, "이미 오류 문의가 접수된 캐릭터입니다."),
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "아이템을 찾을 수 없습니다."),
     ITEM_ALREADY_HELD(HttpStatus.CONFLICT, "이미 보유한 아이템입니다."),
     ITEM_NOT_HELD(HttpStatus.BAD_REQUEST, "보유하지 않은 아이템은 착용할 수 없습니다."),

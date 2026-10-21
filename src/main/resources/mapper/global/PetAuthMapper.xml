@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nyangmeong.global.auth.PetAuthMapper">
+
+    <select id="existsPet" parameterType="long" resultType="boolean">
+        SELECT EXISTS (
+               SELECT 1
+                 FROM PET
+                WHERE PET_SN = #{petSn}
+                  AND DEL_YN = 'N'
+               )
+    </select>
+
+    <!-- 연동 해제된 관계(USE_YN = 'N')는 권한 없음 -->
+    <select id="selectBrupRoleCd" resultType="string">
+        SELECT R.BRUP_ROLE_CD
+          FROM BRUP_REL R
+          JOIN PET P
+            ON P.PET_SN = R.PET_SN
+         WHERE R.PET_SN = #{petSn}
+           AND R.MBR_SN = #{mbrSn}
+           AND R.USE_YN = 'Y'
+           AND P.DEL_YN = 'N'
+    </select>
+</mapper>
