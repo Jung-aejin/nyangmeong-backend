@@ -21,6 +21,11 @@ public interface NotificationMapper {
     NotificationReceiveSetting selectReceiveSetting(Long mbrSn);
 
     /**
+     * 회원 알림 수신 설정 수정
+     */
+    int updateReceiveSetting(@Param("setting") NotificationReceiveSetting setting, @Param("actorId") String actorId);
+
+    /**
      * 인앱 알림 등록
      */
     void insert(InappNotification notification);

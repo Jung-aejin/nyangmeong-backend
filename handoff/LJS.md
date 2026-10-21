@@ -2,11 +2,14 @@
 
 ## 지금 하는 것
 
-SCR-MYP-010 픽셀 캐릭터 관리 — 끝 (2026-10-21). 검증 1회차 통과, 사람 확인(로컬 DB에서 Postman 목록·생성·멱등·상세·이미지·아이템 이미지·착용, 서비스·워커·FileStore 테스트) 완료.
-`global/auth`·`setting`·`code`·`file`·`external`(가짜 생성기)·`AsyncConfig`, `pet` 도메인의 캐릭터 목록·생성 요청(백그라운드 생성, 멱등 키)·꾸미기 상세·착용 저장·캐릭터 이미지(full/face)·아이템 이미지, 오류 문의 접수·확인 종료 서비스 메서드. 기획과 달라진 것(생성 응답 201, afterCommit + @Async 워커, receiveErrorInquiry에 mbrSn 추가)은 커밋 메시지 본문에 있다.
+SCR-COM-008 설정 (알림) — 끝 (2026-10-21). 검증 2회차 통과(1회차는 로컬 DB 회원 1 이메일 복호화 실패로 화면 확인 못 함), 사람 확인 완료.
+`GET·PUT /api/notifications/settings`(notification 도메인): 채널·케어 일정·사전 알림 시점(TODAY·D1·D3·D7)·펫돌봄 거래·커뮤니티·가계부 수신 여부, 가린 가입 이메일, 월 지출 한도 설정 여부(MBR.MM_EXPND_LIM_AMT, SJM API 대신). 기획과 달라진 것: 요청·응답 필드 이름을 DTO 규칙대로 컬럼식(`emlNotiRcptnYn` 등)으로 씀.
 
 ## 다음에 할 것
 
+- OAuth 소셜 로그인을 따로 기획한다(`/start`). nct-backend의 `global/security/handler`(OAuth2 성공·실패 핸들러)·`CustomOAuth2UserService`, `spring-boot-starter-oauth2-client` 의존성, `application.properties.example` 키, `SecurityConfig` 연결. 소셜 제공자와 YAY 담당 여부를 먼저 정한다
+- 프론트에 알린다: 알림 설정 API `GET·PUT /api/notifications/settings` 필드는 `maskedAcntEml`, `emlNotiRcptnYn`, `inappNotiRcptnYn`, `careSchdlNotiRcptnYn`, `leadTimes`(`TODAY`·`D1`·`D3`·`D7`), `mtchDlngNotiRcptnYn`, `cmntNotiRcptnYn`, `lostExpryNotiRcptnYn`, `expndLimNotiRcptnYn`, `expndLimSetYn`(GET만). 케어 일정 ON에 `leadTimes`가 비면 400 `INVALID_INPUT_VALUE`
+- 로컬 DB 회원 1의 이메일을 지금 `app.crypto.*` 키로 `ljs_test@example.com`으로 다시 암호화했다(원래 암호문은 개인 키라 풀리지 않았다). 팀 키를 정하면 다시 맞춘다
 - SCR-MYP-010 연결 남음: FN-MYP-010-24 1:1 문의 작성(SCR-CSC-003, KSJ)이 `PixelCharacterService.receiveErrorInquiry(mbrSn, pixelCharSn, otoInqrySn)`를 부르고, 돌려받은 결과 ATCH_FILE_SN을 문의에 첨부한다
 - SCR-MYP-010 연결 남음: FN-MYP-010-23 관리자 확인 화면(담당 미정)이 `finishErrorCheck(pixelCharSn, regenerate)`를 부른다
 - FN-MYP-010-19 규격 미확보 시 베이스 캐릭터 선택 방식 전환: 캐릭터 생성 외부 API가 정해지면 `CharacterGenerator` 실제 구현과 함께 판단한다. 기본 캐릭터 이미지(`resources/character/default-*.png`)도 디자인 이미지로 바꾼다

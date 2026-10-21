@@ -10,6 +10,8 @@ import lombok.Data;
 public class NotificationReceiveSetting {
     private Long mbrSn;
     private String mbrSttsCd;
+    private Long mmExpndLimAmt;
+    private String emlNotiRcptnYn;
     private String inappNotiRcptnYn;
     private String careSchdlNotiRcptnYn;
     private String mtchDlngNotiRcptnYn;
@@ -17,4 +19,8 @@ public class NotificationReceiveSetting {
     private String lostExpryNotiRcptnYn;
     private String expndLimNotiRcptnYn;
     private String charCrtNotiRcptnYn;
+    private String thdyBfhdNotiYn;
+    private String d1BfhdNotiYn;
+    private String d3BfhdNotiYn;
+    private String d7BfhdNotiYn;
 }
