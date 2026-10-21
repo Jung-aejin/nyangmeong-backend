@@ -5,6 +5,8 @@
     <resultMap id="receiveSettingResultMap" type="com.nyangmeong.notification.domain.NotificationReceiveSetting">
         <id     column="MBR_SN"                   property="mbrSn" />
         <result column="MBR_STTS_CD"              property="mbrSttsCd" />
+        <result column="MM_EXPND_LIM_AMT"         property="mmExpndLimAmt" />
+        <result column="EML_NOTI_RCPTN_YN"        property="emlNotiRcptnYn" />
         <result column="INAPP_NOTI_RCPTN_YN"      property="inappNotiRcptnYn" />
         <result column="CARE_SCHDL_NOTI_RCPTN_YN" property="careSchdlNotiRcptnYn" />
         <result column="MTCH_DLNG_NOTI_RCPTN_YN"  property="mtchDlngNotiRcptnYn" />
@@ -12,6 +14,10 @@
         <result column="LOST_EXPRY_NOTI_RCPTN_YN" property="lostExpryNotiRcptnYn" />
         <result column="EXPND_LIM_NOTI_RCPTN_YN"  property="expndLimNotiRcptnYn" />
         <result column="CHAR_CRT_NOTI_RCPTN_YN"   property="charCrtNotiRcptnYn" />
+        <result column="THDY_BFHD_NOTI_YN"        property="thdyBfhdNotiYn" />
+        <result column="D1_BFHD_NOTI_YN"          property="d1BfhdNotiYn" />
+        <result column="D3_BFHD_NOTI_YN"          property="d3BfhdNotiYn" />
+        <result column="D7_BFHD_NOTI_YN"          property="d7BfhdNotiYn" />
     </resultMap>
 
     <resultMap id="notificationSummaryResultMap" type="com.nyangmeong.notification.dto.NotificationSummary">
@@ -27,6 +33,8 @@
     <select id="selectReceiveSetting" parameterType="long" resultMap="receiveSettingResultMap">
         SELECT MBR_SN
              , MBR_STTS_CD
+             , MM_EXPND_LIM_AMT
+             , EML_NOTI_RCPTN_YN
              , INAPP_NOTI_RCPTN_YN
              , CARE_SCHDL_NOTI_RCPTN_YN
              , MTCH_DLNG_NOTI_RCPTN_YN
@@ -34,9 +42,32 @@
              , LOST_EXPRY_NOTI_RCPTN_YN
              , EXPND_LIM_NOTI_RCPTN_YN
              , CHAR_CRT_NOTI_RCPTN_YN
+             , THDY_BFHD_NOTI_YN
+             , D1_BFHD_NOTI_YN
+             , D3_BFHD_NOTI_YN
+             , D7_BFHD_NOTI_YN
           FROM MBR
          WHERE MBR_SN = #{mbrSn}
     </select>
+
+    <!-- 항상 받는 알림(CHAR_CRT_NOTI_RCPTN_YN)·한도 금액은 바꾸지 않음 -->
+    <update id="updateReceiveSetting">
+        UPDATE MBR
+           SET EML_NOTI_RCPTN_YN = #{setting.emlNotiRcptnYn}
+             , INAPP_NOTI_RCPTN_YN = #{setting.inappNotiRcptnYn}
+             , CARE_SCHDL_NOTI_RCPTN_YN = #{setting.careSchdlNotiRcptnYn}
+             , THDY_BFHD_NOTI_YN = #{setting.thdyBfhdNotiYn}
+             , D1_BFHD_NOTI_YN = #{setting.d1BfhdNotiYn}
+             , D3_BFHD_NOTI_YN = #{setting.d3BfhdNotiYn}
+             , D7_BFHD_NOTI_YN = #{setting.d7BfhdNotiYn}
+             , MTCH_DLNG_NOTI_RCPTN_YN = #{setting.mtchDlngNotiRcptnYn}
+             , CMNT_NOTI_RCPTN_YN = #{setting.cmntNotiRcptnYn}
+             , LOST_EXPRY_NOTI_RCPTN_YN = #{setting.lostExpryNotiRcptnYn}
+             , EXPND_LIM_NOTI_RCPTN_YN = #{setting.expndLimNotiRcptnYn}
+             , MDFR_ID = #{actorId}
+             , MDFCN_DT = NOW()
+         WHERE MBR_SN = #{setting.mbrSn}
+    </update>
 
     <!-- 자동숨김일시는 SYS_STNG 알림숨김기준일수, 설정 행이 없으면 7일 -->
     <insert id="insert" parameterType="com.nyangmeong.notification.domain.InappNotification"

@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nyangmeong.auth.service.AuthService;
 import com.nyangmeong.global.error.CustomException;
 import com.nyangmeong.global.error.ErrorCode;
 import com.nyangmeong.global.notification.NotificationEvent;
@@ -12,7 +13,10 @@ import com.nyangmeong.global.notification.NotificationTab;
 import com.nyangmeong.global.notification.NotificationType;
 import com.nyangmeong.global.security.domain.MemberStatus;
 import com.nyangmeong.notification.domain.InappNotification;
+import com.nyangmeong.notification.domain.NotificationLeadTime;
 import com.nyangmeong.notification.domain.NotificationReceiveSetting;
+import com.nyangmeong.notification.dto.NotificationSettingResponse;
+import com.nyangmeong.notification.dto.NotificationSettingUpdateRequest;
 import com.nyangmeong.notification.dto.NotificationSummary;
 import com.nyangmeong.notification.dto.UnreadCountResponse;
 import com.nyangmeong.notification.mapper.NotificationMapper;
@@ -31,6 +35,7 @@ public class NotificationService {
     private static final int RECENT_LIMIT = 5;
 
     private final NotificationMapper notificationMapper;
+    private final AuthService authService;
 
     /**
      * 인앱 알림 생성
@@ -78,6 +83,50 @@ public class NotificationService {
             throw new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND);
         }
         notificationMapper.updateRead(inappNotiSn, mbrSn);
+    }
+
+    /**
+     * 알림 설정 조회 (SCR-COM-008, 계정 단위)
+     */
+    @Transactional(readOnly = true)
+    public NotificationSettingResponse getSetting(Long mbrSn) {
+        NotificationReceiveSetting setting = notificationMapper.selectReceiveSetting(mbrSn);
+        if (setting == null || MemberStatus.WITHDRAWN.is(setting.getMbrSttsCd())) {
+            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+        return NotificationSettingResponse.from(setting, authService.getMe(mbrSn).maskedAcntEml());
+    }
+
+    /**
+     * 알림 설정 저장
+     * - 케어 일정 ON 이면 사전 알림 시점 1개 이상
+     */
+    @Transactional
+    public NotificationSettingResponse updateSetting(Long mbrSn, NotificationSettingUpdateRequest req) {
+        if (Boolean.TRUE.equals(req.careSchdlNotiRcptnYn()) && req.leadTimes().isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        NotificationReceiveSetting setting = new NotificationReceiveSetting();
+        setting.setMbrSn(mbrSn);
+        setting.setEmlNotiRcptnYn(toYn(req.emlNotiRcptnYn()));
+        setting.setInappNotiRcptnYn(toYn(req.inappNotiRcptnYn()));
+        setting.setCareSchdlNotiRcptnYn(toYn(req.careSchdlNotiRcptnYn()));
+        setting.setThdyBfhdNotiYn(toYn(req.leadTimes().contains(NotificationLeadTime.TODAY)));
+        setting.setD1BfhdNotiYn(toYn(req.leadTimes().contains(NotificationLeadTime.D1)));
+        setting.setD3BfhdNotiYn(toYn(req.leadTimes().contains(NotificationLeadTime.D3)));
+        setting.setD7BfhdNotiYn(toYn(req.leadTimes().contains(NotificationLeadTime.D7)));
+        setting.setMtchDlngNotiRcptnYn(toYn(req.mtchDlngNotiRcptnYn()));
+        setting.setCmntNotiRcptnYn(toYn(req.cmntNotiRcptnYn()));
+        setting.setLostExpryNotiRcptnYn(toYn(req.lostExpryNotiRcptnYn()));
+        setting.setExpndLimNotiRcptnYn(toYn(req.expndLimNotiRcptnYn()));
+        if (notificationMapper.updateReceiveSetting(setting, String.valueOf(mbrSn)) == 0) {
+            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+        return getSetting(mbrSn);
+    }
+
+    private String toYn(Boolean value) {
+        return Boolean.TRUE.equals(value) ? "Y" : "N";
     }
 
     /**

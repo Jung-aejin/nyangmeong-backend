@@ -1,5 +1,6 @@
 package com.nyangmeong.notification.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
@@ -7,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -35,6 +38,9 @@ import com.nyangmeong.global.security.handler.RestAuthenticationEntryPoint;
 import com.nyangmeong.global.security.jwt.JwtProperties;
 import com.nyangmeong.global.security.jwt.JwtTokenProvider;
 import com.nyangmeong.global.security.jwt.TokenCookies;
+import com.nyangmeong.notification.domain.NotificationLeadTime;
+import com.nyangmeong.notification.dto.NotificationSettingResponse;
+import com.nyangmeong.notification.dto.NotificationSettingUpdateRequest;
 import com.nyangmeong.notification.dto.NotificationSummary;
 import com.nyangmeong.notification.dto.UnreadCountResponse;
 import com.nyangmeong.notification.service.NotificationService;
@@ -136,5 +142,57 @@ class NotificationControllerTest {
         mockMvc.perform(post("/api/notifications/99/read").header("X-Requested-With", "XMLHttpRequest"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOTIFICATION_NOT_FOUND"));
+    }
+
+    private NotificationSettingResponse setting() {
+        return new NotificationSettingResponse("jin****@gmail.com", true, true, true,
+                List.of(NotificationLeadTime.D1, NotificationLeadTime.D7), true, true, true, false, false);
+    }
+
+    private static final String SETTING_BODY = """
+            {"emlNotiRcptnYn":true,"inappNotiRcptnYn":true,"careSchdlNotiRcptnYn":true,
+             "leadTimes":["D1","D7"],"mtchDlngNotiRcptnYn":true,"cmntNotiRcptnYn":true,
+             "lostExpryNotiRcptnYn":true,"expndLimNotiRcptnYn":false}
+            """;
+
+    @Test
+    @WithMockLoginMember
+    void 알림_설정을_true_false로_돌려준다() throws Exception {
+        when(notificationService.getSetting(1L)).thenReturn(setting());
+
+        mockMvc.perform(get("/api/notifications/settings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.maskedAcntEml").value("jin****@gmail.com"))
+                .andExpect(jsonPath("$.data.emlNotiRcptnYn").value(true))
+                .andExpect(jsonPath("$.data.leadTimes[0]").value("D1"))
+                .andExpect(jsonPath("$.data.leadTimes[1]").value("D7"))
+                .andExpect(jsonPath("$.data.expndLimNotiRcptnYn").value(false))
+                .andExpect(jsonPath("$.data.expndLimSetYn").value(false));
+    }
+
+    @Test
+    @WithMockLoginMember
+    void 알림_설정_저장은_200과_저장된_설정() throws Exception {
+        when(notificationService.updateSetting(eq(1L), any(NotificationSettingUpdateRequest.class)))
+                .thenReturn(setting());
+
+        mockMvc.perform(put("/api/notifications/settings").header("X-Requested-With", "XMLHttpRequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(SETTING_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.leadTimes[1]").value("D7"));
+        verify(notificationService).updateSetting(1L, new NotificationSettingUpdateRequest(true, true, true,
+                List.of(NotificationLeadTime.D1, NotificationLeadTime.D7), true, true, true, false));
+    }
+
+    @Test
+    @WithMockLoginMember
+    void 설정_필드가_빠지면_400_INVALID_INPUT_VALUE() throws Exception {
+        mockMvc.perform(put("/api/notifications/settings").header("X-Requested-With", "XMLHttpRequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"emlNotiRcptnYn\":true}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"));
     }
 }
