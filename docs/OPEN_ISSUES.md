@@ -24,7 +24,6 @@
 | Spring Boot 세부 버전 | 전체 |
 | 자기 Mapper XML에서 다른 도메인의 테이블을 조회·조인해도 되는지 | 전체. 정해지기 전에는 하지 않는다 |
 | 영수증 이미지와 읽은 결과를 어디에 저장할지(AI 서버 또는 `expense`) | `expense`, AI 서버 |
-| 진료 사전 알림 배치의 위치(AI 서버, `notification`, `job`). `notification`(2층)에 두면 같은 층인 `health`를 부르게 된다 | `notification`, `health`, `job`, AI 서버 |
 | 소셜 로그인의 위치(`global/security` 또는 `member`) | `member` |
 | 신고 테이블의 소유 도메인 | `community`, `support` |
 | `@Scheduled` 클래스의 위치와 이름 | 배치를 만드는 도메인 |

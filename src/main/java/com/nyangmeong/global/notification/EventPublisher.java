@@ -34,6 +34,14 @@ public class EventPublisher {
     }
 
     /**
+     * 케어 일정 사전 알림 이벤트 발행
+     */
+    public void publish(CareScheduleAlarmEvent event) {
+        checkTransaction();
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    /**
      * 트랜잭션 확인
      */
     private void checkTransaction() {

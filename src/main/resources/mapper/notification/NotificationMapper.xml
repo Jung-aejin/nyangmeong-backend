@@ -20,6 +20,21 @@
         <result column="D7_BFHD_NOTI_YN"          property="d7BfhdNotiYn" />
     </resultMap>
 
+    <resultMap id="recipientResultMap" type="com.nyangmeong.notification.domain.NotificationRecipient">
+        <id     column="MBR_SN"      property="mbrSn" />
+        <result column="ACNT_EML_ENC" property="acntEmlEnc" />
+        <result column="MBR_NCNM"    property="mbrNcnm" />
+    </resultMap>
+
+    <resultMap id="templateResultMap" type="com.nyangmeong.notification.domain.NotificationTemplate">
+        <id     column="NOTI_TMPLT_SN" property="notiTmpltSn" />
+        <result column="NOTI_TYPE_CD"  property="notiTypeCd" />
+        <result column="NOTI_CHNL_CD"  property="notiChnlCd" />
+        <result column="NOTI_TTL"      property="notiTtl" />
+        <result column="NOTI_CN"       property="notiCn" />
+        <result column="USE_YN"        property="useYn" />
+    </resultMap>
+
     <resultMap id="notificationSummaryResultMap" type="com.nyangmeong.notification.dto.NotificationSummary">
         <id     column="INAPP_NOTI_SN" property="inappNotiSn" />
         <result column="NOTI_TYPE_CD"  property="notiTypeCd" />
@@ -48,6 +63,27 @@
              , D7_BFHD_NOTI_YN
           FROM MBR
          WHERE MBR_SN = #{mbrSn}
+    </select>
+
+    <select id="selectRecipient" parameterType="long" resultMap="recipientResultMap">
+        SELECT MBR_SN
+             , ACNT_EML_ENC
+             , MBR_NCNM
+          FROM MBR
+         WHERE MBR_SN = #{mbrSn}
+    </select>
+
+    <select id="selectTemplate" resultMap="templateResultMap">
+        SELECT NOTI_TMPLT_SN
+             , NOTI_TYPE_CD
+             , NOTI_CHNL_CD
+             , NOTI_TTL
+             , NOTI_CN
+             , USE_YN
+          FROM NOTI_TMPLT
+         WHERE NOTI_TYPE_CD = #{notiTypeCd}
+           AND NOTI_CHNL_CD = #{notiChnlCd}
+           AND USE_YN = 'Y'
     </select>
 
     <!-- 항상 받는 알림(CHAR_CRT_NOTI_RCPTN_YN)·한도 금액은 바꾸지 않음 -->
