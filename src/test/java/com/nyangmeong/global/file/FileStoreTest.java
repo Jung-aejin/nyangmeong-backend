@@ -51,7 +51,8 @@ class FileStoreTest {
 
     @Test
     void 이미지를_디스크와_ATCH_FILE에_저장한다() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("photo", "kongi.PNG", "image/png", new byte[] {1, 2, 3});
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+        MockMultipartFile file = new MockMultipartFile("photo", "kongi.PNG", "image/png", png);
 
         Long atchFileSn = fileStore.store(file, "1");
 
@@ -61,9 +62,9 @@ class FileStoreTest {
         assertThat(atchFileSn).isEqualTo(7L);
         assertThat(saved.getFileExtnCd()).isEqualTo(FileExtension.PNG.getCode());
         assertThat(saved.getOrgnlFileNm()).isEqualTo("kongi.PNG");
-        assertThat(saved.getFileSz()).isEqualTo(3L);
+        assertThat(saved.getFileSz()).isEqualTo((long) png.length);
         assertThat(saved.getRgtrId()).isEqualTo("1");
-        assertThat(Files.readAllBytes(root.resolve(saved.getPhysStrgPath()))).containsExactly(1, 2, 3);
+        assertThat(Files.readAllBytes(root.resolve(saved.getPhysStrgPath()))).containsExactly(png);
     }
 
     @Test
