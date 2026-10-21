@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nyangmeong.expense.mapper.ReceiptMapper">
+
+    <resultMap id="receiptResultMap" type="com.nyangmeong.expense.domain.Receipt">
+        <id     column="RECPT_SN"         property="recptSn" />
+        <result column="MBR_SN"           property="mbrSn" />
+        <result column="ATCH_FILE_SN"     property="atchFileSn" />
+        <result column="OCR_PRCS_STTS_CD" property="ocrPrcsSttsCd" />
+        <result column="OCR_DMND_SRC_CD"  property="ocrDmndSrcCd" />
+        <result column="OCR_RSPNS_JSON"   property="ocrRspnsJson" />
+        <result column="STRG_DT"          property="strgDt" />
+        <result column="IDMPT_DMND_ID"    property="idmptDmndId" />
+        <result column="REG_DT"           property="regDt" />
+        <result column="MDFCN_DT"         property="mdfcnDt" />
+    </resultMap>
+
+    <select id="selectOwned" resultMap="receiptResultMap">
+        SELECT RECPT_SN
+             , MBR_SN
+             , ATCH_FILE_SN
+             , OCR_PRCS_STTS_CD
+             , OCR_DMND_SRC_CD
+             , OCR_RSPNS_JSON
+             , STRG_DT
+             , IDMPT_DMND_ID
+             , REG_DT
+             , MDFCN_DT
+          FROM RECPT
+         WHERE RECPT_SN = #{recptSn}
+           AND MBR_SN = #{mbrSn}
+    </select>
+
+    <insert id="insert" parameterType="com.nyangmeong.expense.domain.Receipt"
+            useGeneratedKeys="true" keyProperty="recptSn" keyColumn="RECPT_SN">
+        INSERT INTO RECPT
+             ( MBR_SN
+             , ATCH_FILE_SN
+             , OCR_PRCS_STTS_CD
+             , OCR_DMND_SRC_CD
+             , REG_DT
+             , MDFCN_DT )
+        VALUES
+             ( #{mbrSn}
+             , #{atchFileSn}
+             , #{ocrPrcsSttsCd}
+             , #{ocrDmndSrcCd}
+             , NOW()
+             , NOW() )
+    </insert>
+
+    <!-- 다른 요청이 먼저 상태를 바꿨으면 0건 -->
+    <update id="updateStatus">
+        UPDATE RECPT
+           SET OCR_PRCS_STTS_CD = #{aftrSttsCd}
+             , MDFCN_DT = NOW()
+         WHERE RECPT_SN = #{recptSn}
+           AND OCR_PRCS_STTS_CD IN
+            <foreach collection="bfrSttsCds" item="bfrSttsCd" open="(" separator="," close=")">
+                #{bfrSttsCd}
+            </foreach>
+    </update>
+
+    <!-- 분석 중 취소된 영수증은 0건 -->
+    <update id="updateAnalyzed">
+        UPDATE RECPT
+           SET OCR_PRCS_STTS_CD = #{aftrSttsCd}
+             , OCR_RSPNS_JSON = #{ocrRspnsJson}
+             , MDFCN_DT = NOW()
+         WHERE RECPT_SN = #{recptSn}
+           AND OCR_PRCS_STTS_CD = #{bfrSttsCd}
+    </update>
+
+    <insert id="insertStatusHistory" parameterType="com.nyangmeong.expense.domain.ReceiptStatusHistory"
+            useGeneratedKeys="true" keyProperty="recptSttsHstrySn" keyColumn="RECPT_STTS_HSTRY_SN">
+        INSERT INTO RECPT_STTS_HSTRY
+             ( RECPT_SN
+             , MBR_SN
+             , BFR_STTS_CD
+             , AFTR_STTS_CD
+             , CHG_RSN
+             , REG_DT )
+        VALUES
+             ( #{recptSn}
+             , #{mbrSn}
+             , #{bfrSttsCd}
+             , #{aftrSttsCd}
+             , #{chgRsn}
+             , NOW() )
+    </insert>
+</mapper>

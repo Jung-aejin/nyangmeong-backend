@@ -48,6 +48,34 @@ public enum FileExtension {
     }
 
     /**
+     * 파일 내용의 형식 일치 여부
+     * - 첫 바이트(파일 시그니처) 기준 : 확장자만 바꾼 파일 차단 (REQ-NFR-003)
+     */
+    public boolean matchesContent(byte[] content) {
+        return switch (this) {
+            case JPG, JPEG -> startsWith(content, 0, 0xFF, 0xD8, 0xFF);
+            case PNG -> startsWith(content, 0, 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A);
+            case WEBP -> startsWith(content, 0, 'R', 'I', 'F', 'F') && startsWith(content, 8, 'W', 'E', 'B', 'P');
+            case PDF -> startsWith(content, 0, '%', 'P', 'D', 'F');
+        };
+    }
+
+    /**
+     * 시그니처 비교
+     */
+    private static boolean startsWith(byte[] content, int offset, int... signature) {
+        if (content == null || content.length < offset + signature.length) {
+            return false;
+        }
+        for (int i = 0; i < signature.length; i++) {
+            if ((content[offset + i] & 0xFF) != signature[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * 코드로 확장자 조회
      */
     public static FileExtension from(String code) {

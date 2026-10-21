@@ -68,6 +68,19 @@ class FileStoreTest {
     }
 
     @Test
+    void 확장자와_실제_형식이_다르면_FILE_TYPE_NOT_ALLOWED() {
+        MockMultipartFile pdfAsPng = new MockMultipartFile("photo", "a.png", "image/png",
+                new byte[] {'%', 'P', 'D', 'F', '-', '1'});
+        MockMultipartFile textAsJpg = new MockMultipartFile("photo", "a.jpg", "image/jpeg", new byte[] {1, 2, 3});
+
+        assertThatThrownBy(() -> fileStore.store(pdfAsPng, "1"))
+                .extracting("errorCode").isEqualTo(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        assertThatThrownBy(() -> fileStore.store(textAsJpg, "1"))
+                .extracting("errorCode").isEqualTo(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        verify(atchFileMapper, never()).insert(any());
+    }
+
+    @Test
     void 허용하지_않는_확장자는_FILE_TYPE_NOT_ALLOWED() {
         MockMultipartFile pdf = new MockMultipartFile("photo", "a.pdf", "application/pdf", new byte[] {1});
         MockMultipartFile gif = new MockMultipartFile("photo", "a.gif", "image/gif", new byte[] {1});

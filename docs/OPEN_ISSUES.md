@@ -23,7 +23,7 @@
 | --- | --- |
 | Spring Boot 세부 버전 | 전체 |
 | 자기 Mapper XML에서 다른 도메인의 테이블을 조회·조인해도 되는지 | 전체. 정해지기 전에는 하지 않는다 |
-| 영수증 이미지와 읽은 결과를 어디에 저장할지(AI 서버 또는 `expense`) | `expense`, AI 서버 |
+| 영수증 이미지와 읽은 결과를 어디에 저장할지(AI 서버 또는 `expense`). 지금은 `expense` 도메인에 둔다(LJS, 2026-10-21): 영수증 저장이 health(2층)·expense(3층)를 모두 불러야 해서 3층이어야 한다. RECPT·RECPT_STTS_HSTRY의 controller·service·mapper·VO는 `expense` 다섯 패키지 안에 `Receipt` 이름으로 둔다 | `expense`, AI 서버 |
 | 소셜 로그인의 위치(`global/security` 또는 `member`) | `member` |
 | 신고 테이블의 소유 도메인 | `community`, `support` |
 | `@Scheduled` 클래스의 위치와 이름 | 배치를 만드는 도메인 |
