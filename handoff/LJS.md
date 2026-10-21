@@ -2,11 +2,18 @@
 
 ## 지금 하는 것
 
-SCR-COM-004 알림 드롭다운 — 끝 (2026-10-21). 검증 1회차(연결 남음만), 사람 확인(로컬 DB에서 Postman 개수·탭 목록·읽음, 서비스·발행기 테스트) 완료.
-`global/notification`(EventPublisher·NotificationEvent·MailEvent·NotificationType·NotificationTab), `notification` 도메인(커밋 뒤 REQUIRES_NEW 저장 리스너, 수신 OFF 미생성, 미읽음 개수·탭별 최근 5건·읽음 API). 기획과 달라진 것(읽음은 POST, 목록은 NotificationSummary, 탈퇴 회원은 MBR_STTS_CD로 거름)은 커밋 메시지 본문에 있다.
+SCR-MYP-010 픽셀 캐릭터 관리 — 끝 (2026-10-21). 검증 1회차 통과, 사람 확인(로컬 DB에서 Postman 목록·생성·멱등·상세·이미지·아이템 이미지·착용, 서비스·워커·FileStore 테스트) 완료.
+`global/auth`·`setting`·`code`·`file`·`external`(가짜 생성기)·`AsyncConfig`, `pet` 도메인의 캐릭터 목록·생성 요청(백그라운드 생성, 멱등 키)·꾸미기 상세·착용 저장·캐릭터 이미지(full/face)·아이템 이미지, 오류 문의 접수·확인 종료 서비스 메서드. 기획과 달라진 것(생성 응답 201, afterCommit + @Async 워커, receiveErrorInquiry에 mbrSn 추가)은 커밋 메시지 본문에 있다.
 
 ## 다음에 할 것
 
+- SCR-MYP-010 연결 남음: FN-MYP-010-24 1:1 문의 작성(SCR-CSC-003, KSJ)이 `PixelCharacterService.receiveErrorInquiry(mbrSn, pixelCharSn, otoInqrySn)`를 부르고, 돌려받은 결과 ATCH_FILE_SN을 문의에 첨부한다
+- SCR-MYP-010 연결 남음: FN-MYP-010-23 관리자 확인 화면(담당 미정)이 `finishErrorCheck(pixelCharSn, regenerate)`를 부른다
+- FN-MYP-010-19 규격 미확보 시 베이스 캐릭터 선택 방식 전환: 캐릭터 생성 외부 API가 정해지면 `CharacterGenerator` 실제 구현과 함께 판단한다. 기본 캐릭터 이미지(`resources/character/default-*.png`)도 디자인 이미지로 바꾼다
+- 잘못된 Content-Type(multipart 아님 등)이 415가 아니라 500으로 나간다. `GlobalExceptionHandler`에 `HttpMediaTypeNotSupportedException` 처리를 넣을지 정한다
+- 디스코드 공유 `application.properties`에 `app.file.root-dir=uploads`, `spring.servlet.multipart.max-file-size=10MB`, `spring.servlet.multipart.max-request-size=10MB`, `app.character.generator=fake`를 추가한다
+- 팀에 알린다: 반려동물 권한은 `global/auth/PetAuthorizer`(`checkCaregiver`·`checkPrimary`), 파일은 `global/file/FileStore`(`store`·`load`), 공통코드는 `GET /api/common-codes?prntComCd=`. 범용 파일 조회 API는 두지 않는다(`docs/OPEN_ISSUES.md`)
+- 로컬 DB 테스트 데이터 정리: RGTR_ID·MDFR_ID `LJS`인 PET 4~6·BRUP_REL, PIXEL_CHAR 2와 그 작업·사진·이력, ITEM 1~3·HLD_ITEM, ATCH_FILE 1~5와 `uploads/` 아래 파일
 - SCR-COM-004 연결 남음: FN-COM-004-08 공동양육 초대 수락·거절(SJM) API가 나오면 알림 행 버튼과 연결하고, 초대 알림 `mvmnPath` 형식을 SJM과 맞춘다
 - 팀에 알린다: 알림은 `EventPublisher.publish(new NotificationEvent(mbrSn, NotificationType.X, 제목, 내용, mvmnPath))`로 발행한다(@Transactional 안). 프론트는 읽음 처리를 `POST /api/notifications/{inappNotiSn}/read`로 부른다
 - 팀에 알린다: 개인 로컬 DB는 `application-local.properties`(git 제외)에 `spring.datasource.*` 세 줄을 두면 공용 설정을 덮어쓴다. 로컬 DB는 `nyangmeong_` 접두어 스키마에 `db/` SQL 두 개를 실행해 만든다
@@ -17,6 +24,7 @@ SCR-COM-004 알림 드롭다운 — 끝 (2026-10-21). 검증 1회차(연결 남�
 - YAY에게 알린다: 로그인·재발급·로그아웃은 `auth` 도메인(`auth/controller/AuthController`, 접두어 `/api`)에 만들고 `LoginSessionManager`의 `issue`·`rotate`·`revoke`를 쓴다. 새로 여는 경로(로그인 상태 확인·보안코드 등)는 `app.security.permit-all-paths`에 추가한다. 로그인이 생기면 `DevTokenController`를 지운다. 스타터 분석(캡챠는 LGN_ATMPT_LMT, 회원 조회는 ACNT_EML_HMAC, 소셜은 SNS_ACNT_LINK)도 함께 넘긴다
 - SCR-COM-002 연결 남음: `/auth/me`의 프로필 이미지 URL은 `FileStore`·파일 조회 API(SCR-MYP-010) 뒤 연결. 지금은 `atchFileSn`만 준다
 - YAY 소셜 로그인 때 nct-backend의 `global/security/handler`(OAuth2 성공·실패 핸들러)와 `CustomOAuth2UserService`를 가져올 수 있다. 위치(`auth` 도메인 또는 `global/security`)는 `docs/OPEN_ISSUES.md`에서 정한다
+- `global/validation`(공통 검증, `PhoneNumberNormalizer` 등)은 내 마일스톤에 쓰는 화면이 없다. 처음 필요한 YAY(닉네임·휴대전화·비밀번호 검증)가 요청하면 그때 만든다
 - SCR-AIM-008 때 nct-backend의 `global/idempotency`(멱등 요청 인터셉터, `RequestFingerprintMapper`)를 가져와 영수증 저장에 쓴다
 - 디스코드 공유 `application.properties`를 맞춘다: 팀 공용 `app.crypto.*`·`app.jwt.secret-base64` 키를 정해 넣고, `mybatis.configuration.map-underscore-to-camel-case`는 넣지 않는다(추가-12, resultMap 방식)
 - 공용 DB의 테스트 회원(MBR_SN 1, `ljs_test`, RGTR_ID `LJS`)은 개인 키로 암호화돼 있다. 팀 키를 정한 뒤 지우거나 다시 만든다
