@@ -4,6 +4,7 @@
 
 SCR-ACC-002 로그인 준비 (토큰 세션 기반) — 끝 (2026-10-21 11:30). 검증 통과, 사람 확인(Postman·jwt.io·세션 폐기 401) 완료.
 JWT Nimbus 교체(sid·typ), `LoginSessionManager`(issue·rotate·revoke), 필터 세션 확인, `PasswordConfig`, 스타터 방식 화이트리스트(`app.security.permit-all-paths`). 기능 ID와 추가 요청 1~2는 이 마일스톤 커밋 메시지 본문에 있다.
+직전 JWT 라이브러리 교체 작업(2026-10-20, 커밋 6bc9d4e·c83b7de, sid 없이 라이브러리만 교체)은 이 마일스톤에 흡수됐다. 병합 때 4개 파일을 이 마일스톤 쪽으로 정리했다.
 
 ## 다음에 할 것
 
