@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nyangmeong.notification.mapper.NotificationMapper">
+
+    <resultMap id="receiveSettingResultMap" type="com.nyangmeong.notification.domain.NotificationReceiveSetting">
+        <id     column="MBR_SN"                   property="mbrSn" />
+        <result column="MBR_STTS_CD"              property="mbrSttsCd" />
+        <result column="INAPP_NOTI_RCPTN_YN"      property="inappNotiRcptnYn" />
+        <result column="CARE_SCHDL_NOTI_RCPTN_YN" property="careSchdlNotiRcptnYn" />
+        <result column="MTCH_DLNG_NOTI_RCPTN_YN"  property="mtchDlngNotiRcptnYn" />
+        <result column="CMNT_NOTI_RCPTN_YN"       property="cmntNotiRcptnYn" />
+        <result column="LOST_EXPRY_NOTI_RCPTN_YN" property="lostExpryNotiRcptnYn" />
+        <result column="EXPND_LIM_NOTI_RCPTN_YN"  property="expndLimNotiRcptnYn" />
+        <result column="CHAR_CRT_NOTI_RCPTN_YN"   property="charCrtNotiRcptnYn" />
+    </resultMap>
+
+    <resultMap id="notificationSummaryResultMap" type="com.nyangmeong.notification.dto.NotificationSummary">
+        <id     column="INAPP_NOTI_SN" property="inappNotiSn" />
+        <result column="NOTI_TYPE_CD"  property="notiTypeCd" />
+        <result column="NOTI_TTL"      property="notiTtl" />
+        <result column="NOTI_CN"       property="notiCn" />
+        <result column="MVMN_PATH"     property="mvmnPath" />
+        <result column="PRSL_DT"       property="prslDt" />
+        <result column="REG_DT"        property="regDt" />
+    </resultMap>
+
+    <select id="selectReceiveSetting" parameterType="long" resultMap="receiveSettingResultMap">
+        SELECT MBR_SN
+             , MBR_STTS_CD
+             , INAPP_NOTI_RCPTN_YN
+             , CARE_SCHDL_NOTI_RCPTN_YN
+             , MTCH_DLNG_NOTI_RCPTN_YN
+             , CMNT_NOTI_RCPTN_YN
+             , LOST_EXPRY_NOTI_RCPTN_YN
+             , EXPND_LIM_NOTI_RCPTN_YN
+             , CHAR_CRT_NOTI_RCPTN_YN
+          FROM MBR
+         WHERE MBR_SN = #{mbrSn}
+    </select>
+
+    <!-- 자동숨김일시는 SYS_STNG 알림숨김기준일수, 설정 행이 없으면 7일 -->
+    <insert id="insert" parameterType="com.nyangmeong.notification.domain.InappNotification"
+            useGeneratedKeys="true" keyProperty="inappNotiSn" keyColumn="INAPP_NOTI_SN">
+        INSERT INTO INAPP_NOTI
+             ( MBR_SN
+             , NOTI_TYPE_CD
+             , NOTI_TTL
+             , NOTI_CN
+             , MVMN_PATH
+             , AUTO_HIDE_DT
+             , REG_DT
+             , MDFCN_DT )
+        VALUES
+             ( #{mbrSn}
+             , #{notiTypeCd}
+             , #{notiTtl}
+             , #{notiCn}
+             , #{mvmnPath}
+             , DATE_ADD(NOW(), INTERVAL COALESCE((SELECT NOTI_HIDE_CRTR_DAY_CNT
+                                                    FROM SYS_STNG
+                                                   ORDER BY SYS_STNG_SN
+                                                   LIMIT 1), 7) DAY)
+             , NOW()
+             , NOW() )
+    </insert>
+
+    <select id="countUnread" parameterType="long" resultType="long">
+        SELECT COUNT(*)
+          FROM INAPP_NOTI
+         WHERE MBR_SN = #{mbrSn}
+           AND PRSL_DT IS NULL
+           AND AUTO_HIDE_DT &gt; NOW()
+    </select>
+
+    <!-- 전체 탭은 notiTypeCds 없음 -->
+    <select id="selectRecentList" resultMap="notificationSummaryResultMap">
+        SELECT INAPP_NOTI_SN
+             , NOTI_TYPE_CD
+             , NOTI_TTL
+             , NOTI_CN
+             , MVMN_PATH
+             , PRSL_DT
+             , REG_DT
+          FROM INAPP_NOTI
+         WHERE MBR_SN = #{mbrSn}
+           AND AUTO_HIDE_DT &gt; NOW()
+        <if test="notiTypeCds != null and notiTypeCds.size() &gt; 0">
+           AND NOTI_TYPE_CD IN
+            <foreach collection="notiTypeCds" item="notiTypeCd" open="(" separator="," close=")">
+                #{notiTypeCd}
+            </foreach>
+        </if>
+         ORDER BY REG_DT DESC
+                , INAPP_NOTI_SN DESC
+         LIMIT #{limit}
+    </select>
+
+    <select id="existsOwn" resultType="boolean">
+        SELECT EXISTS (
+               SELECT 1
+                 FROM INAPP_NOTI
+                WHERE INAPP_NOTI_SN = #{inappNotiSn}
+                  AND MBR_SN = #{mbrSn}
+               )
+    </select>
+
+    <!-- 이미 읽은 알림은 읽음일시 유지 -->
+    <update id="updateRead">
+        UPDATE INAPP_NOTI
+           SET PRSL_DT = NOW()
+             , MDFCN_DT = NOW()
+         WHERE INAPP_NOTI_SN = #{inappNotiSn}
+           AND MBR_SN = #{mbrSn}
+           AND PRSL_DT IS NULL
+    </update>
+</mapper>

@@ -17,12 +17,13 @@
 - 완료 조건: 발급한 세션을 폐기하면 그 Access로 `/api/auth/me`가 401. 같은 Refresh로 두 번 회전하면 두 번째는 `UNAUTHORIZED`
 - 추가 요청: 추가-1 SecurityConfigTest sid 시그니처, 추가-2 스타터 방식 화이트리스트(`app.security.permit-all-paths`)
 
-## SCR-COM-004 알림 드롭다운 — 대기
+## SCR-COM-004 알림 드롭다운 — 끝
 - 기능: FN-COM-002-09 알림 아이콘·미확인 배지(화면은 SCR-COM-002), FN-COM-004-02 미읽음 개수 표시, FN-COM-004-03 유형 탭 노출, FN-COM-004-04 유형 탭 필터, FN-COM-004-05 알림 목록 조회, FN-COM-004-06 알림 클릭·읽음 처리, FN-COM-004-07 유형별 이동 대상 분기, FN-COM-004-08 공동양육 초대 즉시 처리, FN-COM-004-09 펫돌봄 거래 상태 알림 처리, FN-COM-004-10 캐릭터 완료 알림 처리, FN-COM-004-11 자동 읽음 미처리, FN-COM-004-12 7일 경과 자동 숨김, FN-COM-004-13 수신 OFF 유형 미생성, FN-COM-008-16 수신 OFF = 미생성(화면은 SCR-COM-008), FN-AIM-006-06 유형 수신 설정 확인(화면은 SCR-AIM-006), FN-AIM-006-12 헤더 뱃지 갱신(화면은 SCR-AIM-006)
 - API가 남의 것: FN-COM-004-08 초대 수락·거절 (SJM)
 - 함께 만드는 것: `global/notification`(NotificationEvent·MailEvent·EventPublisher), `notification` 도메인의 알림 저장 리스너
 - 기다리는 것: 없음 (초대 수락·거절 SJM은 가짜 응답으로 먼저)
 - 완료 조건: `EventPublisher.publish(NotificationEvent)`가 트랜잭션 안에서는 INAPP_NOTI에 저장되고 밖에서는 예외를 던진다. 미읽음 개수와 최근 5건 목록 API가 7일 지난 알림을 빼고 돌려준다
+- 연결 남음: FN-COM-004-08 (공동양육 초대 수락·거절 API와 초대 알림 mvmnPath 형식, SJM)
 
 ## SCR-MYP-010 픽셀 캐릭터 관리 — 대기
 - 기능: FN-MYP-001-01 내 반려동물 카드의 캐릭터 얼굴(화면은 SCR-MYP-001), FN-MYP-002-02 반려동물 슬라이드의 캐릭터 얼굴(화면은 SCR-MYP-002), FN-MYP-010-01 탭 구성, FN-MYP-010-02 내 캐릭터 목록, FN-MYP-010-03 캐릭터 만들기, FN-MYP-010-04 생성 상한, FN-MYP-010-07 공동양육 탭, FN-MYP-010-08 1단계 사진 첨부, FN-MYP-010-09 2단계 생성 중, FN-MYP-010-10 3단계 결과 확인, FN-MYP-010-12 생성 실패 시 대체, FN-MYP-010-13 미리보기·부위 슬롯, FN-MYP-010-14 보관함·카테고리 탭, FN-MYP-010-16 되돌리기·장착, FN-MYP-010-17 캐릭터 규격 고정, FN-MYP-010-18 규격 일관성 검증, FN-MYP-010-19 규격 미확보 시 대체, FN-MYP-010-23 생성 오류 처리, FN-MYP-010-24 오류 문의
