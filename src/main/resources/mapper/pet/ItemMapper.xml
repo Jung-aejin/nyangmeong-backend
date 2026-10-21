@@ -2,10 +2,71 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.nyangmeong.pet.mapper.ItemMapper">
 
+    <resultMap id="shopItemSummaryResultMap" type="com.nyangmeong.pet.dto.ShopItemSummary">
+        <id     column="ITEM_SN"      property="itemSn" />
+        <result column="ITEM_NM"      property="itemNm" />
+        <result column="ITEM_REGN_CD" property="itemRegnCd" />
+        <result column="NEED_PNT"     property="needPnt" />
+        <result column="HLD_YN"       property="hldYn" />
+    </resultMap>
+
+    <sql id="shopItemColumns">
+        I.ITEM_SN
+             , I.ITEM_NM
+             , I.ITEM_REGN_CD
+             , I.NEED_PNT
+             , CASE WHEN H.HLD_ITEM_SN IS NULL THEN FALSE ELSE TRUE END AS HLD_YN
+          FROM ITEM I
+          LEFT JOIN HLD_ITEM H
+            ON H.ITEM_SN = I.ITEM_SN
+           AND H.PIXEL_CHAR_SN = #{pixelCharSn}
+           AND H.DEL_YN = 'N'
+    </sql>
+
     <!-- 판매 종료(NTSL_YN = 'N') 아이템도 보유 중이면 이미지 필요 -->
     <select id="selectAtchFileSn" parameterType="long" resultType="long">
         SELECT ATCH_FILE_SN
           FROM ITEM
          WHERE ITEM_SN = #{itemSn}
     </select>
+
+    <!-- 보유 판정은 이 캐릭터의 HLD_ITEM 만 (FN-MYP-011-03) -->
+    <select id="selectShopItems" resultMap="shopItemSummaryResultMap">
+        SELECT <include refid="shopItemColumns" />
+         WHERE I.NTSL_YN = 'Y'
+        <if test="itemRegnCd != null and itemRegnCd != ''">
+           AND I.ITEM_REGN_CD = #{itemRegnCd}
+        </if>
+         ORDER BY I.ITEM_REGN_CD
+                , I.SORT_SEQ
+                , I.ITEM_SN
+    </select>
+
+    <select id="selectShopItemsBySn" resultMap="shopItemSummaryResultMap">
+        SELECT <include refid="shopItemColumns" />
+         WHERE I.NTSL_YN = 'Y'
+           AND I.ITEM_SN IN
+            <foreach collection="itemSns" item="itemSn" open="(" separator="," close=")">
+                #{itemSn}
+            </foreach>
+    </select>
+
+    <insert id="insertHeldItems">
+        INSERT INTO HLD_ITEM
+             ( PIXEL_CHAR_SN
+             , ITEM_SN
+             , EQUIP_REGN_CD
+             , EQUIP_YN
+             , REG_DT
+             , MDFCN_DT )
+        VALUES
+        <foreach collection="items" item="item" separator=",">
+             ( #{pixelCharSn}
+             , #{item.itemSn}
+             , #{item.itemRegnCd}
+             , 'N'
+             , NOW()
+             , NOW() )
+        </foreach>
+    </insert>
 </mapper>

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -33,13 +34,17 @@ import com.nyangmeong.global.security.jwt.JwtProperties;
 import com.nyangmeong.global.security.jwt.JwtTokenProvider;
 import com.nyangmeong.global.security.jwt.TokenCookies;
 import com.nyangmeong.pet.dto.EquippedItemSaveRequest;
+import com.nyangmeong.pet.dto.ItemPurchaseRequest;
 import com.nyangmeong.pet.dto.HeldItemSummary;
 import com.nyangmeong.pet.dto.PixelCharacterResponse;
 import com.nyangmeong.pet.dto.PixelCharacterSummary;
+import com.nyangmeong.pet.dto.ShopItemListResponse;
+import com.nyangmeong.pet.dto.ShopItemSummary;
+import com.nyangmeong.pet.service.ItemService;
 import com.nyangmeong.pet.service.PixelCharacterService;
 
 /**
- * [검사 - 픽셀 캐릭터 목록·꾸미기 API]
+ * [검사 - 픽셀 캐릭터 목록·꾸미기·아이템 상점 API]
  */
 @WebMvcTest(controllers = PixelCharacterController.class)
 @Import({SecurityConfig.class, JwtTokenProvider.class, JwtProperties.class, TokenCookies.class,
@@ -52,6 +57,9 @@ class PixelCharacterControllerTest {
 
     @MockitoBean
     PixelCharacterService pixelCharacterService;
+
+    @MockitoBean
+    ItemService itemService;
 
     @MockitoBean
     AuthMemberMapper authMemberMapper;
@@ -161,5 +169,84 @@ class PixelCharacterControllerTest {
                 .content("{\"hldItemSns\":[100,101]}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("ITEM_SLOT_DUPLICATED"));
+    }
+
+    @Test
+    @WithMockLoginMember
+    void 상점_목록에_보유_포인트와_보유중_표시가_있다() throws Exception {
+        ShopItemSummary item = new ShopItemSummary();
+        item.setItemSn(1L);
+        item.setItemNm("밀짚모자");
+        item.setItemRegnCd("MYPC0001");
+        item.setNeedPnt(600L);
+        item.setHldYn(true);
+        when(itemService.searchShopItems(1L, 3L, "MYPC0001")).thenReturn(new ShopItemListResponse(8450L, List.of(item)));
+
+        mockMvc.perform(get("/api/pixel-characters/3/shop-items").param("itemRegnCd", "MYPC0001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.hldPnt").value(8450))
+                .andExpect(jsonPath("$.data.items[0].needPnt").value(600))
+                .andExpect(jsonPath("$.data.items[0].hldYn").value(true));
+    }
+
+    @Test
+    @WithMockLoginMember
+    void 공동양육자는_상점이_403_PET_PRIMARY_ONLY() throws Exception {
+        when(itemService.searchShopItems(1L, 3L, null)).thenThrow(new CustomException(ErrorCode.PET_PRIMARY_ONLY));
+
+        mockMvc.perform(get("/api/pixel-characters/3/shop-items"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("PET_PRIMARY_ONLY"));
+    }
+
+    @Test
+    @WithMockLoginMember
+    void 아이템을_구매하면_201과_보관함을_돌려준다() throws Exception {
+        when(itemService.purchase(eq(1L), eq(3L), any())).thenReturn(response());
+
+        mockMvc.perform(post("/api/pixel-characters/3/held-items")
+                .header("X-Requested-With", "XMLHttpRequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"idmptDmndId\":\"req-1\",\"itemSns\":[1,2]}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.pixelCharSn").value(3));
+        verify(itemService).purchase(1L, 3L, new ItemPurchaseRequest("req-1", List.of(1L, 2L)));
+    }
+
+    @Test
+    @WithMockLoginMember
+    void 담은_아이템이_없으면_400_INVALID_INPUT_VALUE() throws Exception {
+        mockMvc.perform(post("/api/pixel-characters/3/held-items")
+                .header("X-Requested-With", "XMLHttpRequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"idmptDmndId\":\"req-1\",\"itemSns\":[]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"));
+    }
+
+    @Test
+    @WithMockLoginMember
+    void 공동양육자는_구매가_403_PET_PRIMARY_ONLY() throws Exception {
+        when(itemService.purchase(eq(1L), eq(3L), any())).thenThrow(new CustomException(ErrorCode.PET_PRIMARY_ONLY));
+
+        mockMvc.perform(post("/api/pixel-characters/3/held-items")
+                .header("X-Requested-With", "XMLHttpRequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"idmptDmndId\":\"req-1\",\"itemSns\":[1]}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("PET_PRIMARY_ONLY"));
+    }
+
+    @Test
+    @WithMockLoginMember
+    void 포인트가_부족하면_400_POINT_NOT_ENOUGH() throws Exception {
+        when(itemService.purchase(eq(1L), eq(3L), any())).thenThrow(new CustomException(ErrorCode.POINT_NOT_ENOUGH));
+
+        mockMvc.perform(post("/api/pixel-characters/3/held-items")
+                .header("X-Requested-With", "XMLHttpRequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"idmptDmndId\":\"req-1\",\"itemSns\":[1]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("POINT_NOT_ENOUGH"));
     }
 }
