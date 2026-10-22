@@ -20,5 +20,6 @@ n=$(printf '%s' "$hits" | grep -c .)
   exit 1
 }
 line=${hits%%:*}
-sed -i "${line}s/ — \(대기\|진행\|끝\)\$/ — $2/" "$mf"
+# In-place sed differs between GNU and BSD (BSD takes the next arg as a backup suffix), so write a temp file and move it
+sed -E "${line}s/ — (대기|진행|끝)\$/ — $2/" "$mf" > "$mf.tmp" && mv "$mf.tmp" "$mf"
 sed -n "${line}p" "$mf"

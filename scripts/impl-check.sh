@@ -32,7 +32,8 @@ case "$head" in
   *"— 기획 ("*)
     now=$(date '+%Y-%m-%d %H:%M')
     line=$(grep -n -m1 -F -- "$head" "$hf" | cut -d: -f1)
-    sed -i "${line}s/ — 기획 (/ — 구현 중 (승인 $now, /" "$hf"
+    # In-place sed differs between GNU and BSD (BSD takes the next arg as a backup suffix), so write a temp file and move it
+    sed "${line}s/ — 기획 (/ — 구현 중 (승인 $now, /" "$hf" > "$hf.tmp" && mv "$hf.tmp" "$hf"
     echo "바꿈: $(sed -n "${line}p" "$hf")"
     ;;
   *) echo "상태 줄에 \"— 기획 (\"가 없어 바꾸지 않았습니다. 손으로 \"— 구현 중 (승인 $(date '+%Y-%m-%d %H:%M'))\"을 붙이세요" ;;

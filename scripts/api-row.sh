@@ -5,7 +5,7 @@
 # 사용: sh scripts/api-row.sh <기능 ID 또는 화면 ID>   예: FN-MYP-031-02, MYP-031-02, SCR-MYP-031
 cd "$(git rev-parse --show-toplevel)" || exit 1
 [ $# = 1 ] || { echo "사용: sh scripts/api-row.sh <기능 ID 또는 화면 ID>" >&2; exit 2; }
-q=$(printf '%s' "$1" | tr 'a-z' 'A-Z' | sed 's/^\(FN\|SCR\)-//')
+q=$(printf '%s' "$1" | tr 'a-z' 'A-Z' | sed -E 's/^(FN|SCR)-//')
 
 found=0
 for f in docs/api/*.md; do
@@ -45,7 +45,7 @@ for f in docs/api/*.md; do
   [ -n "$rows" ] || continue
   found=1
   echo "## $f"
-  sed -n '/^| 메서드 /{p;n;p;q}' "$f"
+  sed -n '/^| 메서드 /{p;n;p;q;}' "$f"
   printf '%s\n' "$rows"
 
   # 행의 요청·응답 DTO 이름(Page<…>·List<…> 껍데기는 벗긴다)

@@ -4,11 +4,13 @@
 
 없음
 
-이전: 하네스 테스트(415와 사람이 읽는 변환 오류 문구) — 끝 (2026-10-22). `ErrorCode.UNSUPPORTED_MEDIA_TYPE`과 `HttpMediaTypeNotSupportedException` 핸들러, 타입 변환 실패의 `data[].message`를 "형식이 올바르지 않습니다."로. 검증 1회차 통과, 사람 확인. 새 스크립트 start→impl→verify→end를 처음 끝까지 돌림. 하네스 스크립트화 변경(`scripts/`·스킬)은 아직 커밋 전.
+이전: 하네스 스크립트 Windows·macOS 공통화 — 끝 (2026-10-22). Windows에서만 돌려 남은 GNU 전용 문법을 두 OS 공통으로 고쳤다: `start-check.sh`·`verify-collect.sh`의 `$( )` 안 `case` → `(패턴)`, `api-row.sh`의 `sed` `\|` → `sed -E`와 `{p;n;p;q;}`, `milestone-status.sh`·`impl-check.sh`의 `sed -i` → 임시 파일·`mv`, `verify-collect.sh`의 `cut -c8-`(macOS는 글자 단위라 연도가 잘림) → `sed 's/^시작 //'`. `verify-collect.sh`는 기획에 "실행 확인만"이었으나 macOS에서 깨져 고쳤다. 검증 1회차 통과, macOS 실행·Windows Git Bash 사람 확인.
 
 ## 다음에 할 것
 
-- 하네스 테스트 후속(2026-10-22, 백엔드 PR #23에 포함): verify 스킬 6번은 통과 시 `clear` 대신 `pause`, `pr-prep.sh`는 커밋하지 않은 변경이 있으면 종료 코드 4로 묻고 `--allow-dirty`로 진행. 프론트 저장소에도 `verify-loop.sh`의 `scripts` 보호와 verify·end 스킬 같은 수정을 했다(커밋 전, 프론트 PR 필요). 아직 못 돌려 본 것: `milestone-status`·`dms-fetch`·`api-row`(화면 작업), 검증 실패 뒤 잠금·3회 실패 넘기기, `pr-prep --allow-dirty`
+- 하네스 공통화(2026-10-22)의 `scripts/` 5개 수정을 공용 하네스 PR로 올린다(커밋에서 뺐다)
+- 프론트 저장소: 같은 이름 스크립트에 같은 macOS 수정(`$( )` 안 `case (패턴)`, `sed -E`, `sed -i` 대신 임시 파일·`mv`, `{…;}`, 한글 앞 `cut -c` 대신 `sed`)을 적용하고, 커밋 전인 `verify-loop.sh` `scripts` 보호·verify·end 스킬 수정과 함께 프론트 PR
+- 하네스 아직 못 돌려 본 것: `pr-prep.sh --allow-dirty`(다음 PR 때), 검증 3회 실패 넘기기(다음 화면 작업)
 - 공용 DB `RFRSH_TKN`에 하네스 테스트 검증 때 생긴 회원 1 dev-tokens 행(2026-10-22)을 정리할지 정한다(사람)
 - ERDCloud `EXPND.IDMPT_DMND_ID`를 `EXPND_YMD` 뒤로 옮긴다(화면에서 끌기, 사람)
 - 팀에 알린다(2026-10-22): `docs/convention/api.md` 새 규칙 4가지, `docs/api/README.md`(구현하며 달라지면 같은 PR에서 초안도 고친다), `/start`가 `docs/api`를 기능 ID로 찾아 쓴다, 테이블 변경 SQL은 `db/migration/`에(공용 DB에는 이것만 실행)
