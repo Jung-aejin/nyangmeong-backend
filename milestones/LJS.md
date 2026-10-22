@@ -64,12 +64,15 @@
 - 연결 남음: FN-AIM-009-17 (연동 반려동물 목록, SJM — 지금은 `CaregiverPetFake` 빈 목록)
 - 연결 남음: FN-AIM-008-06 (OCR 외부 API 규격, 담당 미정 — 지금은 `FakeOcrClient`)
 
-## SCR-AIM-008 영수증 저장 (2차: 확인 후 저장) — 대기
+## SCR-AIM-008 영수증 저장 (2차: 확인 후 저장) — 끝
 - 기능: FN-AIM-009-01 원본 이미지 대조 표시, FN-AIM-009-02 공통 항목 표시·수정, FN-AIM-009-03 처방 약품 다건 행 표시, FN-AIM-009-07 필수값 검증, FN-AIM-009-08 확인 후 저장, FN-AIM-009-09 검진기록 생성·연동, FN-AIM-009-10 가계부 기록, FN-AIM-009-11 투약 항목 자동 추가 미적용, FN-AIM-009-12 저장 후 이동, FN-AIM-009-13 금액 불일치 안내, FN-AIM-009-18 반려동물 추가, FN-AIM-009-19 배정 필요 목록, FN-AIM-009-22 가계부에도 기록 선택, FN-AIM-009-23 가계부 중복 확인, FN-AIM-009-24 일괄 저장, FN-AIM-009-26 입력 길이 제한, FN-AIM-009-27 영수증 상태 갱신, FN-AIM-010-08 인식 실패율 수집(명세서 "이번 차수 제외"), FN-HLT-002-34 원본 이미지(화면은 SCR-HLT-002), FN-HLT-002-35 검진일·병원명(화면은 SCR-HLT-002), FN-HLT-002-36 반려동물별 기록 탭(화면은 SCR-HLT-002), FN-HLT-002-37 검진 종류(화면은 SCR-HLT-002), FN-HLT-002-38 검진 내용·검진 메모(화면은 SCR-HLT-002), FN-HLT-002-39 금액(화면은 SCR-HLT-002), FN-HLT-002-40 처방 약품(화면은 SCR-HLT-002), FN-HLT-002-41 가계부에도 기록(화면은 SCR-HLT-002), FN-HLT-002-42 영수증 금액·할인 배분(화면은 SCR-HLT-002), FN-HLT-002-43 배정 필요 목록(화면은 SCR-HLT-002), FN-HLT-002-44 가계부 중복 확인(화면은 SCR-HLT-002), FN-HLT-002-45 다시 촬영하기·저장하기(화면은 SCR-HLT-002), FN-HLT-002-46 가까운 예정 일정 확인(화면은 SCR-HLT-002)
 - API가 남의 것: FN-AIM-009-09·FN-HLT-002-46 검진기록·일정 등록 (JAJ), FN-AIM-009-10·009-23·FN-HLT-002-41·002-44 지출 생성·중복 확인 (SJM)
 - 함께 만드는 것: `global/external`(OCR 호출 FN-AIM-008-06), `global/idempotency`(멱등 요청, nct-backend에서 가져옴)
 - 기다리는 것: health 일정·검진기록 등록 (JAJ), expense 지출 생성·중복 확인 (SJM), OCR 외부 API. 영수증 저장 위치는 docs/OPEN_ISSUES.md에서 정한다
 - 완료 조건: 업로드가 jpg·jpeg·png·webp 10MB 이하만 받고 RECPT에 원본을 남긴다. 저장이 반려동물별 검진기록·가계부를 한 트랜잭션으로 만들고 같은 멱등 요청 ID는 한 번만 처리한다
+- 연결 남음: FN-AIM-009-09·FN-HLT-002-46 검진기록·일정 등록과 앞뒤 7일 일정 조회 (JAJ — 지금은 `CheckupRecordFake`)
+- 연결 남음: FN-AIM-009-10·009-23·FN-HLT-002-41·002-44 지출 생성·중복 확인 (SJM — 지금은 `ExpenseFake`)
+- 달라진 것: `global/idempotency`는 가져오지 않고 `RECPT.IDMPT_DMND_ID` 유일 키로 멱등 처리했다. 저장 전 확인·저장 API는 `ReceiptSaveController`
 
 ## 제외
 - FN-COM-002-01·03·04·05·06·07·08·10·12·13·14·16·17·18·19·20·21·22·23: 화면만 있다(서버 동작 없음)

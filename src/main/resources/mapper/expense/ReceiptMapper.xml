@@ -71,6 +71,35 @@
            AND OCR_PRCS_STTS_CD = #{bfrSttsCd}
     </update>
 
+    <select id="selectByIdmptDmndId" resultMap="receiptResultMap">
+        SELECT RECPT_SN
+             , MBR_SN
+             , ATCH_FILE_SN
+             , OCR_PRCS_STTS_CD
+             , OCR_DMND_SRC_CD
+             , OCR_RSPNS_JSON
+             , STRG_DT
+             , IDMPT_DMND_ID
+             , REG_DT
+             , MDFCN_DT
+          FROM RECPT
+         WHERE IDMPT_DMND_ID = #{idmptDmndId}
+    </select>
+
+    <!-- 다른 요청이 먼저 상태를 바꿨으면 0건 -->
+    <update id="updateSaved">
+        UPDATE RECPT
+           SET OCR_PRCS_STTS_CD = #{aftrSttsCd}
+             , IDMPT_DMND_ID = #{idmptDmndId}
+             , STRG_DT = NOW()
+             , MDFCN_DT = NOW()
+         WHERE RECPT_SN = #{recptSn}
+           AND OCR_PRCS_STTS_CD IN
+            <foreach collection="bfrSttsCds" item="bfrSttsCd" open="(" separator="," close=")">
+                #{bfrSttsCd}
+            </foreach>
+    </update>
+
     <insert id="insertStatusHistory" parameterType="com.nyangmeong.expense.domain.ReceiptStatusHistory"
             useGeneratedKeys="true" keyProperty="recptSttsHstrySn" keyColumn="RECPT_STTS_HSTRY_SN">
         INSERT INTO RECPT_STTS_HSTRY

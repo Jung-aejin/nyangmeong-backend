@@ -1,9 +1,11 @@
 package com.nyangmeong.expense.controller;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +18,7 @@ import com.nyangmeong.expense.dto.ReceiptCreateRequest;
 import com.nyangmeong.expense.dto.ReceiptResponse;
 import com.nyangmeong.expense.service.ReceiptAnalyzer;
 import com.nyangmeong.expense.service.ReceiptService;
+import com.nyangmeong.global.file.StoredFile;
 import com.nyangmeong.global.response.ApiResponse;
 import com.nyangmeong.global.security.domain.LoginMember;
 
@@ -42,6 +45,16 @@ public class ReceiptController {
             @Valid @ModelAttribute ReceiptCreateRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(receiptAnalyzer.create(me.id(), req.petSn(), req.file())));
+    }
+
+    @Operation(summary = "영수증 원본 이미지")
+    @GetMapping("/{recptSn}/image")
+    public ResponseEntity<byte[]> getImage(@AuthenticationPrincipal LoginMember me, @PathVariable Long recptSn) {
+        StoredFile image = receiptService.getImage(me.id(), recptSn);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noCache())
+                .contentType(MediaType.parseMediaType(image.contentType()))
+                .body(image.content());
     }
 
     @Operation(summary = "영수증 다시 분석(취소·인식 실패·일시 오류 뒤)")

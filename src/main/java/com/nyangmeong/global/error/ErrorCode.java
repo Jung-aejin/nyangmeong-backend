@@ -122,6 +122,7 @@ public enum ErrorCode {
     RECEIPT_ALREADY_CANCELED(HttpStatus.CONFLICT, "이미 취소한 영수증입니다."),
     RECEIPT_ALREADY_SAVED(HttpStatus.CONFLICT, "이미 저장한 영수증입니다."),
     RECEIPT_ANALYZING(HttpStatus.CONFLICT, "영수증을 분석하는 중입니다. 잠시 후 다시 시도해 주세요."),
+    RECEIPT_NOT_SAVABLE(HttpStatus.CONFLICT, "인식하지 못한 영수증은 저장할 수 없습니다. 다시 촬영해 주세요."),
 
     /** community */
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),

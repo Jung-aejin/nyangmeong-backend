@@ -38,6 +38,17 @@ public interface ReceiptMapper {
             @Param("aftrSttsCd") String aftrSttsCd, @Param("ocrRspnsJson") String ocrRspnsJson);
 
     /**
+     * 멱등 요청 ID 로 영수증 조회
+     */
+    Receipt selectByIdmptDmndId(@Param("idmptDmndId") String idmptDmndId);
+
+    /**
+     * 저장 완료 처리 : 상태, 저장 일시, 멱등 요청 ID
+     */
+    int updateSaved(@Param("recptSn") Long recptSn, @Param("bfrSttsCds") List<String> bfrSttsCds,
+            @Param("aftrSttsCd") String aftrSttsCd, @Param("idmptDmndId") String idmptDmndId);
+
+    /**
      * 상태 이력 등록
      */
     void insertStatusHistory(ReceiptStatusHistory history);
