@@ -36,6 +36,13 @@ class GlobalExceptionHandlerTest {
     record NameRequest(@NotBlank(message = "이름을 입력해 주세요") String mbrNcnm) {
     }
 
+    enum Kind {
+        DOG, CAT
+    }
+
+    record KindRequest(Kind kind) {
+    }
+
     @RestController
     static class ThrowingController {
 
@@ -51,6 +58,11 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/test/items/{sn}")
         String item(@PathVariable Long sn) {
+            return "ok";
+        }
+
+        @GetMapping("/test/kind")
+        String kind(KindRequest req) {
             return "ok";
         }
 
@@ -93,6 +105,22 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(post("/test/valid").contentType(MediaType.APPLICATION_JSON).content("not-json"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
+    void 지원하지_않는_Content_Type은_415_UNSUPPORTED_MEDIA_TYPE이다() throws Exception {
+        mockMvc.perform(post("/test/valid").contentType(MediaType.TEXT_PLAIN).content("hello"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
+    }
+
+    @Test
+    void 타입_변환_실패는_Java_문구_대신_사람이_읽는_문구다() throws Exception {
+        mockMvc.perform(get("/test/kind").param("kind", "BIRD"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
+                .andExpect(jsonPath("$.data[0].field").value("kind"))
+                .andExpect(jsonPath("$.data[0].message").value("형식이 올바르지 않습니다."));
     }
 
     @Test

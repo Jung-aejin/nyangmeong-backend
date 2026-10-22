@@ -122,7 +122,8 @@ class NotificationControllerTest {
         mockMvc.perform(get("/api/notifications").param("tab", "CHAT"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
-                .andExpect(jsonPath("$.data[0].field").value("tab"));
+                .andExpect(jsonPath("$.data[0].field").value("tab"))
+                .andExpect(jsonPath("$.data[0].message").value("형식이 올바르지 않습니다."));
     }
 
     @Test
