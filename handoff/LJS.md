@@ -2,9 +2,16 @@
 
 ## 지금 하는 것
 
-API 초안 설계 보정 — 끝 (2026-10-22, 마일스톤 밖 작업: 멘토링 피드백과 `docs/api` 검토). 검증 1회차 `통과`, 사람 확인 완료.
-`docs/convention/api.md`에 `me` 경로·DELETE 본문 금지·돈·포인트 생성 `idmptDmndId`·켜고 끄는 동작 멱등 규칙. `docs/api`: 토큰 필드 삭제(쿠키만), 채팅 커서·실시간(STOMP 제안), 지출 다중 삭제 분리(`bulk-delete`)·줄마다 멱등 키, 케어 완료·좋아요 멱등, 분석 동기+제한 시간, LJS 행을 구현에 맞춤(API 176). 알림 설정 경로를 `/api/members/me/notification-settings`(새 `NotificationSettingController`)로. `EXPND.IDMPT_DMND_ID` 추가 SQL.
-추가 요청: 추가-1 새 컨트롤러, 추가-2 AGENTS.md의 `src/main/resources/db/migration` 금지 삭제, 추가-3 `db/migration/`(이름 `YYYYMMDD_NN_설명.sql`, 이력 테이블 없음), 추가-4 AGENTS.md 표와 `start` 스킬 6번에 `docs/api` 기준 줄.
+`EXPND.IDMPT_DMND_ID` 공용 DB 반영 — 기획 (시작 2026-10-22 14:41, 마일스톤 밖 작업: "다음에 할 것" 맨 위)
+
+기획:
+- 전제: `98a40ee`(SQL이 든 커밋)가 아직 `origin/LJS`에만 있고 develop에 병합되지 않았다. PR 생성·병합은 사람이 한다. 병합 전에는 2번부터 하지 않는다.
+- 1. 공용 DB 실행(사람): 실행 전 `SHOW COLUMNS FROM EXPND LIKE 'IDMPT_DMND_ID'`로 이미 있는지 본다. 없으면 `db/migration/20261022_01_add_expnd_idmpt_dmnd_id.sql`을 실행한다. 완료 조건 `명령:` 같은 조회가 1행(varchar(100), NULL), `SHOW INDEX FROM EXPND WHERE Key_name='UK_EXPND_1'`이 1행.
+- 2. ERDCloud `EXPND`에 `IDMPT_DMND_ID`(도메인 var100, NULL, 논리명 멱등요청ID, `EXPND_YMD` 뒤)를 넣고 UK_EXPND_1을 메모·인덱스로 남긴다. 고치기 전에 스냅샷을 만들라고 안내한다. 완료 조건 `화면:` ERD에서 컬럼 확인.
+- 3. PR에 완료 댓글(사람 확인 뒤 `gh pr comment`).
+- 코드 변경 없음. 새 의존성: 없음
+
+이전: API 초안 설계 보정 — 끝 (2026-10-22, 검증 1회차 `통과`, 사람 확인 완료). 내용은 커밋 `98a40ee`.
 
 ## 다음에 할 것
 
