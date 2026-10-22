@@ -8,16 +8,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nyangmeong.global.response.ApiResponse;
 import com.nyangmeong.global.security.domain.LoginMember;
 import com.nyangmeong.notification.dto.NotificationListRequest;
-import com.nyangmeong.notification.dto.NotificationSettingResponse;
-import com.nyangmeong.notification.dto.NotificationSettingUpdateRequest;
 import com.nyangmeong.notification.dto.NotificationSummary;
 import com.nyangmeong.notification.dto.UnreadCountResponse;
 import com.nyangmeong.notification.service.NotificationService;
@@ -28,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * [알림 드롭다운 컨트롤러]
- * - SCR-COM-004, 헤더 배지(SCR-COM-002), 알림 설정(SCR-COM-008)
+ * - SCR-COM-004, 헤더 배지(SCR-COM-002). 알림 설정은 NotificationSettingController
  */
 @RestController
 @RequiredArgsConstructor
@@ -56,19 +52,5 @@ public class NotificationController {
             @PathVariable Long inappNotiSn) {
         notificationService.markRead(me.id(), inappNotiSn);
         return ResponseEntity.ok(ApiResponse.success());
-    }
-
-    @Operation(summary = "알림 설정 조회")
-    @GetMapping("/settings")
-    public ResponseEntity<ApiResponse<NotificationSettingResponse>> getSetting(
-            @AuthenticationPrincipal LoginMember me) {
-        return ResponseEntity.ok(ApiResponse.success(notificationService.getSetting(me.id())));
-    }
-
-    @Operation(summary = "알림 설정 저장")
-    @PutMapping("/settings")
-    public ResponseEntity<ApiResponse<NotificationSettingResponse>> updateSetting(
-            @AuthenticationPrincipal LoginMember me, @Valid @RequestBody NotificationSettingUpdateRequest req) {
-        return ResponseEntity.ok(ApiResponse.success(notificationService.updateSetting(me.id(), req)));
     }
 }

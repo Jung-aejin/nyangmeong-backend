@@ -5,6 +5,8 @@
 - 접두어는 `/api`이다. 버전(`/v1`)은 경로에 넣지 않는다. 리소스는 복수형 kebab-case로 쓴다. 식별자는 경로에, 필터·정렬·페이지는 쿼리에 둔다.
   - 예: `/members/me`, `/pets/{petSn}/checkups`, `/places?plcClsfCd={공통코드}&keyword=병원`
 - 로그인한 회원 자신의 자원은 `me`를 쓴다(`/members/me`). 경로에 회원 일련번호를 넣지 않는다.
+  - 회원에 딸린 설정·단건(회원당 하나)은 `/members/me/x`에 둔다. 예: `/members/me/notification-settings`, `/members/me/points`, `/members/me/expense-limit`
+  - 회원이 쌓는 목록 자원은 최상위 경로에 두고 서버가 로그인 회원으로 거른다. 예: `/notifications`, `/expenses`, `/point-ledgers`, `/chat-rooms`
 - 반려동물에 속한 자원은 `/pets/{petSn}/...` 아래에 둔다(예: `/pets/{petSn}/checkups/{ckupRcdSn}`). `PetAuthorizer`가 `petSn`으로 권한을 검사하기 때문이다.
 - 댓글이나 첨부처럼 부모 없이 존재할 수 없는 자원은 부모 아래에 한 단계까지 중첩할 수 있다(예: `/posts/{pstSn}/comments`). 그 밖의 자원은 중첩하지 않고 쿼리로 거른다.
 - 쿼리 파라미터는 camelCase로 쓴다. 컬럼에 해당하는 값은 컬럼 이름을 그대로 쓰고(`plcClsfCd`), 검색어는 `keyword`로 통일한다.
@@ -25,6 +27,9 @@
 - 생성과 수정은 바뀐 자원을 `XxxResponse`로 돌려준다. 삭제와 상태 변경은 `data`가 `null`이다.
 - 단건 조회에서 대상이 없으면 404다. 목록 조회에서 결과가 없으면 200에 빈 `content`를 돌려준다.
 - PUT은 목록이나 설정 전체를 한 번에 저장하는 API에만 쓴다(예: 케어리스트 순서 저장, 알림 수신 설정 일괄 저장). 요청에 없는 항목은 지워진다. 그 밖의 수정에는 PUT을 쓰지 않는다.
+- DELETE는 본문을 받지 않는다. 일부 클라이언트·프록시가 DELETE 본문을 버리기 때문이다. 여러 건 삭제는 번호를 쿼리로 반복한다(`DELETE /expenses?expndSn=1&expndSn=2`). 조건으로 한꺼번에 지우는 것처럼 본문이 필요하면 `POST /{자원}/bulk-delete`로 둔다.
+- 돈·포인트를 만들거나 옮기는 생성 요청은 `idmptDmndId`(클라이언트가 만든 UUID, 최대 100자)를 필수로 받고, 그 값을 유일 키 컬럼에 저장해 막는다. 같은 `idmptDmndId`를 다시 보내면 200과 처음 결과를 같은 모양으로 돌려준다. 테이블에 자연 유일 키가 있으면(예: 케어 완료의 항목+날짜, 좋아요의 게시글+회원) 그 키로 막고 `idmptDmndId`를 받지 않는다.
+- 켜고 끄는 동작(좋아요 등)은 멱등이다. 이미 켜진 상태의 POST, 이미 꺼진 상태의 DELETE도 200이다.
 
 오류의 상태 코드는 `ErrorCode`를 추가할 때 아래에서 고른다.
 

@@ -9,15 +9,16 @@
 | GET | /breeds | 반려동물 구분별 품종 마스터 목록(`?petSeCd=`) | CMU-002-13, CMU-004-06·13, MYP-003-02 (기능 분배 3.1절 10번) | KSJ | - | List<BreedSummary> |
 | GET | /caregiver-invitations | 내가 보낸 공동양육 초대 목록(계정 전체) | MYP-005-03 | SJM | - | List<CaregiverInvitationSummary> |
 | GET | /caregiver-invitations/{jntBrupInvtnSn} | 받은 초대 상세(대상 반려동물 카드) | MYP-005-05 | SJM | - | CaregiverInvitationResponse |
-| GET | /items | 상점 아이템 목록. 쿼리 `pixelCharSn`(보유중 판정)·`itemRegnCd` | MYP-011-02·03 | LJS | - | List<ItemSummary> |
+| GET | /items/{itemSn}/image | 아이템 이미지(로그인 회원, 판매 중 아이템) | MYP-010-14, MYP-011-02 | LJS | - | 이미지 파일 |
 | GET | /members/me/points | 보유 포인트, 이번 달 적립·사용 합계와 건수, 오늘 미션 요약(주양육 반려동물 전체) | MYP-001-03·04, MYP-011-05, MYP-020-01·09 | SJM | - | PointResponse |
 | GET | /pets | 내 반려동물 목록(주양육·공동양육, 역할·대표 여부·공동양육 인원 포함) | MYP-001-01, MYP-002-01~03, MYP-005-02, MYP-006-04, MYP-020-03 | SJM | - | List<PetSummary> |
 | GET | /pets/{petSn} | 반려동물 프로필 상세(수정 모달 채우기, 체중 수정 가능 여부, 양육자 목록) | MYP-002-04, MYP-003-01 | SJM | - | PetResponse |
 | GET | /pets/{petSn}/caregivers | 공동양육자 목록. 주양육자에게는 전원, 공동양육자에게는 본인 1건 | MYP-004-01·03·04, MYP-006-04 | SJM | - | List<CaregiverSummary> |
-| GET | /pets/{petSn}/character-image | 캐릭터 이미지(얼굴만·착용 아이템 없음 등). 미생성·오류 확인 중이면 종별 기본 캐릭터 | MYP-001-01, MYP-002-02, MYP-010-12·23 | LJS | - | 이미지 파일 |
+| GET | /pets/{petSn}/character-image | 캐릭터 이미지 `?part=full`(전신, 기본)·`face`(얼굴). 미생성·오류 확인 중이면 종별 기본 캐릭터 | MYP-001-01, MYP-002-02, MYP-010-12·23 | LJS | - | 이미지 파일 |
 | GET | /pets/{petSn}/daily-missions | 그날의 케어미션 8개와 진행 상태. 쿼리 `msnCrtrYmd` | MYP-020-03·04 | SJM | - | List<DailyMissionSummary> |
 | GET | /pixel-characters | 내 캐릭터·공동양육 캐릭터 목록(캐릭터 없는 반려동물 포함, 생성 상태·오류 확인 중 표시) | MYP-010-02·03·07·12·23 | LJS | - | List<PixelCharacterSummary> |
 | GET | /pixel-characters/{pixelCharSn} | 꾸미기 상세. 결과 이미지·보유/착용 아이템·오류 문의 접수 여부 | MYP-010-10·13·14·23 | LJS | - | PixelCharacterResponse |
+| GET | /pixel-characters/{pixelCharSn}/shop-items | 상점 아이템 목록(판매 중, 이 캐릭터 기준 보유중 표시, 보유 포인트). `?itemRegnCd=` | MYP-011-02·03 | LJS | - | ShopItemListResponse |
 | GET | /point-ledgers | 선택한 월의 포인트 적립·사용 내역(최신순). 쿼리 `yearMonth` | MYP-020-02 | SJM | - | List<PointLedgerSummary> |
 | POST | /caregiver-invitations | 이메일로 공동양육 초대 발송. 대상 반려동물 여러 마리를 한 초대로 묶음 | MYP-005-01·02 | SJM | CaregiverInvitationCreateRequest | CaregiverInvitationResponse |
 | POST | /caregiver-invitations/{jntBrupInvtnSn}/accept | 초대 일괄 수락 | MYP-005-05 | SJM | - | - |
@@ -25,7 +26,7 @@
 | POST | /pets | 반려동물 등록(계정당 10마리, 첫 등록은 대표 지정) | MYP-002-01, MYP-003-01·04·05·07 | SJM | PetCreateRequest | PetResponse |
 | POST | /pets/{petSn}/pixel-characters | 캐릭터 생성 요청(사진 첨부, 백그라운드 생성, 반려동물당 1개) | MYP-010-04·08·09·17 | LJS | PixelCharacterCreateRequest | PixelCharacterResponse |
 | POST | /pets/{petSn}/representative | 대표 반려동물 지정(주양육 반려동물만) | MYP-010-05 | SJM | - | - |
-| POST | /pixel-characters/{pixelCharSn}/held-items | 아이템 일괄 구매(포인트 차감, 보관함 추가, 주양육자만) | MYP-011-05·06 | LJS | HeldItemCreateRequest | List<HeldItemResponse> |
+| POST | /pixel-characters/{pixelCharSn}/held-items | 아이템 일괄 구매(포인트 차감, 보관함 추가, 주양육자만). 201. 오류: `POINT_NOT_ENOUGH`(400), `PET_PRIMARY_ONLY`(403), `ITEM_NOT_FOUND`(404), `ITEM_ALREADY_HELD`(409) | MYP-011-05·06 | LJS | ItemPurchaseRequest | PixelCharacterResponse |
 | PUT | /pixel-characters/{pixelCharSn}/equipped-items | 착용 상태 확정 저장(부위당 1개, 요청에 없는 보유 아이템은 착용 해제) | MYP-010-13·16 | LJS | EquippedItemSaveRequest | PixelCharacterResponse |
 | PATCH | /pets/{petSn} | 반려동물 수정(체중은 건강 일지 기록이 없을 때만) | MYP-002-04, MYP-003-01·04~07 | SJM | PetUpdateRequest | PetResponse |
 | DELETE | /pets/{petSn} | 반려동물 삭제(주양육자만). 캐릭터·보유 아이템 삭제, 공동양육 연동 해제, 대표 승계 | MYP-002-07·08 | SJM | - | - |
@@ -110,30 +111,29 @@
 | --- | --- | --- | --- | --- |
 | hldItemSns | List<Long> | Y | 이 캐릭터의 보유 아이템만. 부위당 1개. 빈 목록이면 전부 착용 해제(요청에 없는 보유 아이템은 해제) | HLD_ITEM.HLD_ITEM_SN, MYP-010-13·16 |
 
-### HeldItemCreateRequest
+### ItemPurchaseRequest
 쓰는 API: POST /pixel-characters/{pixelCharSn}/held-items
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
+| idmptDmndId | String | Y | 최대 100자. 포인트 원장에 넘겨 중복 차감을 막는다 | PNT_GNLGR.IDMPT_DMND_ID, MYP-011-05 |
 | itemSns | List<Long> | Y | 1개 이상. 이 캐릭터가 이미 보유한 아이템은 불가. 총 필요 포인트가 보유 포인트를 넘으면 불가 | ITEM.ITEM_SN, MYP-011-03·05 |
 
-### HeldItemResponse
-쓰는 API: POST /pixel-characters/{pixelCharSn}/held-items
+### ShopItemListResponse
+쓰는 API: GET /pixel-characters/{pixelCharSn}/shop-items
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| hldItemSn | Long | Y | | HLD_ITEM.HLD_ITEM_SN |
-| itemSn | Long | Y | | HLD_ITEM.ITEM_SN |
-| itemRegnCd | String | Y | | ITEM.ITEM_REGN_CD |
+| hldPnt | Long | Y | 보유 포인트 | MBR.HLD_PNT, MYP-011-03 |
+| items | List<ShopItemSummary> | Y | 판매 중 아이템. 없으면 빈 목록 | ITEM, MYP-011-02 |
 
-### ItemSummary
-쓰는 API: GET /items
+#### ShopItemSummary (ShopItemListResponse.items)
+아이템 이미지는 `GET /items/{itemSn}/image`로 받는다.
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | itemSn | Long | Y | | ITEM.ITEM_SN |
 | itemNm | String | Y | | ITEM.ITEM_NM |
 | itemRegnCd | String | Y | 부위(MYPG01) | ITEM.ITEM_REGN_CD |
 | needPnt | Long | Y | 가격 | ITEM.NEED_PNT |
-| atchFileSn | Long | Y | 아이템 이미지 | ITEM.ATCH_FILE_SN |
-| heldYn | boolean | Y | 쿼리 `pixelCharSn` 캐릭터 기준 보유중(이름은 issues 3번) | MYP-011-03, HLD_ITEM |
+| hldYn | boolean | Y | 이 캐릭터가 이미 보유했는지 | HLD_ITEM 유무, MYP-011-03 |
 
 ### PetCreateRequest
 쓰는 API: POST /pets
@@ -244,7 +244,7 @@
 | photo | MultipartFile | Y | 사진 첨부 필수. 형식·용량 규칙은 명세에 없음(`issues.md` API의 마이페이지 18번) | MYP-010-08, CHAR_PHOTO.ATCH_FILE_SN |
 
 ### PixelCharacterResponse
-쓰는 API: GET /pixel-characters/{pixelCharSn}; POST /pets/{petSn}/pixel-characters; PUT /pixel-characters/{pixelCharSn}/equipped-items
+쓰는 API: GET /pixel-characters/{pixelCharSn}; POST /pets/{petSn}/pixel-characters; PUT /pixel-characters/{pixelCharSn}/equipped-items; POST /pixel-characters/{pixelCharSn}/held-items
 결과 이미지는 `GET /pets/{petSn}/character-image`로 받는다. POST 응답과 GET 응답의 필드를 합쳤다(issues 11번).
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |

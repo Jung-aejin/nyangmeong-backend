@@ -12,7 +12,7 @@
 | GET | /chat-rooms | 내 채팅 목록(`?unreadOnly=`) | CMU-005-02, COM-009 | KSJ | - | List<ChatRoomSummary> |
 | GET | /chat-rooms/unread-count | 읽지 않은 메시지 총수(채팅 메뉴·헤더 배지) | CMU-005-03, COM-009 | KSJ | - | ChatUnreadCountResponse |
 | GET | /chat-rooms/{otoChatRoomSn} | 채팅방 상단 게시글 카드·매칭 진행 상태·내 역할 조회(참여자만) | CMU-005-01·11, COM-009 | KSJ | - | ChatRoomResponse |
-| GET | /chat-rooms/{otoChatRoomSn}/messages | 대화 메시지 조회 | CMU-005-04, COM-009 | KSJ | - | List<ChatMessageSummary> |
+| GET | /chat-rooms/{otoChatRoomSn}/messages | 대화 메시지 조회(커서 방식, 최신순). `?beforeChatMsgSn=&size=30` — 처음은 `beforeChatMsgSn` 없이, 위로 스크롤하면 받은 것 중 가장 오래된 `chatMsgSn`을 넘긴다. `size` 최대 50 | CMU-005-04, COM-009 | KSJ | - | ChatMessageSliceResponse |
 | GET | /community-ai-commentaries | 오늘의 이야기 조회(`?cmtryCrtrYmd=`) | CMU-001-05 | KSJ | - | CommunityAiCommentaryResponse |
 | GET | /lost-reports | 실종 제보 목록(상태·지역·동물 구분·최종 목격 기간·키워드, 12건) | CMU-002-01~04 | KSJ | - | Page<LostReportSummary> |
 | GET | /lost-reports/{lostTpofSn} | 실종 제보 상세(목격 장소 좌표, 찾았어요 후 비공개 처리) | CMU-002-05·06 | KSJ | - | LostReportResponse |
@@ -32,21 +32,37 @@
 | POST | /care-matches/{petPrtcMtchSn}/request-supplement | 보호자 보완 요청(사유, 확인 대기 유지) | CMU-005-09 | KSJ | CareMatchSupplementRequest | - |
 | POST | /care-recruitments | 펫돌봄 모집 등록(반려동물·돌봄 형태·일정·비용 최저시급 검증·장소·사진·동의) | CMU-004-06~11·13 | KSJ | CareRecruitmentCreateRequest | CareRecruitmentResponse |
 | POST | /chat-rooms | 게시글·보호자·지원자 조합 채팅방 생성 또는 기존 방 반환 | CMU-004-05, CMU-005-01 | KSJ | ChatRoomCreateRequest | ChatRoomResponse |
-| POST | /chat-rooms/{otoChatRoomSn}/messages | 메시지 전송(텍스트·사진·주소 공유, 멱등 요청 ID) | CMU-004-05, CMU-005-04·05, COM-009 | KSJ | ChatMessageCreateRequest | ChatMessageResponse |
+| POST | /chat-rooms/{otoChatRoomSn}/messages | 메시지 전송(텍스트·사진·주소 공유, 멱등 요청 ID). 처음은 201, 같은 `idmptDmndId` 재전송은 200과 같은 응답. 저장 뒤 참여자에게 실시간으로 보낸다(아래 "실시간") | CMU-004-05, CMU-005-04·05, COM-009 | KSJ | ChatMessageCreateRequest | ChatMessageResponse |
 | POST | /chat-rooms/{otoChatRoomSn}/read | 활성 대화창에 표시된 메시지까지 읽음 처리 | CMU-005-03, COM-009 | KSJ | ChatRoomReadRequest | - |
 | POST | /lost-reports | 실종 제보 등록(게시글+제보, 품종 마스터/직접입력, 목격 좌표, 개인정보 동의) | CMU-002-10·13 | KSJ | LostReportCreateRequest | LostReportResponse |
 | POST | /lost-reports/{lostTpofSn}/found | 찾았어요 전환(완료 안내 댓글 자동 생성) | CMU-002-09 | KSJ | - | - |
 | POST | /lost-reports/{lostTpofSn}/renew | 만료 전 게시 기간 갱신 | CMU-002-09 | KSJ | - | - |
 | POST | /posts | 펫이야기 게시글 작성(사진 최대 10장) | CMU-001-14 | KSJ | PostCreateRequest | PostResponse |
 | POST | /posts/{pstSn}/comments | 댓글·대댓글(1depth) 등록 | CMU-001-11, CMU-002-07 | KSJ | CommentCreateRequest | CommentResponse |
-| POST | /posts/{pstSn}/likes | 좋아요 등록 | CMU-001-09, CMU-002-08, CMU-004-12 | KSJ | - | PostLikeResponse |
+| POST | /posts/{pstSn}/likes | 좋아요 등록. 멱등: 이미 누른 상태여도 200과 현재 좋아요 수(`UK_PST_RCMDTN_1`로 중복 행을 막는다) | CMU-001-09, CMU-002-08, CMU-004-12 | KSJ | - | PostLikeResponse |
 | POST | /reports | 게시글·댓글 신고(사유·상세, 중복 신고 제한, 누적 처리) | CMU-001-13, CMU-002-12, CMU-004-12 | KSJ | ReportCreateRequest | ReportResponse |
 | PATCH | /care-recruitments/{petPrtcRcrtSn} | 펫돌봄 모집 수정(작성자) | CMU-004-11 | KSJ | CareRecruitmentUpdateRequest | CareRecruitmentResponse |
 | PATCH | /posts/{pstSn} | 게시글 수정(작성자) | CMU-001-15 | KSJ | PostUpdateRequest | PostResponse |
 | DELETE | /care-recruitments/{petPrtcRcrtSn} | 펫돌봄 모집 삭제(작성자, 매칭·채팅 기록 유지) | CMU-004-11 | KSJ | - | - |
 | DELETE | /posts/{pstSn} | 게시글 삭제(작성자) | CMU-001-15 | KSJ | - | - |
 | DELETE | /posts/{pstSn}/comments/{cmntSn} | 댓글 삭제(답글 유지) | CMU-001-11, CMU-002-07 | KSJ | - | - |
-| DELETE | /posts/{pstSn}/likes | 좋아요 취소 | CMU-001-09, CMU-002-08, CMU-004-12 | KSJ | - | - |
+| DELETE | /posts/{pstSn}/likes | 좋아요 취소. 멱등: 누르지 않은 상태여도 200 | CMU-001-09, CMU-002-08, CMU-004-12 | KSJ | - | - |
+
+## 실시간 (채팅, 2026-10-22 제안)
+
+REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽음 변경은 STOMP(WebSocket)로 받는다. 보내기를 REST로 두는 이유는 `idmptDmndId` 멱등과 `ApiResponse` 오류 응답을 그대로 쓰기 위해서다.
+
+| 항목 | 값 |
+| --- | --- |
+| 연결 | `/ws` (STOMP over WebSocket). 연결할 때 access 토큰 쿠키로 인증하고, 연결 속성에 `mbrSn`·`sid`(RFRSH_TKN 일련번호)를 저장한다 |
+| 구독 | `/user/queue/chat`. 사용자 식별자는 `mbrSn`이라 같은 회원의 모든 기기 연결로 간다 |
+| 받는 것 | `{ type: "MESSAGE", otoChatRoomSn, message: ChatMessageSummary }`, `{ type: "READ", otoChatRoomSn, mbrSn, msgSeq }` |
+
+다중 로그인(한 회원이 여러 기기로 동시에 접속)에서 지킬 것:
+- 메시지와 읽음은 회원의 모든 연결로 보낸다. 읽음 위치는 DB(회원 + 방 기준 마지막 읽은 `msgSeq`)에 두고, 한 기기에서 읽으면 다른 기기 연결에도 `READ`를 보낸다. 헤더의 채팅 안 읽은 수(`GET /chat-rooms/unread-count`)도 같은 값을 쓴다
+- "채팅방을 보는 중이면 거래 알림을 만들지 않는다"(COM-004-14)는 그 회원의 연결 중 하나라도 그 방을 보고 있으면 보는 중으로 본다. 기준(연결 여부 / 화면 포커스)은 KSJ가 정한다
+- 로그아웃·세션 폐기 뒤에도 소켓이 살아 있으면 안 된다. `LoginSessionManager.revoke`가 세션 폐기 이벤트를 발행하고, 채팅 쪽이 그 `sid`의 연결을 끊는다. 오래 열린 연결은 access 토큰 만료 때 다시 인증한다
+- 서버가 한 대면 내장 브로커로 충분하다. 여러 대가 되면 외부 브로커(Redis pub/sub 등)가 필요하다
 
 ## DTO
 
@@ -256,8 +272,15 @@
 | shrnAddr | String | N | 복호화. 참여자에게만 | CHAT_MSG.SHRN_ADDR_ENC, CMU-005-05 |
 | photos | List<ImageItem> | Y | 사진 메시지가 아니면 빈 목록 | CHAT_MSG_PHOTO, CMU-005-05 |
 
+### ChatMessageSliceResponse
+쓰는 API: GET /chat-rooms/{otoChatRoomSn}/messages (전체 건수를 세지 않는 커서 응답. `PageResponse`를 쓰지 않는다)
+| 필드 | 타입 | 필수 | 검증·설명 | 근거 |
+| --- | --- | --- | --- | --- |
+| content | List<ChatMessageSummary> | Y | 최신순. 없으면 빈 목록 | CMU-005-04 |
+| hasNext | boolean | Y | 더 오래된 메시지가 있는지(`size + 1`건 조회로 판정) | CMU-005-04 |
+
 ### ChatMessageSummary
-쓰는 API: GET /chat-rooms/{otoChatRoomSn}/messages
+쓰는 API: GET /chat-rooms/{otoChatRoomSn}/messages (ChatMessageSliceResponse.content의 요소)
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | chatMsgSn | Long | Y | | CHAT_MSG.CHAT_MSG_SN |

@@ -39,8 +39,8 @@ com.nyangmeong
 └─ scheduler/              여러 도메인에 걸친 배치만
 
 src/main/resources/mapper/{도메인}/{이름}Mapper.xml   (공통 모듈은 mapper/global/)
-db/                        테이블 생성·변경 SQL (저장소 루트). 사람이 직접 실행한다.
-                           src/main/resources/db/migration은 만들지 않는다
+db/                        테이블 생성 기준 SQL (저장소 루트). 사람이 직접 실행한다.
+db/migration/              기존 DB 위에 차례로 실행하는 변경 SQL. 공용 DB에는 이것만 실행한다
 ```
 
 도메인 안은 다섯 패키지로 통일한다. 하위 패키지, 깊이, 설정 클래스 위치는 `docs/convention/architecture.md`에 있다.
@@ -86,6 +86,7 @@ db/                        테이블 생성·변경 SQL (저장소 루트). 사�
 | --- | --- |
 | 코드를 쓸 때 항상 | `docs/convention/common.md`: 로그와 예외, 주석, 이름 짓기, 공통 모듈에서 가져다 쓰는 것 |
 | Controller를 쓸 때 | `docs/convention/controller.md`, `docs/convention/api.md` |
+| API 경로·요청·응답 DTO를 정할 때(기획 포함) | `docs/api/README.md`, `docs/api/<도메인>.md`에서 기능 ID로 검색한 행과 그 DTO. 초안과 다르게 정하면 같은 PR에서 초안도 고친다 |
 | Service를 쓸 때 | `docs/convention/service.md` |
 | Mapper, Mapper XML, VO, enum을 쓸 때 | `docs/convention/mapper.md` |
 | DTO를 쓸 때 | `docs/convention/dto.md` |
