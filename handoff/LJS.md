@@ -2,20 +2,15 @@
 
 ## 지금 하는 것
 
-`EXPND.IDMPT_DMND_ID` 공용 DB 반영 — 기획 (시작 2026-10-22 14:41, 마일스톤 밖 작업: "다음에 할 것" 맨 위)
+없음
 
-기획:
-- 전제: `98a40ee`(SQL이 든 커밋)가 아직 `origin/LJS`에만 있고 develop에 병합되지 않았다. PR 생성·병합은 사람이 한다. 병합 전에는 2번부터 하지 않는다.
-- 1. 공용 DB 실행(사람): 실행 전 `SHOW COLUMNS FROM EXPND LIKE 'IDMPT_DMND_ID'`로 이미 있는지 본다. 없으면 `db/migration/20261022_01_add_expnd_idmpt_dmnd_id.sql`을 실행한다. 완료 조건 `명령:` 같은 조회가 1행(varchar(100), NULL), `SHOW INDEX FROM EXPND WHERE Key_name='UK_EXPND_1'`이 1행.
-- 2. ERDCloud `EXPND`에 `IDMPT_DMND_ID`(도메인 var100, NULL, 논리명 멱등요청ID, `EXPND_YMD` 뒤)를 넣고 UK_EXPND_1을 메모·인덱스로 남긴다. 고치기 전에 스냅샷을 만들라고 안내한다. 완료 조건 `화면:` ERD에서 컬럼 확인.
-- 3. PR에 완료 댓글(사람 확인 뒤 `gh pr comment`).
-- 코드 변경 없음. 새 의존성: 없음
-
-이전: API 초안 설계 보정 — 끝 (2026-10-22, 검증 1회차 `통과`, 사람 확인 완료). 내용은 커밋 `98a40ee`.
+이전: 하네스 테스트(415와 사람이 읽는 변환 오류 문구) — 끝 (2026-10-22). `ErrorCode.UNSUPPORTED_MEDIA_TYPE`과 `HttpMediaTypeNotSupportedException` 핸들러, 타입 변환 실패의 `data[].message`를 "형식이 올바르지 않습니다."로. 검증 1회차 통과, 사람 확인. 새 스크립트 start→impl→verify→end를 처음 끝까지 돌림. 하네스 스크립트화 변경(`scripts/`·스킬)은 아직 커밋 전.
 
 ## 다음에 할 것
 
-- 이번 PR 병합 직후 팀 공용 DB에 `db/migration/20261022_01_add_expnd_idmpt_dmnd_id.sql`을 실행하고 PR에 완료 댓글. ERDCloud `EXPND`에 `IDMPT_DMND_ID`(var100, NULL, UK_EXPND_1)를 넣는다
+- 하네스 스크립트화 변경(`scripts/`·`.claude/skills/`·`.agents/skills/`)을 따로 PR로 올린다(2026-10-22 테스트 끝). 프론트 저장소의 `scripts/verify-loop.sh`에도 `scripts` 보호 줄을 맞춘다. 테스트에서 본 것: 검증 에이전트가 verify 스킬 6번대로 `verify-loop.sh clear`를 부르다 권한 분류기에 막혔다. AGENTS.md는 `clear`를 사람·`/end`만 한다고 하므로 verify 스킬 6번을 맞춘다
+- 공용 DB `RFRSH_TKN`에 하네스 테스트 검증 때 생긴 회원 1 dev-tokens 행(2026-10-22)을 정리할지 정한다(사람)
+- ERDCloud `EXPND.IDMPT_DMND_ID`를 `EXPND_YMD` 뒤로 옮긴다(화면에서 끌기, 사람)
 - 팀에 알린다(2026-10-22): `docs/convention/api.md` 새 규칙 4가지, `docs/api/README.md`(구현하며 달라지면 같은 PR에서 초안도 고친다), `/start`가 `docs/api`를 기능 ID로 찾아 쓴다, 테이블 변경 SQL은 `db/migration/`에(공용 DB에는 이것만 실행)
 - YAY에게 알린다: 로그인·SNS 로그인 응답에 토큰을 넣지 않는다(`TokenResponse` 삭제, `/auth/refresh`는 `data` 없음). SNS 흐름을 정할 때 `issues.md` 로그인 2번 2026-10-22 추가 4가지를 함께 정한다
 - SJM에게 알린다: 지출 다중 삭제는 `DELETE /expenses?expndSn=`와 `POST /expenses/bulk-delete`(`expectedCnt` 확인, LJS가 더한 안전장치), 지출 등록은 줄마다 `idmptDmndId`
@@ -37,7 +32,6 @@
 - FN-MYP-010-19: 캐릭터 생성 외부 API가 정해지면 `CharacterGenerator` 실제 구현과 베이스 캐릭터 선택 방식을 판단한다. 기본 캐릭터 이미지(`resources/character/default-*.png`)도 디자인 이미지로
 - SCR-COM-004 연결 남음: FN-COM-004-08 공동양육 초대 수락·거절(SJM) API가 나오면 알림 행 버튼과 연결하고 초대 알림 `mvmnPath` 형식을 SJM과 맞춘다
 - SCR-COM-002 연결 남음: `/auth/me`의 프로필 이미지 URL은 `FileStore`·파일 조회 API 뒤 연결. 지금은 `atchFileSn`만
-- 정하기: 잘못된 Content-Type이 415가 아니라 500, 잘못된 tab 400의 `data[].message`에 Java 변환 문구가 나온다. `GlobalExceptionHandler`에서 고칠지
 - 정하기: HLD_ITEM 유일 키 `UK_HLD_ITEM_1`에 DEL_YN이 없다. 보유 아이템 소프트 삭제가 생기면 재구매가 막히므로 그때 키를 고친다
 - 정하기: Windows 터미널 로그 한글 깨짐(임시 `chcp 65001`). `bootRun`에 `-Dstdout.encoding=UTF-8`을 넣을지
 - 팀에 알린다: 배치 패키지 `job` → `scheduler`(기능 분배 정본은 아직 `job`과 AIM-006 담당 YAY), 케어 일정 사전 알림 `CareScheduleAlarmEvent`, 메일 `global/mail/MailSender`(로그만), 스케줄러 `global/batch/SchedulingConfig`

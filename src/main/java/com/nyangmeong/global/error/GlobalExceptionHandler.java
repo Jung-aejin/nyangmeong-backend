@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -32,6 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    /** 타입 변환 실패(없는 enum 값 등)에 Java 기본 문구 대신 내보내는 문구 */
+    private static final String INVALID_FORMAT_MESSAGE = "형식이 올바르지 않습니다.";
 
     private final SensitiveDataMasker masker;
 
@@ -64,7 +68,8 @@ public class GlobalExceptionHandler {
 
         List<FieldErrorResponse> fields = e.getBindingResult().getFieldErrors().stream()
                 .map(fieldError -> new FieldErrorResponse(fieldError.getField(),
-                        String.valueOf(fieldError.getDefaultMessage())))
+                        fieldError.isBindingFailure() ? INVALID_FORMAT_MESSAGE
+                                : String.valueOf(fieldError.getDefaultMessage())))
                 .toList();
         ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
         return ResponseEntity.status(errorCode.status())
@@ -99,6 +104,16 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
         logException(e);
         return respond(ErrorCode.METHOD_NOT_ALLOWED, request);
+    }
+
+    /**
+     * 미지원 Content-Type 처리 핸들러 메소드
+     */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException e,
+            HttpServletRequest request) {
+        logException(e);
+        return respond(ErrorCode.UNSUPPORTED_MEDIA_TYPE, request);
     }
 
     /**

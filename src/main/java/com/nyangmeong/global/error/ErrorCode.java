@@ -28,6 +28,7 @@ public enum ErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 정보를 찾을 수 없습니다."),
     COMMON_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 공통코드입니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "허용하지 않는 요청 방식입니다."),
+    UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 요청 형식입니다."),
     IDEMPOTENCY_KEY_REQUIRED(HttpStatus.BAD_REQUEST, "요청 식별값(Idempotency-Key)이 필요합니다."),
     /** 멱등 요청 ID(idmptDmndId)가 같은 요청이 처리 중이거나 끝난 경우 */
     ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 요청입니다."),
