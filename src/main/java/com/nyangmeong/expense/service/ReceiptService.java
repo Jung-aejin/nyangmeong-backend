@@ -105,6 +105,18 @@ public class ReceiptService {
     }
 
     /**
+     * 저장 완료 처리 : 인식성공·부분인식에서만
+     */
+    @Transactional
+    public void markSaved(Long mbrSn, Long recptSn, ReceiptStatus before, String idmptDmndId) {
+        if (receiptMapper.updateSaved(recptSn, codes(List.of(ReceiptStatus.RECOGNIZED, ReceiptStatus.PARTIAL)),
+                ReceiptStatus.SAVED.getCode(), idmptDmndId) == 0) {
+            throw new CustomException(ErrorCode.ALREADY_PROCESSED);
+        }
+        insertHistory(recptSn, mbrSn, before, ReceiptStatus.SAVED, null);
+    }
+
+    /**
      * 회원 영수증 조회
      */
     private Receipt getOwned(Long mbrSn, Long recptSn) {
