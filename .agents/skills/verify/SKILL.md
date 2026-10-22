@@ -24,7 +24,7 @@ background: false
 5. `화면:` 완료 조건은 AGENTS.md의 방법으로 확인한다. 못 하면 이유를 적고 둘 중 하나로 나눈다.
    - `연결 남음`: 기다리는 것이 `milestones/<이름>.md`의 그 마일스톤 "API가 남의 것"·"기다리는 것"에 있거나, `docs/convention/milestone.md` 담당 표에서 남의 화면·라우트일 때만. 기다리는 것과 담당을 적는다.
    - `내 것`: 그 밖 전부(가짜 값을 바꿀 수 없음, 이 마일스톤 코드의 빠진 부분 등). 확인할 수 있게 하는 방법을 적는다.
-6. 판정이 `실패`면 `sh scripts/verify-loop.sh fail "<실패 항목 한 줄>"`을 돌려 나온 회차를 적는다. 아니면 `sh scripts/verify-loop.sh clear`.
+6. 판정이 `실패`면 `sh scripts/verify-loop.sh fail "<실패 항목 한 줄>"`을 돌려 나온 회차를 적는다. 아니면 `sh scripts/verify-loop.sh pause`(잠금을 보관만 한다. 버리는 `clear`는 부르지 않는다. `/end`가 `끝`으로 판정할 때 버린다).
 7. 보고한다.
 
 ```

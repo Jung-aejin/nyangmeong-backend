@@ -28,7 +28,7 @@ disable-model-invocation: true
    - 검증 보고의 "확인 못 함(내 것)"이 없다.
    - 사람이 `확인`이라고 답했다(2번).
    - `끝`이면 그 마일스톤 절에 `- 연결 남음: <기능 ID> (<기다리는 것>, <담당>)`을 남기고, 같은 항목을 핸드오프 "다음에 할 것"에 올린다.
-   - `끝`이고 4번에서 보관한 잠금이 있으면 `sh scripts/verify-loop.sh clear`로 버린다. `끝`은 사람 확인(2번)을 거친 판정이라 그 확인에 루프를 버리는 것도 포함한다. 핸드오프에 "보관 중" 문구를 이미 적었다면 지운다. `진행`이면 버리지 않고 보관한 채 둔다.
+   - `끝`이고 보관한 잠금(4번에서 보관했거나 검증이 통과 뒤 보관한 것)이 있으면 `sh scripts/verify-loop.sh clear`로 버린다. `끝`은 사람 확인(2번)을 거친 판정이라 그 확인에 루프를 버리는 것도 포함한다. 핸드오프에 "보관 중" 문구를 이미 적었다면 지운다. `진행`이면 버리지 않고 보관한 채 둔다.
 6. end-check의 "## 스킬 동기화"가 `차이 없음`이어야 한다(스크립트가 `.claude/skills/`를 `.agents/skills/`로 복사하고 비교했다). 4·5번에서 스킬을 고쳤으면 `sh scripts/end-check.sh --no-build`를 다시 돌린다.
 7. 커밋 메시지를 제안한다(`docs/convention/git.md` 형식). 종류는 들어가는 변경으로 정한다(end-check "## 커밋 종류").
    - 코드가 있으면 코드·핸드오프·마일스톤을 한 커밋으로. 제목 `[이니셜] feat: <화면 ID> <이번에 만든 것>`(버그 수정만이면 `fix`). 화면명이 아니라 실제로 만든 것을 쓴다.
@@ -38,7 +38,7 @@ disable-model-invocation: true
    - `Co-Authored-By:` 같은 AI 도구 줄은 넣지 않는다. 사람이 `커밋`이라고 답하면 커밋한다.
    - 커밋한 뒤 푸시를 제안한다: 올릴 커밋 목록(`git log origin/<이름>..HEAD --oneline`, 커밋 전이면 end-check "## 푸시·PR")을 보여 주고 "푸시하려면 `푸시`라고 답해 주세요". 답하면 `git push origin <이름>`만 한다. `develop`·`main`에는 푸시하지 않는다.
    - 푸시한 뒤 PR: 열린 PR(end-check "## 푸시·PR")이 있으면 "이 커밋은 열린 PR #N에 들어갑니다"라고만 알린다. 없고 이번 마일스톤이 `끝`이면 "PR을 만들려면 `PR`이라고 답해 주세요"라고 묻는다(`진행`이면 묻지 않는다).
-   - `PR`이라고 답하면: `sh scripts/pr-prep.sh`를 돌린다(`origin/develop` merge → 검증 명령 → 푸시). 0이 아니면 출력(충돌 파일·실패 줄)을 그대로 보여 주고 멈춘다. 충돌은 스크립트가 abort 하지 않고 그대로 둔다. 0이면 `gh pr create --base develop --head <이름>`. 제목은 커밋 형식이다. 본문은 `.github/pull_request_template.md`를 읽어 섹션 제목·순서를 그대로 채운다(규칙은 `docs/convention/git.md` "PR"). 해당 없는 섹션은 `없음`이라고 쓴다. `Features` 표는 마일스톤의 기능 ID와 검증 보고로, `Test Plan`의 `Result:`는 검증 판정과 회차로, 호출 체크박스는 사람 확인으로 채운다. `Design Decisions`는 기획과 달라진 것과 다른 담당에 영향 가는 선택만 쓴다. AI 도구 문구는 넣지 않는다. `gh`가 없으면 `https://github.com/<저장소>/compare/develop...<이름>` 주소와 본문을 보여 준다.
+   - `PR`이라고 답하면: `sh scripts/pr-prep.sh`를 돌린다(`origin/develop` merge → 검증 명령 → 푸시). 종료 코드 4면 출력의 커밋하지 않은 파일 목록을 보여 주고 "이 파일들은 커밋하지 않은 채로 두고 진행할까요? 검증 명령에는 이 변경도 포함됩니다. 진행하려면 `진행`이라고 답해 주세요"라고 묻고 멈춘다. `진행`이면 `sh scripts/pr-prep.sh --allow-dirty`로 다시 돌린다. 그 밖에 0이 아니면 출력(충돌 파일·실패 줄)을 그대로 보여 주고 멈춘다. 충돌은 스크립트가 abort 하지 않고 그대로 둔다. 0이면 `gh pr create --base develop --head <이름>`. 제목은 커밋 형식이다. 본문은 `.github/pull_request_template.md`를 읽어 섹션 제목·순서를 그대로 채운다(규칙은 `docs/convention/git.md` "PR"). 해당 없는 섹션은 `없음`이라고 쓴다. `Features` 표는 마일스톤의 기능 ID와 검증 보고로, `Test Plan`의 `Result:`는 검증 판정과 회차로, 호출 체크박스는 사람 확인으로 채운다. `Design Decisions`는 기획과 달라진 것과 다른 담당에 영향 가는 선택만 쓴다. AI 도구 문구는 넣지 않는다. `gh`가 없으면 `https://github.com/<저장소>/compare/develop...<이름>` 주소와 본문을 보여 준다.
    - 병합은 하지 않는다. 사람이 GitHub에서 한다.
 8. 보고: 검증 명령별 종료 코드, 사람 확인 결과, 바뀐 절, 동기화 결과, 확인 못 한 것. 마지막 줄:
    - 끝났으면 "다음 작업은 `/clear` 한 뒤 `/start`로 시작하세요"

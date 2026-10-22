@@ -8,7 +8,7 @@
 
 ## 다음에 할 것
 
-- 하네스 스크립트화는 415 수정과 같은 PR로 올렸다(2026-10-22). 남은 것: 프론트 저장소의 `scripts/verify-loop.sh`에도 `scripts` 보호 줄을 맞춘다. 테스트에서 본 것 두 가지를 고친다: 검증 에이전트가 verify 스킬 6번대로 `verify-loop.sh clear`를 부르다 권한 분류기에 막혔다(AGENTS.md는 `clear`를 사람·`/end`만 한다고 하므로 verify 스킬 6번을 맞춘다). `pr-prep.sh`는 커밋하지 않은 파일이 있으면 멈춰서, 따로 올릴 하네스 변경이 남아 있으면 PR을 못 만든다
+- 하네스 테스트 후속(2026-10-22, 백엔드 PR #23에 포함): verify 스킬 6번은 통과 시 `clear` 대신 `pause`, `pr-prep.sh`는 커밋하지 않은 변경이 있으면 종료 코드 4로 묻고 `--allow-dirty`로 진행. 프론트 저장소에도 `verify-loop.sh`의 `scripts` 보호와 verify·end 스킬 같은 수정을 했다(커밋 전, 프론트 PR 필요). 아직 못 돌려 본 것: `milestone-status`·`dms-fetch`·`api-row`(화면 작업), 검증 실패 뒤 잠금·3회 실패 넘기기, `pr-prep --allow-dirty`
 - 공용 DB `RFRSH_TKN`에 하네스 테스트 검증 때 생긴 회원 1 dev-tokens 행(2026-10-22)을 정리할지 정한다(사람)
 - ERDCloud `EXPND.IDMPT_DMND_ID`를 `EXPND_YMD` 뒤로 옮긴다(화면에서 끌기, 사람)
 - 팀에 알린다(2026-10-22): `docs/convention/api.md` 새 규칙 4가지, `docs/api/README.md`(구현하며 달라지면 같은 PR에서 초안도 고친다), `/start`가 `docs/api`를 기능 ID로 찾아 쓴다, 테이블 변경 SQL은 `db/migration/`에(공용 DB에는 이것만 실행)
