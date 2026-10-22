@@ -60,7 +60,7 @@ check_keys src/main/resources/application.properties.example src/main/resources/
 
 # 잠금이 남아 있으면 이전 세션이 /end 없이 끝난 것이다. 지우지 않고 보관한다(clear는 사람만 한다)
 echo "## 검증 루프"
-case "$(sh scripts/verify-loop.sh status)" in 잠금*) sh scripts/verify-loop.sh pause ;; esac
+case "$(sh scripts/verify-loop.sh status)" in "잠금 회차"*) sh scripts/verify-loop.sh pause ;; esac
 sh scripts/verify-loop.sh status
 
 hf=handoff/$name.md
@@ -71,6 +71,19 @@ if [ ! -f "$hf" ]; then
 fi
 echo "## 지금 하는 것"
 awk '/^## 지금 하는 것/ { f = 1; next } /^## / { f = 0 } f && NF' "$hf"
+# 첫 줄의 상태로 승인 여부를 본다. "— 기획 ("이면 승인 전이다(/impl이 "— 구현 중 (승인 …"으로 바꾼다)
+case "$(awk '/^## 지금 하는 것/ { f = 1; next } /^## / { f = 0 } f && NF { print; exit }' "$hf")" in
+  *"— 기획 ("*) echo "기획 상태: 승인 전" ;;
+  *"— 구현 중 ("*) echo "기획 상태: 구현 중" ;;
+esac
+
+echo "## PR"
+if command -v gh >/dev/null; then
+  gh pr list --head "$branch" --state all --limit 3 --json number,state,title \
+    --jq '.[] | "#\(.number) \(.state) \(.title)"' 2>/dev/null || echo "gh 조회 실패"
+else
+  echo "gh 없음"
+fi
 
 echo "## 작업 후보"
 mf=milestones/$name.md

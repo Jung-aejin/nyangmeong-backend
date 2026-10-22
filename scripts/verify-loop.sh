@@ -12,7 +12,8 @@ PAUSED=.claude/verify-loop.paused
 BASE=.claude/verify-loop.base
 TAB=$(printf '\t')
 # 잠그는 기준 파일. 없는 경로는 무시된다(프론트·백엔드 공용 목록)
-PROTECTED="handoff milestones AGENTS.md CLAUDE.md .claude .agents .codex scripts/verify-loop.sh package.json yarn.lock eslint.config.js vite.config.js build.gradle settings.gradle gradle src/test"
+# scripts는 검증이 쓰는 수집 스크립트(verify-collect.sh 등)까지 잠근다
+PROTECTED="handoff milestones AGENTS.md CLAUDE.md .claude .agents .codex scripts package.json yarn.lock eslint.config.js vite.config.js build.gradle settings.gradle gradle src/test"
 
 snapshot() {
   mkdir -p .claude
