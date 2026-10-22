@@ -21,11 +21,11 @@
 | GET | /pets/{petSn}/observation-items | 관찰 항목 목록(첫·최근 회차 요약 포함). `?obsrvSttsCd=` | HLT-002-15, HLT-011-10 | JAJ | - | List<ObservationItemSummary> |
 | GET | /pets/{petSn}/prescriptions | 처방약 목록(복용 중 우선·최신순). `?ckupRcdSn=&prscSttsCd=` | HLT-005-03, HLT-011-02·08 | JAJ | - | List<PrescriptionSummary> |
 | GET | /pets/{petSn}/repeat-preventions | 반복 예방 관리 목록. `?ckupRcdSn=` | HLT-005-05 | JAJ | - | List<RepeatPreventionSummary> |
-| POST | /pets/{petSn}/care-completions | 케어 완료 체크(투약 항목은 1회 체크). 다음 예정일 재계산 | HLT-003-12 | JAJ | CareCompletionCreateRequest | CareCompletionResponse |
+| POST | /pets/{petSn}/care-completions | 케어 완료 체크(투약 항목은 1회 체크). 다음 예정일 재계산. 중복 체크는 `UK_CARE_CMPTN_HSTRY_1`(항목+완료일)로 막는다. 같은 항목·같은 날 다시 보내면 200과 기존 기록(처음은 201), `idmptDmndId`는 받지 않는다 | HLT-003-12 | JAJ | CareCompletionCreateRequest | CareCompletionResponse |
 | POST | /pets/{petSn}/care-items | 케어 항목 추가(마지막으로 한 날은 완료 기록으로 함께 저장). AI 대화 등록도 같은 API | HLT-003-21~24·38, AIM-012-07·09·13 | JAJ | CareItemCreateRequest | CareItemResponse |
 | POST | /pets/{petSn}/care-schedules | 일정 등록(종류별 필수값 서버 재검증, 출처 SCHDL_SRC_CD). AI 대화 등록도 같은 API | HLT-003-32~37, AIM-012-09·12~14 | JAJ | CareScheduleCreateRequest | CareScheduleResponse |
 | POST | /pets/{petSn}/checkup-attachments | 첨부 등록(multipart, 유형·영상 종류·촬영 부위) | HLT-005-01 | JAJ | CheckupAttachmentCreateRequest | CheckupAttachmentResponse |
-| POST | /pets/{petSn}/checkup-attachments/{ckupRcdAtchSn}/analyses | 검사결과지 PDF 분석 요청(인식 결과만 반환, 저장 안 함, 중복 요청 차단) | HLT-005-04, HLT-007-06 | JAJ | - | InspectionAnalysisResponse |
+| POST | /pets/{petSn}/checkup-attachments/{ckupRcdAtchSn}/analyses | 검사결과지 PDF 분석 요청(인식 결과만 반환, 저장 안 함, 중복 요청 차단). 요청 안에서 동기로 분석하고 제한 시간(설정값, 영수증 OCR의 `app.ocr.timeout`과 같은 방식)을 넘기면 일시 오류로 돌려준다. 성공·실패 모두 200, 결과는 `anlysRslt`로 구분(JAJ 확인) | HLT-005-04, HLT-007-06 | JAJ | - | InspectionAnalysisResponse |
 | POST | /pets/{petSn}/checkups | 검진기록 직접 등록(같은 날짜 병원 일정 자동 연결·없으면 생성, 가까운 일정 옮겨 연결 선택) | HLT-002-26~29·31·46 | JAJ | CheckupCreateRequest | CheckupResponse |
 | POST | /pets/{petSn}/daily-health-records | 오늘 기록 추가(식사량·음수량·산책·체중·배변상태) | HLT-002-11 | JAJ | DailyHealthRecordCreateRequest | DailyHealthRecordResponse |
 | POST | /pets/{petSn}/etc-inspections | 기타검사 입력(검사명·결과 500자·메모 200자) | HLT-005-11~14 | JAJ | EtcInspectionCreateRequest | EtcInspectionResponse |
@@ -417,6 +417,7 @@
 | --- | --- | --- | --- | --- |
 | ckupRcdAtchSn | Long | Y | 분석한 첨부 | CKUP_RCD_ATCH.CKUP_RCD_ATCH_SN, HLT-005-04 |
 | ckupRcdSn | Long | Y | 저장할 검진기록(SCR-HLT-007 진입) | CKUP_RCD_ATCH.CKUP_RCD_SN, HLT-005-04 |
+| anlysRslt | String | Y | 분석 결과 구분: 성공 / 인식 실패 / 일시 오류(제한 시간 초과·외부 API 오류). 실패도 200으로 주고 이 값으로 문구를 고른다. 값 표현은 영수증의 `ocrPrcsSttsCd`(AIMG01)처럼 공통코드로 둘지 JAJ가 정한다(2026-10-22 제안) | HLT-005-04, HLT-007-06 |
 | items | List<InspectionAnalysisItem> | Y | 혈액검사 항목만. 0건이면 빈 목록 | HLT-007-04·05 |
 | excludedArtclNms | List<String> | N | 혈액검사가 아니라서 뺀 항목 이름(안내용, issues 10) | HLT-007-05 |
 

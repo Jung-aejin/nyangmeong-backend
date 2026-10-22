@@ -19,7 +19,7 @@
 | POST | /auth/captchas | 보안코드(캡챠) 발급·새로고침, 이전 코드 무효화 | ACC-002-18·19 | YAY | CaptchaCreateRequest | CaptchaResponse |
 | POST | /auth/login | 이메일 로그인(캡챠·ID/PW 검증, 실패 누적, 첫 로그인 닉네임 재안내 여부 반환) | ACC-002-05·16·20, ACC-001-22 | YAY | LoginRequest | LoginResponse |
 | POST | /auth/logout | 로그아웃(Refresh 토큰 폐기) | COM-005-07·08, AIM-011-17 (기능 분배 3.1절 28번) | YAY | - | - |
-| POST | /auth/refresh | Access 토큰 재발급 | (명세 기능 ID 없음) | YAY | - | TokenResponse |
+| POST | /auth/refresh | Access 토큰 재발급. 토큰은 httpOnly 쿠키로만 주고 응답 `data`는 없다(`docs/convention/api.md`). 근거는 로그인 유지 기능(issues 6) | (명세 기능 ID 없음) | YAY | - | - |
 | POST | /auth/sns-login | 네이버·카카오·구글 인가 결과 처리: 기존 회원 로그인 / 신규 가입 확인 / 이메일 중복 / 30일 복구 분기 | ACC-002-09~11, ACC-001-22·31·38·40 | YAY | SnsLoginRequest | SnsLoginResponse |
 | POST | /email-certifications | 이메일 인증번호 발송·재전송(목적: 가입·비밀번호 찾기·복구). 가입 목적은 정상 회원 이메일 중복이면 거절 | ACC-001-03·04·38·41, ACC-011-03·07 | YAY | EmailCertificationCreateRequest | EmailCertificationResponse |
 | POST | /email-certifications/{emlCertSn}/invalidate | 인증번호·재설정 권한·복구 확인 권한 무효화 | ACC-011-05, ACC-012-04, ACC-001-46 | YAY | - | - |
@@ -127,8 +127,6 @@
 쓰는 API: POST /auth/login
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| accessToken | String | Y | | ACC-002-05 |
-| refreshToken | String | N | 전달 방식(쿠키/본문) 미정. 쿠키로 정하면 이 필드를 뺀다 | RFRSH_TKN.RFRSH_TKN_HASH (해시 전 원문) |
 | ncnmReguide | Boolean | Y | 닉네임 모달 재안내 여부. 닉네임 설정 미완료이고 기존 최종로그인일시가 없을 때만 true | MBR.NCNM_STNG_CMPTN_YN, MBR.LAST_LGN_DT, ACC-001-22 |
 | mbrNcnm | String | Y | 재안내 모달에 미리 채울 저장값 | MBR.MBR_NCNM, ACC-001-22 |
 
@@ -257,8 +255,6 @@
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | snsLoginRslt | String | Y | 기존 회원 로그인 / 신규 가입 확인 / 이메일 중복 / 30일 복구 중 하나(값 미정) | ACC-002-09~11 |
-| accessToken | String | N | 기존 회원 로그인일 때만 | ACC-002-09~11 |
-| refreshToken | String | N | 기존 회원 로그인일 때만. 전달 방식 미정 | RFRSH_TKN.RFRSH_TKN_HASH (해시 전 원문) |
 | ncnmReguide | Boolean | N | 기존 회원 로그인일 때만. `LoginResponse`와 같은 기준 | MBR.NCNM_STNG_CMPTN_YN, MBR.LAST_LGN_DT, ACC-001-22 |
 | mbrNcnm | String | N | 기존 회원 로그인일 때만. 재안내 모달 저장값 | MBR.MBR_NCNM, ACC-001-22 |
 | snsOffrCd | String | N | 신규 가입 확인일 때 읽기 전용 표시 | SNS_ACNT_LINK.SNS_OFFR_CD, ACC-001-31 |
@@ -289,9 +285,3 @@
 | trmsTtl | String | Y | | TRMS.TRMS_TTL |
 | esntlAgreYn | boolean | Y | | TRMS.ESNTL_AGRE_YN, ACC-001-12 |
 | sortSeq | Integer | Y | | TRMS.SORT_SEQ |
-
-### TokenResponse
-쓰는 API: POST /auth/refresh
-| 필드 | 타입 | 필수 | 검증·설명 | 근거 |
-| --- | --- | --- | --- | --- |
-| accessToken | String | Y | 재발급한 Access 토큰. 이 API는 명세 기능 ID가 없어 로그인 유지 기능을 근거로 둔다(issues 6) | ACC-002-05 |

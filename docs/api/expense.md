@@ -13,17 +13,17 @@
 | POST | /expenses | 지출 등록. 날짜·카테고리·내용 공통, 반려동물·금액 줄 여러 개(영수증 마리별 분할), 영수증 연결(`recptSn`) | MYP-031-02·03 | SJM | ExpenseCreateRequest | List<ExpenseResponse> |
 | PUT | /members/me/expense-limit | 월 지출 한도 저장(계정 전체 한 개). 처음 저장하면 한도 알림 수신을 켬 | MYP-030-13 | SJM | ExpenseLimitSaveRequest | ExpenseLimitResponse |
 | PATCH | /expenses/{expndSn} | 지출 수정 | MYP-030-03·12 | SJM | ExpenseUpdateRequest | ExpenseResponse |
-| DELETE | /expenses | 지출 다중 삭제. 선택한 `expndSn` 목록 또는 범위·필터 조건 전체 | MYP-030-19·21 | SJM | ExpenseBulkDeleteRequest | - |
+| DELETE | /expenses | 지출 다중 삭제(개별 선택). `?expndSn=1&expndSn=2`, 1개 이상. 본문 없음(`docs/convention/api.md`) | MYP-030-19·21 | SJM | - | - |
+| POST | /expenses/bulk-delete | 지출 조건 전체 삭제([조회 결과 전체 선택]). 범위·필터에 맞는 전체 건. 200, `data` 없음 | MYP-030-18·19·21 | SJM | ExpenseBulkDeleteRequest | - |
 | DELETE | /expenses/{expndSn} | 지출 한 건 삭제 | MYP-030-03·15 | SJM | - | - |
 
 ## DTO
 
 ### ExpenseBulkDeleteRequest
-쓰는 API: DELETE /expenses
+쓰는 API: POST /expenses/bulk-delete (개별 선택 삭제는 `DELETE /expenses?expndSn=`)
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| expndSns | List<Long> | N | 개별 선택한 지출. `selectAll`이 `true`가 아니면 1개 이상 필수 | EXPND.EXPND_SN, MYP-030-18·19 |
-| selectAll | Boolean | N | `true`면 아래 범위·필터 조건에 맞는 전체 건 삭제([조회 결과 전체 선택]). 이때 `expndSns`는 무시 | MYP-030-18 (issues 8번) |
+| expectedCnt | Integer | Y | 화면이 보여 준 삭제 건수(`GET /expenses/totals`). 서버가 센 건수와 다르면 400으로 거절해, 그 사이 바뀐 조건으로 지우지 않는다 | MYP-030-18·19 (issues 8번) |
 | startYmd | LocalDate | N | 삭제 범위 시작 월의 첫날. 종료보다 뒤면 서로 바꿔 적용. `endYmd`와 함께 생략하면 전체 기간 | MYP-030-17 |
 | endYmd | LocalDate | N | 삭제 범위 종료 월의 말일 | MYP-030-17 |
 | petSn | Long | N | 반려동물 필터. 생략하면 전체("공용" 표현은 issues 8번) | EXPND.PET_SN, MYP-030-10·17 |
@@ -45,6 +45,7 @@
 | --- | --- | --- | --- | --- |
 | petSn | Long | N | 비우면 공용. 병원 카테고리면 필수(공용 불가). 연동된 반려동물만 | EXPND.PET_SN, MYP-031-02·03 |
 | expndAmt | Long | Y | 1 이상(0원 불가) | EXPND.EXPND_AMT, MYP-031-02·03 |
+| idmptDmndId | String | Y | 줄마다 클라이언트가 만든 UUID, 최대 100자. 중복 클릭·재전송 차단. 모든 줄의 값이 이미 있으면 200과 기존 지출, 처음이면 201. 일부만 있으면 409 `ALREADY_PROCESSED` | EXPND.IDMPT_DMND_ID (`db/migration/20261022_01_add_expnd_idmpt_dmnd_id.sql`) |
 
 ### ExpenseLimitResponse
 쓰는 API: PUT /members/me/expense-limit

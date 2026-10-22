@@ -48,7 +48,7 @@ import com.nyangmeong.notification.service.NotificationService;
 /**
  * [검사 - 알림 드롭다운 API]
  */
-@WebMvcTest(controllers = NotificationController.class)
+@WebMvcTest(controllers = {NotificationController.class, NotificationSettingController.class})
 @Import({SecurityConfig.class, JwtTokenProvider.class, JwtProperties.class, TokenCookies.class,
         ErrorResponseWriter.class, RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class,
         SensitiveDataMasker.class, GlobalExceptionHandler.class})
@@ -160,7 +160,7 @@ class NotificationControllerTest {
     void 알림_설정을_true_false로_돌려준다() throws Exception {
         when(notificationService.getSetting(1L)).thenReturn(setting());
 
-        mockMvc.perform(get("/api/notifications/settings"))
+        mockMvc.perform(get("/api/members/me/notification-settings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.maskedAcntEml").value("jin****@gmail.com"))
                 .andExpect(jsonPath("$.data.emlNotiRcptnYn").value(true))
@@ -176,7 +176,7 @@ class NotificationControllerTest {
         when(notificationService.updateSetting(eq(1L), any(NotificationSettingUpdateRequest.class)))
                 .thenReturn(setting());
 
-        mockMvc.perform(put("/api/notifications/settings").header("X-Requested-With", "XMLHttpRequest")
+        mockMvc.perform(put("/api/members/me/notification-settings").header("X-Requested-With", "XMLHttpRequest")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(SETTING_BODY))
                 .andExpect(status().isOk())
@@ -189,7 +189,7 @@ class NotificationControllerTest {
     @Test
     @WithMockLoginMember
     void 설정_필드가_빠지면_400_INVALID_INPUT_VALUE() throws Exception {
-        mockMvc.perform(put("/api/notifications/settings").header("X-Requested-With", "XMLHttpRequest")
+        mockMvc.perform(put("/api/members/me/notification-settings").header("X-Requested-With", "XMLHttpRequest")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"emlNotiRcptnYn\":true}"))
                 .andExpect(status().isBadRequest())
