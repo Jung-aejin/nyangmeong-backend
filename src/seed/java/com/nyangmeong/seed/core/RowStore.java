@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -32,11 +33,26 @@ public final class RowStore {
      * - PK를 매기고 fill로 컬럼을 채운다
      */
     public Row add(String table, Consumer<Row> fill) {
+        return add(table, table + "_SN", fill);
+    }
+
+    /**
+     * PK 이름이 테이블명_SN이 아닌 테이블(자동 엔진)
+     */
+    public Row add(String table, String pkColumn, Consumer<Row> fill) {
         List<Row> rows = tables.computeIfAbsent(table, k -> new ArrayList<>());
-        Row row = new Row(table, rows.size() + 1L);
+        Row row = new Row(table, pkColumn, rows.size() + 1L);
         fill.accept(row);
         rows.add(row);
         return row;
+    }
+
+    public Set<String> tableNames() {
+        return tables.keySet();
+    }
+
+    void removeTable(String table) {
+        tables.remove(table);
     }
 
     public List<Row> rows(String table) {
@@ -94,35 +110,72 @@ public final class RowStore {
     /**
      * DB에 넣기
      * - 호출한 쪽의 트랜잭션 안에서 실행. 컬럼 구성이 같은 행끼리 묶어 배치로 넣는다
+     * - isolated(자동 엔진이 만든 새 테이블)는 테이블마다 세이브포인트로 넣고, 실패하면 그 테이블만 되돌리고 경고한다.
+     *   실패한 테이블을 필수 FK로 가리키는 isolated 테이블도 건너뛴다
+     * @return 넣지 못한 isolated 테이블
      */
-    public void flush(Connection conn, Schema schema) throws SQLException {
+    public Set<String> flush(Connection conn, Schema schema, List<String> isolated) throws SQLException {
+        Set<String> failed = new LinkedHashSet<>();
         try (Statement st = conn.createStatement()) {
             st.execute("SET FOREIGN_KEY_CHECKS = 0");
         }
         try {
             for (Map.Entry<String, List<Row>> entry : tables.entrySet()) {
                 String table = entry.getKey();
-                boolean audited = schema.columns(table).containsKey("RGTR_ID");
-                boolean modified = schema.columns(table).containsKey("MDFCN_DT");
-                Map<List<String>, List<Row>> groups = new LinkedHashMap<>();
-                for (Row row : entry.getValue()) {
-                    if (audited) {
-                        row.setIfAbsent("RGTR_ID", SEED_ACTOR);
-                        row.setIfAbsent("MDFR_ID", SEED_ACTOR);
-                    }
-                    if (modified && row.values().containsKey("REG_DT")) {
-                        row.setIfAbsent("MDFCN_DT", row.get("REG_DT"));
-                    }
-                    groups.computeIfAbsent(List.copyOf(row.values().keySet()), k -> new ArrayList<>()).add(row);
+                if (isolated.contains(table)) {
+                    continue;
                 }
-                for (Map.Entry<List<String>, List<Row>> group : groups.entrySet()) {
-                    insert(conn, table, group.getKey(), group.getValue());
+                insertTable(conn, schema, table, entry.getValue());
+            }
+            for (String table : isolated) {
+                String blocker = schema.foreignKeys().stream()
+                        .filter(fk -> fk.table().equals(table) && failed.contains(fk.refTable())
+                                && schema.columns(table).get(fk.column()).requiresValue())
+                        .map(Schema.ForeignKey::refTable).findFirst().orElse(null);
+                if (blocker != null) {
+                    failed.add(table);
+                    SeedWarnings.add("새 테이블 " + table + ": " + blocker + "를 넣지 못해 함께 건너뜀");
+                    continue;
+                }
+                Savepoint sp = conn.setSavepoint();
+                try {
+                    insertTable(conn, schema, table, tables.get(table));
+                    conn.releaseSavepoint(sp);
+                } catch (SQLException e) {
+                    conn.rollback(sp);
+                    failed.add(table);
+                    SeedWarnings.add("새 테이블 " + table + ": 자동 생성 행을 넣지 못해 건너뜀(Seeder 필요) - " + e.getMessage());
                 }
             }
+            failed.forEach(this::removeTable);
+            return failed;
         } finally {
             try (Statement st = conn.createStatement()) {
                 st.execute("SET FOREIGN_KEY_CHECKS = 1");
             }
+        }
+    }
+
+    private void insertTable(Connection conn, Schema schema, String table, List<Row> tableRows) throws SQLException {
+        boolean audited = schema.columns(table).containsKey("RGTR_ID");
+        boolean modified = schema.columns(table).containsKey("MDFCN_DT");
+        boolean registered = schema.columns(table).containsKey("REG_DT");
+        Map<List<String>, List<Row>> groups = new LinkedHashMap<>();
+        for (Row row : tableRows) {
+            if (audited) {
+                row.setIfAbsent("RGTR_ID", SEED_ACTOR);
+                row.setIfAbsent("MDFR_ID", SEED_ACTOR);
+            }
+            if (!registered) {
+                row.values().remove("REG_DT");
+            }
+            if (modified && row.values().containsKey("REG_DT")) {
+                row.setIfAbsent("MDFCN_DT", row.get("REG_DT"));
+            }
+            groups.computeIfAbsent(List.copyOf(row.values().keySet()), k -> new ArrayList<>()).add(row);
+        }
+        for (Map.Entry<List<String>, List<Row>> group : groups.entrySet()) {
+            insert(conn, table, group.getKey(), group.getValue());
         }
     }
 
@@ -156,7 +209,9 @@ public final class RowStore {
         Map<String, Long> filled = new LinkedHashMap<>();
         try (Statement st = conn.createStatement()) {
             for (String table : tables) {
-                schema.columns(table);
+                if (!schema.hasTable(table)) {
+                    continue;
+                }
                 try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM " + table)) {
                     rs.next();
                     if (rs.getLong(1) > 0) {
