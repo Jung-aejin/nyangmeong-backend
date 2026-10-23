@@ -17,6 +17,6 @@
 
 시드 데이터 생성기(`src/seed`, README "시드 데이터")는 테이블 구조를 따라간다.
 
-- 테이블을 바꾸는 PR은 `./gradlew compileSeedJava`가 통과하고, 그 SQL을 적용한 개인 DB에서 `./gradlew seedData -Ptarget=local -Preset`이 끝까지 도는지 확인한다. 기본값 없는 NOT NULL 컬럼을 추가하거나 컬럼 이름을 바꾸면 생성기가 멈추므로 같은 PR에서 그 Seeder를 고친다.
+- 테이블을 바꿔도 생성기는 고치지 않아도 돈다(자동 엔진이 빠진 값·없어진 컬럼·새 테이블을 메우고 "자동 처리" 경고를 남긴다). 새 테이블이나 컬럼에 업무 규칙(상태 이력, 개수 상한 등)이 있어 자동 값이 화면에 어색하면 그 도메인 담당이 `src/seed/.../domain`의 Seeder에 값을 더한다.
 - 공용 DB 시드는 시드 대상 테이블이 모두 빈 상태에서 넣는다. 넣기 전에 팀에 알린다.
 - 공용 DB 시드를 고쳐 다시 넣을 때는 팀에 알린 뒤 `./gradlew seedClean -Ptarget=shared` → `seedData` 순서로 한다. `seedClean`은 팀원이 만든 테스트 데이터까지 지운다.

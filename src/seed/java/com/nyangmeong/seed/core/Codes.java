@@ -45,13 +45,26 @@ public final class Codes {
 
     /**
      * 이름으로 코드 찾기
+     * - 이름이 바뀌었거나 지워졌으면 같은 그룹의 첫 코드로 대신하고 경고를 남긴다
      */
     public String of(String group, String name) {
-        String code = group(group).get(name);
+        Map<String, String> codes = group(group);
+        String code = codes.get(name);
         if (code == null) {
-            throw new SeedException("공통코드 " + group + "에 '" + name + "'이 없습니다. 코드가 바뀌었으면 src/seed를 고쳐 주세요");
+            code = codes.values().iterator().next();
+            SeedWarnings.add("공통코드 " + group + "에 '" + name + "'이 없어 " + code + "로 대신함");
         }
         return code;
+    }
+
+    public boolean hasGroup(String group) {
+        Map<String, String> codes = groups.get(group);
+        return codes != null && !codes.isEmpty();
+    }
+
+    /** 그룹이 없는 코드 컬럼에 넣을 아무 코드(자동 채움용) */
+    public String anyCode() {
+        return groups.values().iterator().next().values().iterator().next();
     }
 
     public List<String> all(String group) {

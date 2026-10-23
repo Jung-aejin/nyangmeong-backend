@@ -5,9 +5,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.nyangmeong.seed.core.AutoFill;
 import com.nyangmeong.seed.core.RowStore;
 import com.nyangmeong.seed.core.Schema;
 import com.nyangmeong.seed.core.Seed;
@@ -15,6 +17,7 @@ import com.nyangmeong.seed.core.SeedImages;
 import com.nyangmeong.seed.core.Seeder;
 import com.nyangmeong.seed.core.SeedSettings;
 import com.nyangmeong.seed.core.SeedValidator;
+import com.nyangmeong.seed.core.SeedWarnings;
 import com.nyangmeong.seed.core.World;
 import com.nyangmeong.seed.domain.AiSeeder;
 import com.nyangmeong.seed.domain.CharacterSeeder;
@@ -75,7 +78,7 @@ public final class SeedDataApplication {
         try (Connection conn = DriverManager.getConnection(settings.jdbcUrl(), settings.username(), settings.password())) {
             Schema schema = Schema.load(conn);
             if (options.reset()) {
-                RowStore.truncate(conn, schema, SeedTables.SEEDED, SeedTables.RUNTIME);
+                RowStore.truncate(conn, schema, SeedTables.targets(schema), SeedTables.RUNTIME);
                 SeedImages.deleteFiles(settings.fileRootDir());
                 System.out.println("[시드] -Preset: 시드 대상 테이블과 seed 이미지 폴더를 비웠습니다");
             }
@@ -90,12 +93,16 @@ public final class SeedDataApplication {
             for (Seeder seeder : seeders) {
                 seeder.run(seed, world);
             }
+            // 테이블 구조가 Seeder와 달라도 돌게 맞추고, 모르는 새 테이블은 자동으로 채운다
+            AutoFill auto = new AutoFill(seed, schema);
+            auto.reconcile();
+            List<String> autoTables = auto.generateUnknownTables(SeedTables.known());
 
             seed.store().checkColumns(schema);
             conn.setAutoCommit(false);
             try {
-                seed.store().flush(conn, schema);
-                new SeedValidator(conn, schema).validate(SeedTables.SEEDED);
+                seed.store().flush(conn, schema, autoTables);
+                new SeedValidator(conn, schema).validate(new ArrayList<>(seed.store().tableNames()));
                 conn.commit();
             } catch (Exception e) {
                 conn.rollback();
@@ -106,6 +113,7 @@ public final class SeedDataApplication {
             seed.store().counts().forEach((table, count) -> System.out.printf("  %-26s %,8d%n", table, count));
             System.out.printf("[시드] 완료: %,d행, 이미지 %,d개, %.1f초%n", seed.store().totalRows(), files,
                     (System.currentTimeMillis() - started) / 1000.0);
+            SeedWarnings.print();
             System.out.println("[시드] 고정 계정과 확인 방법은 README \"시드 데이터\"에 있습니다");
         }
     }
@@ -121,8 +129,8 @@ public final class SeedDataApplication {
         if (options.target() == SeedOptions.Target.LOCAL && !settings.isLocalHost()) {
             throw new SeedException("-Ptarget=local인데 접속 주소가 " + settings.host() + "입니다");
         }
-        System.out.println("[시드] 시드 대상 " + SeedTables.SEEDED.size() + "개와 기록 " + SeedTables.RUNTIME.size()
-                + "개 테이블의 행을 전부 지웁니다. 팀원이 만든 테스트 데이터도 함께 지워집니다");
+        System.out.println("[시드] " + String.join("·", SeedTables.KEPT)
+                + "를 뺀 모든 테이블의 행을 지웁니다. 팀원이 만든 테스트 데이터도 함께 지워집니다");
         confirmDatabaseName(options, settings, "지우려면");
 
         try (Connection conn = DriverManager.getConnection(settings.jdbcUrl(), settings.username(), settings.password())) {
@@ -130,7 +138,7 @@ public final class SeedDataApplication {
             conn.setAutoCommit(false);
             Map<String, Long> deleted;
             try {
-                deleted = RowStore.deleteAll(conn, schema, SeedTables.SEEDED, SeedTables.RUNTIME);
+                deleted = RowStore.deleteAll(conn, schema, SeedTables.targets(schema), SeedTables.RUNTIME);
                 conn.commit();
             } catch (Exception e) {
                 conn.rollback();
@@ -186,7 +194,7 @@ public final class SeedDataApplication {
     }
 
     private static void requireEmpty(Connection conn, Schema schema) throws Exception {
-        Map<String, Long> filled = RowStore.nonEmpty(conn, schema, SeedTables.SEEDED);
+        Map<String, Long> filled = RowStore.nonEmpty(conn, schema, SeedTables.targets(schema));
         if (!filled.isEmpty()) {
             StringBuilder message = new StringBuilder("시드 대상 테이블 " + filled.size() + "개에 이미 데이터가 있습니다(섞어 넣지 않습니다):");
             filled.entrySet().stream().limit(5)

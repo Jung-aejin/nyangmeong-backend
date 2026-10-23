@@ -13,10 +13,13 @@ public final class Row {
     private final long sn;
     private final Map<String, Object> values = new LinkedHashMap<>();
 
-    Row(String table, long sn) {
+    /**
+     * @param pkColumn PK 컬럼 이름(보통 테이블명_SN)
+     */
+    Row(String table, String pkColumn, long sn) {
         this.table = table;
         this.sn = sn;
-        values.put(table + "_SN", sn);
+        values.put(pkColumn, sn);
     }
 
     public long sn() {
