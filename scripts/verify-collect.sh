@@ -15,7 +15,7 @@ if ! printf '%s\n' "$plan" | grep -q '완료 조건\|새 의존성:'; then
 fi
 printf '%s\n' "$plan" | grep -v '^[[:space:]]*$'
 
-start=$(printf '%s\n' "$plan" | grep -m1 -o '시작 [0-9]\{4\}-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]' | cut -c8-)
+start=$(printf '%s\n' "$plan" | grep -m1 -o '시작 [0-9]\{4\}-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]' | sed 's/^시작 //')
 echo "## 바뀐 것 (시작: ${start:-못 찾음, 오늘 0시로 봄})"
 start=${start:-midnight}
 git status -sb
@@ -36,8 +36,8 @@ echo "## 기획 밖 변경 후보"
 # 기획에 `scripts/`처럼 폴더로 적은 것
 dirs=$(printf '%s\n' "$plan" | grep -oE '`[^` ]+/`' | tr -d '`')
 out_plan=$(printf '%s\n' "$files" | while IFS= read -r f; do
-  case "$f" in handoff/* | milestones/*) continue ;; esac
-  for d in $dirs; do case "$f" in "$d"*) continue 2 ;; esac; done
+  case "$f" in (handoff/* | milestones/*) continue ;; esac
+  for d in $dirs; do case "$f" in ("$d"*) continue 2 ;; esac; done
   base=${f##*/}
   printf '%s\n' "$plan" | grep -qF -- "$base" && continue
   # 확장자 없이 클래스 이름만 적은 경우
