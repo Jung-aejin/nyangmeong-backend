@@ -14,3 +14,9 @@
 - 병합된 SQL 파일은 고치지 않는다. 바꿀 것이 있으면 새 파일을 추가한다.
 - 테이블을 바꾸는 PR은 본문에 "DB 변경 있음"과 파일 이름을 적는다.
 - PR 작성자가 병합 직후 팀 공용 DB에 그 SQL을 실행하고 PR에 완료 댓글을 남긴다.
+
+시드 데이터 생성기(`src/seed`, README "시드 데이터")는 테이블 구조를 따라간다.
+
+- 테이블을 바꾸는 PR은 `./gradlew compileSeedJava`가 통과하고, 그 SQL을 적용한 개인 DB에서 `./gradlew seedData -Ptarget=local -Preset`이 끝까지 도는지 확인한다. 기본값 없는 NOT NULL 컬럼을 추가하거나 컬럼 이름을 바꾸면 생성기가 멈추므로 같은 PR에서 그 Seeder를 고친다.
+- 공용 DB 시드는 시드 대상 테이블이 모두 빈 상태에서 넣는다. 넣기 전에 팀에 알린다.
+- 공용 DB 시드를 고쳐 다시 넣을 때는 팀에 알린 뒤 `./gradlew seedClean -Ptarget=shared` → `seedData` 순서로 한다. `seedClean`은 팀원이 만든 테스트 데이터까지 지운다.
