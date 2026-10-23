@@ -9,7 +9,7 @@
 
 ```mermaid
 flowchart LR
-  E[application.properties 받기] --> A[setup 실행] --> B[앱 다시 켜기] --> C[MCP 인증 한 번] --> D["/start"]
+  E[application.properties 받기] --> A[setup 실행] --> B[앱 다시 켜기] --> F[seedFiles 한 번] --> C[MCP 인증 한 번] --> D["/start"]
 ```
 
 ### setup
@@ -19,10 +19,8 @@ flowchart LR
 | Windows | `setup.bat` (cmd·PowerShell·탐색기 더블클릭) |
 | 맥 | `bash setup.sh` |
 
-- 여러 번 실행해도 된다.
-- Windows에서 `bash setup.sh`를 치면 WSL이 떠서 안 된다.
-- Codex를 쓰려면 Codex를 먼저 설치하고 setup을 실행한다.
-- 끝나면 앱(IDE·데스크탑 앱)을 다시 켠다. 새 PATH는 다시 켜야 잡힌다.
+- 여러 번 실행해도 된다. 끝나면 IDE·데스크탑 앱을 다시 켠다(새 PATH 반영).
+- Windows에서 `bash setup.sh`는 WSL이 떠서 안 된다. Codex를 쓰려면 Codex를 먼저 설치한다.
 
 | setup이 하는 일 | 내용 |
 | --- | --- |
@@ -37,35 +35,30 @@ flowchart LR
 
 직접 할 일:
 
-- `application.properties`를 디스코드에서 받아 `src/main/resources/`에 둔다.
-  - 이름이 `application.properties.txt`로 바뀌지 않았는지 본다.
-  - git에 올리지 않는다(`.gitignore`에 있다).
-- STS는 처음 한 번 프로젝트를 가져온다.
-  - File > Import > Gradle > Existing Gradle Project
-  - 상위 폴더가 아니라 `gradlew`가 있는 `backend` 폴더를 고른다.
+- `application.properties`를 디스코드에서 받아 `src/main/resources/`에 둔다. 이름이 `.txt`로 바뀌지 않았는지 본다.
+- STS는 처음 한 번 File > Import > Gradle > Existing Gradle Project로 `gradlew`가 있는 `backend` 폴더를 가져온다.
+- `./gradlew seedFiles`를 한 번 실행한다(시드 이미지, "시드 데이터").
 - DB 접속이 안 되면(학원 밖 등) setup이 할 일로 알려 준다.
 
 ### application.properties
 
-스프링 설정 파일이다. 비밀값이 들어 있어 git에 올리지 않고 디스코드로 공유한다. 키 목록은 커밋된 `application.properties.example`에 있다.
+비밀값이 들어 있어 git에 올리지 않고 디스코드로 공유한다. 키 목록은 커밋된 `application.properties.example`에 있다.
 
 | 키 | 예 |
 | --- | --- |
 | `spring.datasource.url` | `jdbc:mysql://호스트:3306/PAWEVER` |
 | `spring.datasource.username` | |
 | `spring.datasource.password` | |
-| `dms.mcp-url` | DMS MCP 서버 주소 |
+| `dms.mcp-url` | DMS MCP 서버 주소(claude.ai 커넥터로 `dms`가 연결돼 있으면 비워도 된다) |
 
-- 키를 추가·변경하면 `application.properties.example`도 같은 PR에서 고치고, 디스코드의 파일도 갱신한다.
-- 운영 프로필 설정은 `application-prod.properties`(비밀값 없음, 커밋)에 둔다.
-- claude.ai 커넥터로 `dms`가 이미 연결돼 있으면 `dms.mcp-url`은 비워도 된다.
+- 키를 추가·변경하면 `application.properties.example`과 디스코드의 파일도 같이 고친다.
+- `application-local.properties`(git 제외)가 있으면 그 DB 설정이 우선한다. 공용 DB의 시드 데이터를 보려면 이 파일을 두지 않는다.
+- 운영 설정은 `application-prod.properties`(비밀값 없음, 커밋)에 둔다.
 
 ### MCP
 
 - claude.ai 커넥터로 이미 연결돼 있으면 Claude Code에는 등록하지 않는다.
-- 인증: `/mcp` → 서버 선택 → Authenticate
-- 데스크탑 앱은 Connectors 화면에서 인증한다(확인 필요).
-- Codex는 등록할 때 로그인 창이 뜬다. 놓쳤으면 `codex mcp login dms`.
+- 인증: Claude Code는 `/mcp` → 서버 선택 → Authenticate, 데스크탑 앱은 Connectors 화면(확인 필요), Codex는 `codex mcp login dms`.
 
 ### 직접 실행
 
@@ -73,8 +66,66 @@ flowchart LR
 ./gradlew bootRun
 ```
 
+- `http://localhost:8080`에 뜬다. 8080을 다른 프로그램(수업 프로젝트 등)이 쓰고 있으면 먼저 끈다.
 - API 명세: `http://localhost:8080/swagger-ui.html`
+- 한글이 깨지면 PowerShell에서 `chcp 65001`.
 - `db/`의 SQL은 setup이 실행하지 않는다. 테이블을 바꾼 PR 작성자가 병합 직후 공용 DB에 실행한다(`docs/convention/shared-files.md`).
+
+### 로그인 (dev-token)
+
+로그인 API(YAY)가 나오기 전에는 회원 번호로 토큰 쿠키를 받는다(운영 프로필에서는 꺼진다). 번호는 "시드 데이터"의 계정 표를 본다.
+
+- Postman: `POST http://localhost:8080/api/auth/dev-tokens`, Headers `X-Requested-With: XMLHttpRequest`, Body(raw JSON) `{"mbrSn": 1}` → 200. 쿠키는 Postman이 저장해 다음 요청부터 붙인다(요청 오른쪽 Cookies에서 확인·삭제).
+- 브라우저: 프론트 화면(`http://localhost:5173`)의 개발자 도구 콘솔에서 실행하고 새로고침한다.
+
+```js
+fetch('/api/auth/dev-tokens',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({mbrSn:1})})
+```
+
+- 토큰은 30분짜리다. 재발급 API가 아직 없어 만료되면(401, `/auth/refresh` 404) 다시 받는다.
+
+### 프론트와 같이 띄우기
+
+| 띄울 것 | 명령 | 포트 |
+| --- | --- | --- |
+| 백엔드 | `./gradlew bootRun` | 8080 |
+| 프론트(`frontend` 저장소) | `yarn dev` | 5173 |
+
+- 프론트는 `/api` 요청을 8080으로 넘긴다(`vite.config.js` 프록시). 두 포트가 꼭 8080·5173이어야 한다.
+- 5173이 이미 쓰이고 있으면 Vite가 5174로 뜨고, 백엔드 CORS(`app.cors.allowed-origins`, 기본 5173)에 막혀 POST가 403(`Invalid CORS request`)이 된다. 5173을 쓰는 다른 프로젝트를 먼저 끈다.
+- 로그인은 위 "로그인 (dev-token)"의 브라우저 방법. 이미지가 404면 `./gradlew seedFiles`를 실행한다.
+
+### 시드 데이터
+
+공용 DB에 화면 확인용 데이터(회원 200, 반려동물 1,000, 게시글 1,000 등 약 15만 행)가 들어 있다. 코드는 `src/seed`.
+
+| 하고 싶은 것 | 명령 |
+| --- | --- |
+| 시드 이미지를 내 PC에 만들기(각자 한 번) | `./gradlew seedFiles` |
+| 공용 DB에 넣기(빈 DB에 한 사람이) | `./gradlew seedData -Ptarget=shared -Pconfirm=<DB이름>` |
+| 비우기(공용은 팀에 알린 뒤) | `./gradlew seedClean -Ptarget=shared -Pconfirm=<DB이름>` |
+| 개인 로컬 DB에 넣기 / 비우고 다시 | `./gradlew seedData -Ptarget=local` / 뒤에 `-Preset` |
+| 양 늘리기(1~20배) | `-Pscale=10` 추가 |
+
+- 시드 대상 테이블에 행이 있으면 넣지 않는다. 고쳐서 다시 넣을 때는 `seedClean` → `seedData`. 둘 다 한 트랜잭션이라 실패하면 DB가 그대로다.
+- `seedClean`은 시드 행만이 아니라 시드 대상·기록 테이블을 전부 비운다(팀원 테스트 데이터 포함). `COM_CD`·`NOTI_TMPLT`는 남는다.
+- 공용 DB에는 이미지 행만 있어서 각 PC가 `seedFiles`로 파일(`uploads/seed/`, git 제외)을 만든다.
+- 사진은 `src/seed/resources/images`의 CC0 사진을 고른다. 사진을 바꾸면 같은 폴더 `SOURCES.md`에 출처를 적는다(표에 있는 사진만 쓴다). 영수증·검사결과지·픽셀 캐릭터·아이템은 생성기가 그린다.
+- 같은 번호는 늘 같은 회원·반려동물이다. 날짜는 실행한 날 기준이다.
+- 테이블 구조가 바뀌어 생성기가 멈추면 메시지에 나온 Seeder(`src/seed/java/com/nyangmeong/seed/domain/`)를 고친다.
+
+비밀번호는 모두 같고 `application.properties`의 `app.seed.password`에 있다(공개 저장소라 여기 적지 않는다). 로그인 API가 나오기 전에는 dev-token으로 들어간다.
+
+| 회원 번호 | 이메일 | 용도 |
+| --- | --- | --- |
+| 1 | `tester@nyangmeong.dev` | 일반회원. 반려동물 3마리와 공동양육, 모든 화면에 데이터가 있다 |
+| 2 | `admin@nyangmeong.dev` | 관리자 |
+| 3 | `empty@nyangmeong.dev` | 반려동물 0마리(빈 화면 확인) |
+| 4 | `full@nyangmeong.dev` | 반려동물 10마리(등록 상한 확인) |
+| 5 | `operator@nyangmeong.dev` | 관리자 |
+| 6~ | `user0006@nyangmeong.dev` 형식 | 일반회원. 정지·탈퇴 회원이 섞여 있다 |
+
+넣지 않는 테이블: `COM_CD`(기준 SQL), `NOTI_TMPLT`(없으면 코드의 기본 문구), `RFRSH_TKN`·`LGN_ATMPT_LMT`·`EML_CERT`·`NOTI_SNDNG_LOG`(실행 중 쌓이는 기록).
 
 ## AI로 작업하기
 
@@ -97,8 +148,7 @@ flowchart LR
 | VS Code 확장 | 이 폴더 열기 → 왼쪽 막대의 Claude 아이콘 |
 | 터미널 | 이 폴더에서 `claude` |
 
-- 셋 다 같은 스킬과 MCP를 쓴다.
-- STS만 쓰면 VS Code 확장은 직접 설치한다(`anthropic.claude-code`).
+셋 다 같은 스킬과 MCP를 쓴다. STS만 쓰면 VS Code 확장(`anthropic.claude-code`)은 직접 설치한다.
 
 ### 작업 흐름
 
@@ -123,19 +173,17 @@ flowchart TD
 | 기획 승인 (구현·검증 루프 시작) | `승인` 또는 `/impl` |
 | 다시 검증 (직접 고친 뒤) | `/verify` |
 | 마무리 | `/end` → `확인` → `커밋` → `푸시` → (마일스톤이 끝나면) `PR`. 병합은 GitHub에서 사람이 |
-| 중간 저장 (작업이 덜 끝났을 때) | `/end` → (확인 없이 핸드오프에 `진행`으로 남김) → `커밋` → `푸시`. 다음 세션은 `/start`로 이어 간다 |
-| 새 대화 | 터미널·VS Code `/clear`, 데스크탑 앱 Ctrl+N |
+| 중간 저장 | `/end` → (확인 없이 `진행`으로 남김) → `커밋` → `푸시`. 다음은 `/start`로 이어 간다 |
+| 새 대화 | 터미널·VS Code `/clear`(VS Code는 확인 필요, 안 되면 Open in New Tab), 데스크탑 앱 Ctrl+N |
 
-- 마일스톤 파일이 없으면 첫 `/start`가 먼저 만든다. 시간이 더 걸린다.
-- 모델은 바꾸지 않는다. 기본은 Sonnet, `/start`와 검증(`/verify`, `/impl` 안의 검증)만 Opus로 돈다.
-- 마일스톤 `끝`은 `/end`만 정한다. 남의 API·화면을 기다려 연결만 남은 기능(연결 남음)은 `끝`을 막지 않고 마일스톤과 핸드오프 "다음에 할 것"에 남는다(`docs/convention/milestone.md`).
-- 스킬이 `/` 목록에 없으면 새 대화를 연다.
-- Codex(`$start`·`$impl`·`$end`)도 같은 흐름이지만 두 가지가 다르다. 검증도 구현과 같은 모델(GPT)로 돈다(Opus 지정은 Claude Code 전용). 기준 파일 잠금 훅(`.codex/hooks.json`)은 처음 한 번 사람이 신뢰해야 돈다: 이 폴더를 처음 열 때 "신뢰" → `/hooks`에서 훅 승인. 훅 내용이 바뀌면 다시 승인한다.
-- VS Code의 `/clear`는 확인 필요. 안 되면 명령 팔레트의 Open in New Tab.
+- 마일스톤 파일이 없으면 첫 `/start`가 먼저 만든다(시간이 더 걸린다). 스킬이 `/` 목록에 없으면 새 대화를 연다.
+- 모델은 바꾸지 않는다. 기본 Sonnet, `/start`와 검증만 Opus.
+- 마일스톤 `끝`은 `/end`만 정한다. 남의 API·화면을 기다리는 "연결 남음"은 `끝`을 막지 않고 마일스톤과 핸드오프 "다음에 할 것"에 남는다(`docs/convention/milestone.md`).
+- Codex(`$start`·`$impl`·`$end`)도 같은 흐름이다. 다른 점: 검증도 GPT로 돈다(Opus 지정은 Claude Code 전용). 기준 파일 잠금 훅(`.codex/hooks.json`)은 처음 폴더를 열 때 "신뢰" → `/hooks`에서 승인해야 돈다(훅이 바뀌면 다시 승인).
 
 ### 사람 확인
 
-`/impl`이 끝에 주는 "`/end` 전에 확인할 것"(직접 `/verify`를 돌렸으면 그 보고)의 "사람 확인" 목록대로 확인한다.
+`/impl`이 끝에 주는 "`/end` 전에 확인할 것"(직접 `/verify`를 돌렸으면 그 보고)의 "사람 확인" 목록대로 확인한다. Postman은 데스크톱 앱을 쓴다(웹 버전은 `localhost`에 닿지 않는다).
 
 ```mermaid
 flowchart LR
@@ -146,23 +194,16 @@ flowchart LR
   T --> OK
 ```
 
-확인은 Postman 데스크톱 앱으로 한다(웹 버전은 `localhost`에 닿지 않는다).
+1. `./gradlew bootRun` → `Started … in N seconds`가 나오면 준비 완료(공용 DB, "application.properties" 참고).
+2. Postman 컬렉션 Variables에 `baseUrl` = `http://localhost:8080`. 요청 주소는 `{{baseUrl}}/api/...`.
+3. 로그인이 필요하면 "로그인 (dev-token)"의 Postman 방법으로 쿠키를 받는다.
+4. 목록의 요청(메서드·URL, Headers, Body)을 그대로 보낸다. POST·PUT·PATCH·DELETE에는 `X-Requested-With: XMLHttpRequest`(없으면 403 `FORBIDDEN`).
+5. 응답 코드와 JSON을 기대 결과와 비교한다. 화면 확인은 "프론트와 같이 띄우기"대로 띄운다.
+6. Postman으로 만들기 어려운 조건(만료 토큰·정지 회원 등)은 목록의 테스트로: `./gradlew test --tests '<클래스>'`, 결과 `build/reports/tests/test/index.html`.
+7. 확인용으로 만든 데이터는 목록의 정리 방법대로 지운다(공용 DB). Postman Cookies의 `localhost` 쿠키도 지운다.
+8. 목록의 "바뀐 파일"을 훑어보고 기획에 없는 파일이면 문제로 답한다. Ctrl+C로 끈다.
 
-1. `./gradlew bootRun` → `Started … in N seconds`가 나오면 준비 완료
-   - 기본 프로필 `local`, `application.properties`의 공용 DB에 붙는다.
-2. Postman 컬렉션의 Variables에 `baseUrl` = `http://localhost:8080`을 넣는다. 요청 주소는 `{{baseUrl}}/api/...`로 쓴다.
-3. 로그인이 필요한 API면 먼저 토큰 쿠키를 받는다. 로그인 API(YAY)가 생기기 전까지는 개발용 발급을 쓴다.
-   - `POST {{baseUrl}}/api/auth/dev-tokens`, Headers `X-Requested-With: XMLHttpRequest`, Body → raw → JSON `{"mbrSn": <MBR에 있는 번호>}` → 200
-   - Postman이 `access_token`·`refresh_token` 쿠키를 저장해 다음 요청부터 자동으로 붙인다. 요청 오른쪽의 Cookies에서 보고 지울 수 있다.
-4. 목록의 요청을 그대로 보낸다: 메서드·URL, Headers, Body.
-   - POST·PUT·PATCH·DELETE에는 Headers에 `X-Requested-With: XMLHttpRequest`를 넣는다. 없으면 403 `FORBIDDEN`이다.
-5. 응답 코드와 JSON을 기대 결과와 비교한다.
-6. 만료 토큰·정지 회원처럼 Postman으로 만들기 어려운 조건은 목록의 테스트로 확인한다: `./gradlew test --tests '<클래스>'`
-   - 결과: `build/reports/tests/test/index.html`
-7. 참고: Swagger(`http://localhost:8080/swagger-ui.html`)에서 API 목록과 요청·응답 모양을 볼 수 있다. 쿠키와 `X-Requested-With`가 필요한 요청은 Postman으로 확인한다.
-8. 확인용으로 만든 데이터는 목록의 정리 방법대로 지운다. 공용 DB다. Postman Cookies의 `localhost` 쿠키도 지운다.
-9. 목록의 "바뀐 파일"을 훑어본다. 기획에 없는 파일이면 문제로 답한다.
-10. Ctrl+C로 끈다.
+Swagger(`http://localhost:8080/swagger-ui.html`)에서 API 목록과 요청·응답 모양을 볼 수 있다. 쿠키와 `X-Requested-With`가 필요한 요청은 Postman으로 확인한다.
 
 ## PR 전 확인
 

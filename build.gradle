@@ -42,3 +42,60 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// 시드 데이터 생성기(src/seed). 서버 jar·테스트와 분리하고, build가 컴파일만 해서 깨지면 알린다
+sourceSets {
+	seed {
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
+	}
+}
+
+configurations {
+	seedImplementation.extendsFrom implementation
+	seedRuntimeOnly.extendsFrom runtimeOnly
+	seedCompileOnly.extendsFrom compileOnly
+}
+
+tasks.named('check') {
+	dependsOn 'seedClasses'
+}
+
+// ./gradlew seedData -Ptarget=shared|local [-Pscale=N] [-Pconfirm=<DB이름>] [-Preset]
+tasks.register('seedData', JavaExec) {
+	group = 'application'
+	description = '빈 DB에 시드 데이터를 넣는다(README "시드 데이터")'
+	classpath = sourceSets.seed.runtimeClasspath
+	mainClass = 'com.nyangmeong.seed.SeedDataApplication'
+	workingDir = projectDir
+	jvmArgs = ['-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8']
+	standardInput = System.in
+	args = ['data'] + ['target', 'scale', 'confirm', 'reset']
+			.findAll { project.hasProperty(it) }
+			.collect { "--${it}=${project.property(it)}" }
+}
+
+// ./gradlew seedClean -Ptarget=shared|local [-Pconfirm=<DB이름>]. 시드 대상·기록 테이블을 전부 비운다(팀원 데이터 포함)
+tasks.register('seedClean', JavaExec) {
+	group = 'application'
+	description = '시드 대상 테이블을 전부 비운다(README "시드 데이터")'
+	classpath = sourceSets.seed.runtimeClasspath
+	mainClass = 'com.nyangmeong.seed.SeedDataApplication'
+	workingDir = projectDir
+	jvmArgs = ['-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8']
+	standardInput = System.in
+	args = ['clean'] + ['target', 'confirm']
+			.findAll { project.hasProperty(it) }
+			.collect { "--${it}=${project.property(it)}" }
+}
+
+// ./gradlew seedFiles [-Ptarget=shared|local]. 시드 이미지 파일만 이 PC의 저장 폴더에 다시 만든다
+tasks.register('seedFiles', JavaExec) {
+	group = 'application'
+	description = '시드 데이터의 이미지 파일을 이 PC에 다시 만든다'
+	classpath = sourceSets.seed.runtimeClasspath
+	mainClass = 'com.nyangmeong.seed.SeedDataApplication'
+	workingDir = projectDir
+	jvmArgs = ['-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8']
+	args = ['files'] + (project.hasProperty('target') ? ["--target=${project.property('target')}"] : [])
+}
