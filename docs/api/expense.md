@@ -36,6 +36,7 @@
 | expndYmd | LocalDate | Y | 모든 줄에 공통 적용 | EXPND.EXPND_YMD |
 | expndClsfCd | String | Y | 카테고리 7종(MYPG05). 모든 줄에 공통 적용 | EXPND.EXPND_CLSF_CD |
 | dtlMttr | String | N | 최대 1000자. 모든 줄에 공통 적용 | EXPND.DTL_MTTR |
+| expndPlcusNm | String | N | 사용처. 최대 80자. 모든 줄에 공통 적용. 영수증 등록이면 상호명이 기본값 | EXPND.EXPND_PLCUS_NM (`db/migration/20261025_01_add_expnd_plcus_nm.sql`), MYP-031-02·03 |
 | recptSn | Long | N | 영수증 등록이면 그 영수증. 모든 줄을 같은 영수증에 연결 | EXPND.RECPT_SN, MYP-031-03·05 |
 | expndInptMthCd | String | Y | 직접 입력·영수증 구분(MYPG06) | EXPND.EXPND_INPT_MTH_CD |
 | lines | List<ExpenseLineRequest> | Y | 1줄 이상. 같은 반려동물을 두 줄에 고를 수 없음. 줄 수는 연동된 반려동물 수까지 | MYP-031-03 |
@@ -76,6 +77,7 @@
 | expndClsfCd | String | Y | | EXPND.EXPND_CLSF_CD |
 | expndAmt | Long | Y | | EXPND.EXPND_AMT |
 | dtlMttr | String | N | | EXPND.DTL_MTTR |
+| expndPlcusNm | String | N | 사용처 | EXPND.EXPND_PLCUS_NM |
 | expndYmd | LocalDate | Y | | EXPND.EXPND_YMD |
 | recptSn | Long | N | | EXPND.RECPT_SN |
 
@@ -126,6 +128,7 @@
 | petNm | String | N | | PET.PET_NM, MYP-030-12 |
 | petDelYn | boolean | N | `true`면 "(삭제된 반려동물)" 표기. 공용이면 null | PET.DEL_YN, MYP-002-07 (issues 12번) |
 | dtlMttr | String | N | 내용 | EXPND.DTL_MTTR, MYP-030-12 |
+| expndPlcusNm | String | N | 사용처 | EXPND.EXPND_PLCUS_NM, MYP-031-06 |
 | expndAmt | Long | Y | | EXPND.EXPND_AMT, MYP-030-12 |
 | recptSn | Long | N | | EXPND.RECPT_SN |
 
@@ -145,3 +148,4 @@
 | petSn | Long | N | 연동된 반려동물만. 공용으로 바꾸는 방법은 issues 4번 | EXPND.PET_SN, MYP-031-02 |
 | expndAmt | Long | N | 1 이상(수정 시에도 0원 불가) | EXPND.EXPND_AMT, MYP-031-02 |
 | dtlMttr | String | N | 최대 1000자. `""`이면 비움 | EXPND.DTL_MTTR |
+| expndPlcusNm | String | N | 최대 80자. `""`이면 비움 | EXPND.EXPND_PLCUS_NM |

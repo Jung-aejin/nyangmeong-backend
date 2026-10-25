@@ -46,7 +46,7 @@ import com.nyangmeong.global.security.jwt.TokenCookies;
 class ReceiptSaveControllerTest {
 
     private static final String SAVE_BODY = """
-            {"idmptDmndId":"req-1","hsptlNm":"냥멍동물병원","ckupYmd":"2026-10-21",
+            {"idmptDmndId":"req-1","hsptlNm":"냥멍동물병원","ckupYmd":"2026-10-21","expndPlcusNm":"행복동물병원",
              "pets":[{"petSn":10,"ckupTypeCd":"HLTC0002","ckupCn":"진찰료","amt":30000,"expenseYn":true,
                       "drugs":[{"mdcnNm":"항생제","mdcnBgngYmd":"2026-10-21","mdcnEndYmd":"2026-10-26",
                                 "dayMdcnNmtm":2,"prscSttsCd":"HLTC0010"}]}]}
@@ -116,6 +116,17 @@ class ReceiptSaveControllerTest {
 
     @Test
     @WithMockLoginMember
+    void 사용처_80자_초과는_400이다() throws Exception {
+        String body = SAVE_BODY.replace("행복동물병원", "가".repeat(81));
+
+        mockMvc.perform(post("/api/receipts/3/save").contentType(MediaType.APPLICATION_JSON).content(body)
+                .header("X-Requested-With", "XMLHttpRequest"))
+                .andExpect(status().isBadRequest());
+        verify(receiptSaveService, never()).save(any(), any(), any());
+    }
+
+    @Test
+    @WithMockLoginMember
     void 약품명_40자_초과나_검진_종류_누락은_400이다() throws Exception {
         mockMvc.perform(post("/api/receipts/3/save").contentType(MediaType.APPLICATION_JSON)
                 .content(SAVE_BODY.replace("항생제", "약".repeat(41)))
@@ -152,7 +163,7 @@ class ReceiptSaveControllerTest {
     @WithMockLoginMember
     void 저장_전_확인은_중복_지출과_가까운_일정을_돌려준다() throws Exception {
         ReceiptSaveCheckResponse.DuplicateExpense duplicate = new ReceiptSaveCheckResponse.DuplicateExpense(10L, 7L,
-                java.time.LocalDate.of(2026, 10, 21), 30_000L, "냥멍동물병원");
+                java.time.LocalDate.of(2026, 10, 21), 30_000L, null, "냥멍동물병원");
         when(receiptSaveService.check(eq(1L), eq(3L), any()))
                 .thenReturn(new ReceiptSaveCheckResponse(List.of(duplicate), List.of()));
         String body = """
@@ -163,6 +174,7 @@ class ReceiptSaveControllerTest {
                 .header("X-Requested-With", "XMLHttpRequest"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.duplicateExpenses[0].expndSn").value(7))
+                .andExpect(jsonPath("$.data.duplicateExpenses[0].expndPlcusNm").value("냥멍동물병원"))
                 .andExpect(jsonPath("$.data.nearbySchedules").isEmpty());
     }
 
