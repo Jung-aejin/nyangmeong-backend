@@ -66,7 +66,7 @@
 쓰는 API: POST /receipts/{recptSn}/save-check
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| duplicateExpenses | List<DuplicateExpense> | Y | 같은 날·같은 금액·병원 카테고리·같은 반려동물 지출. `petSn`·`expndSn`·`expndYmd`·`expndAmt`·`dtlMttr`. [아니오]를 고른 탭은 저장 때 `expenseYn=false`로 보낸다 | AIM-009-22·23 |
+| duplicateExpenses | List<DuplicateExpense> | Y | 같은 날·같은 금액·병원 카테고리·같은 반려동물 지출. `petSn`·`expndSn`·`expndYmd`·`expndAmt`·`dtlMttr`·`expndPlcusNm`. 목록은 "내용 · 사용처"로 표시(빈 값 생략, MYP-031-06). [아니오]를 고른 탭은 저장 때 `expenseYn=false`로 보낸다 | AIM-009-22·23 |
 | nearbySchedules | List<NearbySchedule> | Y | 검진일 앞뒤 7일의 검진기록 미연결 병원 일정. `petSn`·`schdlSn`·`schdlDt`·`hsptlNm`. [옮겨 연결하기]를 고르면 저장 때 `schdlSn`으로 보낸다 | HLT-002-46 |
 
 ### ReceiptSaveRequest
@@ -76,6 +76,7 @@
 | idmptDmndId | String | Y | 최대 100자. 중복 클릭·재전송 차단 | RECPT.IDMPT_DMND_ID (AIM-009-24) |
 | hsptlNm | String | Y | 1~50자(AIM-009-26. 컬럼은 80자, issues 11) | CKUP_RCD.HSPTL_NM (AIM-009-07) |
 | ckupYmd | LocalDate | Y | 모든 반려동물에 공통 | AIM-009-07 |
+| expndPlcusNm | String | N | 가계부 사용처. 최대 80자, 모든 탭에 공통. 모달이 병원명을 기본값으로 채운다. 비우면(공백 포함) 사용처 없이 기록하고, 세부사항(`DTL_MTTR`)은 늘 비운다 | EXPND.EXPND_PLCUS_NM (`db/migration/20261025_01_add_expnd_plcus_nm.sql`, AIM-009-10) |
 | pets | List<ReceiptSavePetRequest> | Y | 1건 이상('저장 안 함' 탭은 보내지 않음) | AIM-009-09 |
 
 #### ReceiptSavePetRequest (ReceiptSaveRequest.pets)

@@ -103,7 +103,7 @@ public class ReceiptSaveService {
             records.add(new ReceiptSaveResponse.CheckupRecord(pet.petSn(), ckupRcdSn));
             if (wantsExpense(pet.expenseYn(), pet.amt())) {
                 expenseFake.create(new ExpenseCreateCommand(mbrSn, pet.petSn(), recptSn, req.ckupYmd(), pet.amt(),
-                        req.hsptlNm()));
+                        req.expndPlcusNmOrNull(), null));
             }
         }
         checkupRecordFake.remember(recptSn, records);

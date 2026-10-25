@@ -15,7 +15,8 @@ public record ReceiptSaveCheckResponse(List<DuplicateExpense> duplicateExpenses,
     /**
      * 겹치는 지출
      */
-    public record DuplicateExpense(Long petSn, Long expndSn, LocalDate expndYmd, Long expndAmt, String dtlMttr) {
+    public record DuplicateExpense(Long petSn, Long expndSn, LocalDate expndYmd, Long expndAmt, String dtlMttr,
+            String expndPlcusNm) {
     }
 
     /**

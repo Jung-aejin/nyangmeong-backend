@@ -64,7 +64,11 @@ class ReceiptSaveServiceTest {
     }
 
     private ReceiptSaveRequest request(ReceiptSavePetRequest... pets) {
-        return new ReceiptSaveRequest("req-1", "냥멍동물병원", YMD, List.of(pets));
+        return requestWithPlace("냥멍동물병원", pets);
+    }
+
+    private ReceiptSaveRequest requestWithPlace(String expndPlcusNm, ReceiptSavePetRequest... pets) {
+        return new ReceiptSaveRequest("req-1", "냥멍동물병원", YMD, expndPlcusNm, List.of(pets));
     }
 
     private void owned(ReceiptStatus status) {
@@ -122,8 +126,32 @@ class ReceiptSaveServiceTest {
         assertThat(captor.getValue().petSn()).isEqualTo(10L);
         assertThat(captor.getValue().expndAmt()).isEqualTo(30_000L);
         assertThat(captor.getValue().expndYmd()).isEqualTo(YMD);
-        assertThat(captor.getValue().dtlMttr()).isEqualTo("냥멍동물병원");
+        assertThat(captor.getValue().expndPlcusNm()).isEqualTo("냥멍동물병원");
+        assertThat(captor.getValue().dtlMttr()).isNull();
         assertThat(captor.getValue().recptSn()).isEqualTo(3L);
+    }
+
+    @Test
+    void 가계부_사용처가_비면_사용처_없이_기록한다() {
+        owned(ReceiptStatus.RECOGNIZED);
+
+        service.save(1L, 3L, requestWithPlace("  ", pet(10L, 30_000L, true, null)));
+
+        ArgumentCaptor<ExpenseCreateCommand> captor = ArgumentCaptor.forClass(ExpenseCreateCommand.class);
+        verify(expenseFake).create(captor.capture());
+        assertThat(captor.getValue().expndPlcusNm()).isNull();
+        assertThat(captor.getValue().dtlMttr()).isNull();
+    }
+
+    @Test
+    void 가계부_사용처는_병원명과_달라도_입력값을_쓴다() {
+        owned(ReceiptStatus.RECOGNIZED);
+
+        service.save(1L, 3L, requestWithPlace("행복동물병원 본점", pet(10L, 30_000L, true, null)));
+
+        ArgumentCaptor<ExpenseCreateCommand> captor = ArgumentCaptor.forClass(ExpenseCreateCommand.class);
+        verify(expenseFake).create(captor.capture());
+        assertThat(captor.getValue().expndPlcusNm()).isEqualTo("행복동물병원 본점");
     }
 
     @Test
@@ -239,7 +267,7 @@ class ReceiptSaveServiceTest {
     void 저장_전_확인은_체크한_탭의_중복_지출과_가까운_일정을_돌려준다() {
         when(mapper.selectOwned(3L, 1L)).thenReturn(receipt(ReceiptStatus.RECOGNIZED, null));
         ReceiptSaveCheckResponse.DuplicateExpense duplicate = new ReceiptSaveCheckResponse.DuplicateExpense(10L, 7L,
-                YMD, 30_000L, "냥멍동물병원");
+                YMD, 30_000L, null, "냥멍동물병원");
         ReceiptSaveCheckResponse.NearbySchedule nearby = new ReceiptSaveCheckResponse.NearbySchedule(10L, 8L,
                 LocalDateTime.of(2026, 10, 23, 10, 0), "냥멍동물병원");
         when(expenseFake.findDuplicates(1L, 10L, YMD, 30_000L)).thenReturn(List.of(duplicate));

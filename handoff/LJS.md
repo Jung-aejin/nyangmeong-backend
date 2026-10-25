@@ -4,11 +4,12 @@
 
 없음
 
-이전: 공용 DB 시드 데이터 생성기 — 끝 (2026-10-23, 대화에서 기획·승인, 사람 확인). `src/seed`와 `seedData`·`seedFiles`·`seedClean`(회원 200·반려동물 1,000·게시글 1,000 등 약 15만 행, 한 트랜잭션·커밋 전 FK·공통코드·업무 규칙 검사). 추가 요청 1~5: 전체 비우기 `seedClean`, CC0 실제 사진(`src/seed/resources/images/SOURCES.md`), README 로그인·프론트 연동 절과 요약, 시드 비밀번호 `app.seed.password`, 자동 엔진(테이블 변경에 생성기 수정 없이 대응). 공용 DB에 넣음. PR #25 병합(자동 엔진 커밋 `4381a2f`·`9e6a281`은 병합 뒤라 새 PR 필요). 검증 에이전트 없이 직접 확인.
+이전: SCR-AIM-008 영수증 저장 (3차: 가계부 사용처) — 끝 (2026-10-25, `/start`·`/impl` 검증 1회차 통과, 사람 확인). EXPND에 사용처 `EXPND_PLCUS_NM` varchar(80) NULL(행안부 표준단어 사용처=PLCUS, `db/migration/20261025_01_add_expnd_plcus_nm.sql`). 영수증 저장은 사용처 = 요청 `expndPlcusNm`(공통 1칸, 공백이면 null), 세부사항 = null. 중복 확인 `DuplicateExpense`에 `expndPlcusNm`. `docs/api/receipt.md`·`expense.md`(지출 DTO 4개 행만, 구현은 SJM). 테스트 기대값 변경(사람 승인)은 별도 커밋
 
 ## 다음에 할 것
 
-- 자동 엔진 커밋(`4381a2f`·`9e6a281`)을 새 PR로 올린다(`/end`의 `PR`)
+- PR 병합 뒤 공용 DB에 `db/migration/20261025_01_add_expnd_plcus_nm.sql` 실행하고 PR에 완료 댓글(사람). 그 뒤 시드 `ExpenseSeeder`의 OCR 지출을 사용처 = 병원명, 세부사항 = null로 맞춘다
+- 요청자에게 알린다: AI매니저 FN-AIM-009-10·21과 건강기록 FN-HLT-002-41 명세서에 아직 "내용 = 병원명". 사용처로 고치고 SCR-HLT-002에 사용처 칸(선택, 80자, 병원명 기본값)을 넣는다
 - 디스코드 공유 `application.properties`에 `app.seed.password` 추가, 시드 공지(팀원 `./gradlew seedFiles` 한 번, 시드 계정, dev-token 로그인)를 보낸다(사람)
 - KSJ에게 확인: 실종 제보·펫돌봄 모집 글의 `PST.BBS_CD` 규칙이 없어 시드는 펫일상으로 넣었다. 정해지면 `CommunitySeeder`를 맞춘다
 - 로컬 테스트 DB `nyangmeong_seedtest`가 필요 없으면 `DROP DATABASE nyangmeong_seedtest`(사람)
@@ -16,18 +17,18 @@
 - 하네스 공통화(2026-10-22)의 `scripts/` 5개 수정을 공용 하네스 PR로 올린다(커밋에서 뺐다)
 - 프론트 저장소: 같은 이름 스크립트에 같은 macOS 수정(`$( )` 안 `case (패턴)`, `sed -E`, `sed -i` 대신 임시 파일·`mv`, `{…;}`, 한글 앞 `cut -c` 대신 `sed`)을 적용하고, 커밋 전인 `verify-loop.sh` `scripts` 보호·verify·end 스킬 수정과 함께 프론트 PR
 - 하네스 아직 못 돌려 본 것: `pr-prep.sh --allow-dirty`(다음 PR 때), 검증 3회 실패 넘기기(다음 화면 작업)
-- ERDCloud `EXPND.IDMPT_DMND_ID`를 `EXPND_YMD` 뒤로 옮긴다(화면에서 끌기, 사람)
+- ERDCloud `EXPND.IDMPT_DMND_ID`를 `EXPND_YMD` 뒤로, `EXPND.EXPND_PLCUS_NM`을 `DTL_MTTR` 앞으로 옮긴다(화면에서 끌기, 사람)
 - 팀에 알린다(2026-10-22): `docs/convention/api.md` 새 규칙 4가지, `docs/api/README.md`(구현하며 달라지면 같은 PR에서 초안도 고친다), `/start`가 `docs/api`를 기능 ID로 찾아 쓴다, 테이블 변경 SQL은 `db/migration/`에(공용 DB에는 이것만 실행)
 - YAY에게 알린다: 로그인·SNS 로그인 응답에 토큰을 넣지 않는다(`TokenResponse` 삭제, `/auth/refresh`는 `data` 없음). SNS 흐름을 정할 때 `issues.md` 로그인 2번 2026-10-22 추가 4가지를 함께 정한다
-- SJM에게 알린다: 지출 다중 삭제는 `DELETE /expenses?expndSn=`와 `POST /expenses/bulk-delete`(`expectedCnt` 확인, LJS가 더한 안전장치), 지출 등록은 줄마다 `idmptDmndId`
+- SJM에게 알린다: 지출 다중 삭제는 `DELETE /expenses?expndSn=`와 `POST /expenses/bulk-delete`(`expectedCnt` 확인, LJS가 더한 안전장치), 지출 등록은 줄마다 `idmptDmndId`. 사용처 `expndPlcusNm`(80자, `EXPND_PLCUS_NM`)을 등록·수정·응답·목록 DTO에 추가(`docs/api/expense.md`), 중복 확인 표시는 "내용 · 사용처"
 - KSJ에게 알린다: 채팅 메시지 커서 조회, 실시간 STOMP 제안과 다중 로그인 다섯 가지(`docs/api/community.md` "실시간"). 세션 폐기 때 소켓을 끊는 이벤트는 `LoginSessionManager.revoke`에서 같이 정한다. 좋아요는 멱등
-- JAJ에게 알린다: 케어 완료 중복은 `UK_CARE_CMPTN_HSTRY_1`로 200 기존 기록, 검사결과지 분석은 동기+제한 시간과 `anlysRslt`(제안, 확인 필요)
+- JAJ에게 알린다: 케어 완료 중복은 `UK_CARE_CMPTN_HSTRY_1`로 200 기존 기록, 검사결과지 분석은 동기+제한 시간과 `anlysRslt`(제안, 확인 필요). 영수증 확인 모달의 사용처 칸은 저장 요청 `expndPlcusNm`(공통, 병원명 기본값, 비우면 사용처 없음)
 - 프론트에 알린다: 알림·상점·영수증 API는 `docs/api/notification.md`·`pet.md`·`receipt.md`(구현에 맞춤). 알림 설정 경로는 `/api/members/me/notification-settings`로 바뀌었다. 영수증 업로드는 실패도 201이고 `ocrPrcsSttsCd`·`failRsn`으로 문구를 고른다. 중복 확인에서 [아니오]를 고른 탭은 `expenseYn=false`
 - 프론트 `start` 스킬에도 `docs/api`(백엔드 저장소) 기준 줄을 넣을지 정한다
 - 정하기: 휴대폰 일정 가져오기(기획에 없음, JAJ 영역). 넣는다면 QR 짝짓기 `.ics` 업로드, iPhone 단축어, 웹 → 휴대폰은 `webcal://` 구독 QR
 - 정하기: 파일 저장소 운영(지금 로컬 디스크 `uploads/`. 서버 여러 대·재배포 대비 영구 볼륨 또는 S3), 영상 업로드 형식·용량
 - SCR-AIM-008 연결 남음: health 검진기록·일정 등록(JAJ)이 나오면 `expense/service/CheckupRecordFake`를 그 service로(같은 날 병원 일정 연결·새 일정·앞뒤 7일 미연결 일정·처방약 `CARE_RFLT_YN='N'`), 멱등 재전송용 `remember`·`findByReceipt`도 DB 조회로
-- SCR-AIM-008 연결 남음: 가계부 지출 생성·중복 확인(SJM)이 나오면 `ExpenseFake`를, pet 연동 반려동물 목록(SJM)이 나오면 `CaregiverPetFake`를 그 service로(그 전에는 FN-AIM-009-17 구역 자동 연결이 안 된다). 지출 생성에 줄마다 `idmptDmndId`를 넘긴다
+- SCR-AIM-008 연결 남음: 가계부 지출 생성·중복 확인(SJM)이 나오면 `ExpenseFake`를, pet 연동 반려동물 목록(SJM)이 나오면 `CaregiverPetFake`를 그 service로(그 전에는 FN-AIM-009-17 구역 자동 연결이 안 된다). 지출 생성에 줄마다 `idmptDmndId`, 사용처 `ExpenseCreateCommand.expndPlcusNm`(세부사항은 null)을 넘기고 중복 조회에 `expndPlcusNm`을 채운다
 - SCR-AIM-008 연결 남음: OCR 외부 API 규격이 정해지면 `OcrClient` 실제 구현을 두고 `app.ocr.client`를 바꾼다(지금 `FakeOcrClient`)
 - SJM에게 확인: 가계부 모달의 영수증 저장을 `ExpenseService`가 직접 하는지. 영수증 쪽이 하라면 `receipt`(4층) 분리를 다시 검토한다(`docs/OPEN_ISSUES.md` 영수증 행)
 - SCR-AIM-006 연결 남음: health 병원 일정 조회(JAJ)가 나오면 `scheduler/HospitalScheduleFake`를, pet 연동 양육자 조회(SJM)가 나오면 `scheduler/CaregiverFake`를 그 service로. 그 뒤 FN-AIM-006-11·13 화면과 01·02·20 실제 조회를 공용 DB 병원 일정으로 확인한다
