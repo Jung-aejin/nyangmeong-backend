@@ -22,7 +22,7 @@ SCR-MYP-003 반려동물 등록/수정 — 기획 (시작 2026-10-26 14:48)
 - FN-MYP-002-04 수정·프로필 조회: `GET /pets/{petSn}`(결정3)·`PATCH`. 체중은 결정2: `LAST_BDWG_RCD_DT`가 있으면 `petBdwg`를 보내면 `PET_WEIGHT_LOCKED`. 프로필 체중 동기화 `syncWeight`는 health가 부를 메서드로만 준비. 완료 조건 — 명령: `PetServiceTest` `syncWeight` 값 있음→체중·일시 갱신, null→체중 유지·일시 비움. 화면: 상세의 `bdwgEditableYn`·`latestBdwgRcdDt`
 - FN-MYP-010-05 대표 지정: `POST /pets/{petSn}/representative`(SJM), 응답 본문 없음. 주양육자만(공동양육 동물은 `PET_PRIMARY_ONLY`). 한 트랜잭션에서 내 기존 대표를 `N`으로 바꾼 뒤 대상 `Y`(UK `RPRS_MBR_SN` 때문에 순서 지킴). 완료 조건 — 명령: `PetServiceTest` 기존 대표 해제 후 지정 순서, 공동양육 동물 거부; `PetControllerTest` 200. 화면: 지정 뒤 `GET /api/pets`의 `rprsPetYn`이 한 마리만 true
 - PetCreateRequest·PetUpdateRequest·PetResponse·CaregiverSummary: docs/api/pet.md 초안 그대로(`PetResponse.latestBdwgRcdDt`의 근거만 `PET.LAST_BDWG_RCD_DT`로 고친다 — 구현 전에 초안 수정)
-- 하지 않는 것: 반려동물 삭제와 대표 승계(SCR-MYP-002), 식사량·음수량 범위(issues 4번), `GET /breeds`(KSJ), PETG03 시드 수정(팀)
+- 하지 않는 것: 반려동물 삭제와 대표 승계(SCR-MYP-002), `GET /breeds`(KSJ), PETG03 시드 수정(팀)
 - 새 의존성: 없음
 
 ## 다음에 할 것
