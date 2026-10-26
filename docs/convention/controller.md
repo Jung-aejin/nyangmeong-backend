@@ -8,7 +8,7 @@
 - 로그인한 회원은 `@AuthenticationPrincipal LoginMember`로 받는다. 회원 일련번호를 경로, 쿼리, 요청 본문으로 받지 않는다. 받은 값을 그대로 쓰면 다른 회원의 번호를 넣어 남의 데이터를 조회하거나 바꿀 수 있다.
 - 리소스 경로 전체는 클래스의 `@RequestMapping`에 적고(`/api/posts`), 메서드에는 하위 경로만 적는다.
 - 요청 DTO에 `@Valid`를 붙인다.
-- 메서드마다 `@Operation(summary = "...")`을 붙인다. 그 밖의 Swagger 어노테이션은 붙이지 않는다. 프론트는 Swagger UI(`/swagger-ui.html`)에서 API 명세를 본다.
+- 메서드마다 `@Operation(summary = "...")`을 붙인다. 그 밖의 Swagger 어노테이션은 붙이지 않는다. 프론트는 Swagger UI(`/swagger-ui.html`)에서 API 명세를 본다. 문서 정보·쿠키 인증·공통 헤더는 `global/config/OpenApiConfig`가 붙인다.
 
 ```java
 @RestController @RequiredArgsConstructor
