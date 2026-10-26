@@ -212,6 +212,7 @@
 | brupRoleCd | String | Y | | BRUP_REL.BRUP_ROLE_CD |
 | rprsPetYn | boolean | Y | | BRUP_REL.RPRS_PET_YN |
 | caregiverCount | Integer | Y | | MYP-005-02 (BRUP_REL 건수) |
+| bscCharSbstYn | boolean | Y | 캐릭터 오류 확인 중. 캐릭터가 없으면 false | PIXEL_CHAR.BSC_CHAR_SBST_YN, MYP-001-01 |
 
 ### PetUpdateRequest
 쓰는 API: PATCH /pets/{petSn}

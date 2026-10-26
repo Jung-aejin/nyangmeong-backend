@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nyangmeong.pet.mapper.PetMapper">
+
+    <resultMap id="petSummaryResultMap" type="com.nyangmeong.pet.dto.PetSummary">
+        <id     column="PET_SN"            property="petSn" />
+        <result column="PET_NM"            property="petNm" />
+        <result column="PET_SE_CD"         property="petSeCd" />
+        <result column="VRTY_SN"           property="vrtySn" />
+        <result column="VRTY_NM"           property="vrtyNm" />
+        <result column="VRTY_DRCT_INPT_NM" property="vrtyDrctInptNm" />
+        <result column="PET_GNDR_CD"       property="petGndrCd" />
+        <result column="PET_BRDT"          property="petBrdt" />
+        <result column="PET_BDWG"          property="petBdwg" />
+        <result column="COLR_CD"           property="colrCd" />
+        <result column="COLR_DRCT_INPT_NM" property="colrDrctInptNm" />
+        <result column="CHIP_NO"           property="chipNo" />
+        <result column="CHRC_CN"           property="chrcCn" />
+        <result column="ALGY_CN"           property="algyCn" />
+        <result column="DSS_CN"            property="dssCn" />
+        <result column="BRUP_ROLE_CD"      property="brupRoleCd" />
+        <result column="RPRS_PET_YN"       property="rprsPetYn" />
+        <result column="CAREGIVER_COUNT"   property="caregiverCount" />
+        <result column="BSC_CHAR_SBST_YN"  property="bscCharSbstYn" />
+    </resultMap>
+
+    <!-- 주양육·공동양육 모두, 연동 해제(USE_YN = 'N') 제외. 공동양육 인원은 사용 중인 공동양육자 관계 수 -->
+    <select id="selectList" resultMap="petSummaryResultMap">
+        SELECT P.PET_SN
+             , P.PET_NM
+             , P.PET_SE_CD
+             , P.VRTY_SN
+             , V.VRTY_NM
+             , P.VRTY_DRCT_INPT_NM
+             , P.PET_GNDR_CD
+             , P.PET_BRDT
+             , P.PET_BDWG
+             , P.COLR_CD
+             , P.COLR_DRCT_INPT_NM
+             , P.CHIP_NO
+             , P.CHRC_CN
+             , P.ALGY_CN
+             , P.DSS_CN
+             , R.BRUP_ROLE_CD
+             , CASE WHEN R.RPRS_PET_YN = 'Y' THEN TRUE ELSE FALSE END AS RPRS_PET_YN
+             , (SELECT COUNT(*)
+                  FROM BRUP_REL CR
+                 WHERE CR.PET_SN = P.PET_SN
+                   AND CR.USE_YN = 'Y'
+                   AND CR.BRUP_ROLE_CD = #{coParentRoleCd}) AS CAREGIVER_COUNT
+             , CASE WHEN C.BSC_CHAR_SBST_YN = 'Y' THEN TRUE ELSE FALSE END AS BSC_CHAR_SBST_YN
+          FROM BRUP_REL R
+          JOIN PET P
+            ON P.PET_SN = R.PET_SN
+           AND P.DEL_YN = 'N'
+          LEFT JOIN VRTY V
+            ON V.VRTY_SN = P.VRTY_SN
+          LEFT JOIN PIXEL_CHAR C
+            ON C.PET_SN = P.PET_SN
+           AND C.DEL_YN = 'N'
+         WHERE R.MBR_SN = #{mbrSn}
+           AND R.USE_YN = 'Y'
+         ORDER BY R.REG_DT
+                , R.BRUP_REL_SN
+    </select>
+</mapper>
