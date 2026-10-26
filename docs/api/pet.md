@@ -12,7 +12,7 @@
 | GET | /items/{itemSn}/image | 아이템 이미지(로그인 회원, 판매 중 아이템) | MYP-010-14, MYP-011-02 | LJS | - | 이미지 파일 |
 | GET | /members/me/points | 보유 포인트, 이번 달 적립·사용 합계와 건수, 오늘 미션 요약(주양육 반려동물 전체) | MYP-001-03·04, MYP-011-05, MYP-020-01·09 | SJM | - | PointResponse |
 | GET | /pets | 내 반려동물 목록(주양육·공동양육, 역할·대표 여부·공동양육 인원 포함) | MYP-001-01, MYP-002-01~03, MYP-005-02, MYP-006-04, MYP-020-03 | SJM | - | List<PetSummary> |
-| GET | /pets/{petSn} | 반려동물 프로필 상세(수정 모달 채우기, 체중 수정 가능 여부, 양육자 목록) | MYP-002-04, MYP-003-01 | SJM | - | PetResponse |
+| GET | /pets/{petSn} | 반려동물 프로필 상세(수정 모달 채우기, 양육자 목록). 체중 잠금은 화면이 건강기록 API로 판단(`issues.md` API의 마이페이지 2번) | MYP-002-04, MYP-003-01 | SJM | - | PetResponse |
 | GET | /pets/{petSn}/caregivers | 공동양육자 목록. 주양육자에게는 전원, 공동양육자에게는 본인 1건 | MYP-004-01·03·04, MYP-006-04 | SJM | - | List<CaregiverSummary> |
 | GET | /pets/{petSn}/character-image | 캐릭터 이미지 `?part=full`(전신, 기본)·`face`(얼굴). 미생성·오류 확인 중이면 종별 기본 캐릭터 | MYP-001-01, MYP-002-02, MYP-010-12·23 | LJS | - | 이미지 파일 |
 | GET | /pets/{petSn}/daily-missions | 그날의 케어미션 8개와 진행 상태. 쿼리 `msnCrtrYmd` | MYP-020-03·04 | SJM | - | List<DailyMissionSummary> |
@@ -28,7 +28,7 @@
 | POST | /pets/{petSn}/representative | 대표 반려동물 지정(주양육 반려동물만) | MYP-010-05 | SJM | - | - |
 | POST | /pixel-characters/{pixelCharSn}/held-items | 아이템 일괄 구매(포인트 차감, 보관함 추가, 주양육자만). 201. 오류: `POINT_NOT_ENOUGH`(400), `PET_PRIMARY_ONLY`(403), `ITEM_NOT_FOUND`(404), `ITEM_ALREADY_HELD`(409) | MYP-011-05·06 | LJS | ItemPurchaseRequest | PixelCharacterResponse |
 | PUT | /pixel-characters/{pixelCharSn}/equipped-items | 착용 상태 확정 저장(부위당 1개, 요청에 없는 보유 아이템은 착용 해제) | MYP-010-13·16 | LJS | EquippedItemSaveRequest | PixelCharacterResponse |
-| PATCH | /pets/{petSn} | 반려동물 수정(체중은 건강 일지 기록이 없을 때만) | MYP-002-04, MYP-003-01·04~07 | SJM | PetUpdateRequest | PetResponse |
+| PATCH | /pets/{petSn} | 반려동물 수정(양육자 전원, 체중 잠금은 화면에서) | MYP-002-04, MYP-003-01·04~07 | SJM | PetUpdateRequest | PetResponse |
 | DELETE | /pets/{petSn} | 반려동물 삭제(주양육자만). 캐릭터·보유 아이템 삭제, 공동양육 연동 해제, 대표 승계 | MYP-002-07·08 | SJM | - | - |
 | DELETE | /pets/{petSn}/caregivers/{brupRelSn} | 공동양육 연동 해제. 주양육자의 강제 해제와 공동양육자의 자진 해제 | MYP-004-01, MYP-006-02 | SJM | - | - |
 
@@ -182,8 +182,6 @@
 | goalBdwg | BigDecimal | N | | PET.GOAL_BDWG |
 | minBdwg | BigDecimal | Y | | PET.MIN_BDWG |
 | maxBdwg | BigDecimal | Y | | PET.MAX_BDWG |
-| bdwgEditableYn | boolean | Y | 건강 일지 체중 기록이 없으면 `true`(`issues.md` API의 마이페이지 2번, 이름은 issues 3번) | MYP-003-01 |
-| latestBdwgRcdDt | LocalDateTime | N | 가장 최근 체중 기록일시(`issues.md` API의 마이페이지 2번) | MYP-003-01, DAILY_HLTH_RCD.RCD_DT |
 | caregivers | List<CaregiverSummary> | Y | 양육자 목록 | D절 6번, BRUP_REL |
 | caregivers[].brupRelSn | Long | Y | | BRUP_REL.BRUP_REL_SN |
 | caregivers[].mbrSn | Long | Y | | BRUP_REL.MBR_SN |
@@ -212,6 +210,7 @@
 | brupRoleCd | String | Y | | BRUP_REL.BRUP_ROLE_CD |
 | rprsPetYn | boolean | Y | | BRUP_REL.RPRS_PET_YN |
 | caregiverCount | Integer | Y | | MYP-005-02 (BRUP_REL 건수) |
+| bscCharSbstYn | boolean | Y | 캐릭터 오류 확인 중. 캐릭터가 없으면 false | PIXEL_CHAR.BSC_CHAR_SBST_YN, MYP-001-01 |
 
 ### PetUpdateRequest
 쓰는 API: PATCH /pets/{petSn}
@@ -226,7 +225,7 @@
 | chipNo | String | N | 숫자만, 최대 20자리 | PET.CHIP_NO, MYP-003-05 |
 | petGndrCd | String | N | 성별(PETG02) | PET.PET_GNDR_CD, MYP-003-01 |
 | nutrYn | Boolean | N | | PET.NUTR_YN, MYP-003-06 |
-| petBdwg | BigDecimal | N | 0보다 큼, 소수 셋째 자리까지. 건강 일지에 체중 기록이 없을 때만(있으면 400) | PET.PET_BDWG, MYP-002-04, MYP-003-01 |
+| petBdwg | BigDecimal | N | 0보다 큼, 소수 셋째 자리까지. 체중 잠금은 화면에서만(서버는 막지 않음) | PET.PET_BDWG, MYP-002-04, MYP-003-01 |
 | goalBdwg | BigDecimal | N | 0보다 큼, 소수 셋째 자리까지 | PET.GOAL_BDWG, MYP-003-04 |
 | minBdwg | BigDecimal | N | 0보다 큼, 소수 셋째 자리까지, 최대보다 작음(저장 후 값 기준) | PET.MIN_BDWG, MYP-003-04 |
 | maxBdwg | BigDecimal | N | 0보다 큼, 소수 셋째 자리까지 | PET.MAX_BDWG, MYP-003-04 |
