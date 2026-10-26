@@ -11,8 +11,8 @@
 | GET | /inquiries/{otoInqrySn} | 내 1:1 문의 상세(답변 포함) | CSC-003-12·13·16 | KSJ | - | InquiryResponse |
 | GET | /notices | 공지사항 목록(상단 고정 우선·제목 검색, 10건). 상세 하단 최신 5건도 사용 | CSC-001-01~04·06 | KSJ | - | Page<NoticeSummary> |
 | GET | /notices/{ntcMttrSn} | 공지사항 상세(조회수 세션 기준 1회 증가) | CSC-001-05·07 | KSJ | - | NoticeResponse |
-| POST | /inquiries | 1:1 문의 작성(캐릭터 오류 문의 연동 포함, 접수 상태) | CSC-003-06·08~11, MYP-010-12·24 (기능 분배 3.1절 21·24번) | KSJ | InquiryCreateRequest | InquiryResponse |
-| PATCH | /inquiries/{otoInqrySn} | 1:1 문의 수정(접수 상태에서만) | CSC-003-15 | KSJ | InquiryUpdateRequest | InquiryResponse |
+| POST | /inquiries | 1:1 문의 작성(multipart, 캐릭터 오류 문의 연동 포함, 접수 상태) | CSC-003-06·08~11, MYP-010-12·24 (기능 분배 3.1절 21·24번) | KSJ | InquiryCreateRequest | InquiryResponse |
+| PATCH | /inquiries/{otoInqrySn} | 1:1 문의 수정(multipart, 접수 상태에서만) | CSC-003-15 | KSJ | InquiryUpdateRequest | InquiryResponse |
 
 ## DTO
 
@@ -31,11 +31,11 @@
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | inqryTypeCd | String | Y | 초안 그대로. 공통코드 CSCG02 단일 선택 | OTO_INQRY.INQRY_TYPE_CD, CSC-003-06 |
-| inqryTtl | String | Y | 초안 그대로. 최대 200자 | OTO_INQRY.INQRY_TTL, CSC-003-08 |
-| inqryCn | String | Y | 초안 그대로. 최대 4000자 | OTO_INQRY.INQRY_CN, CSC-003-08 |
-| atchFileSns | List<Long> | N | 초안 그대로. 최대 10개, 각 10MB 이내 | INQRY_ATCH_PHOTO.ATCH_FILE_SN, CSC-003-09 |
-| pixelCharSn | Long | N | 초안 그대로. 캐릭터 오류 문의 | OTO_INQRY.PIXEL_CHAR_SN (캐릭터 오류 문의), CSC-003-10 |
-| charPhotoSn | Long | N | 초안 그대로. 캐릭터 오류 문의 | OTO_INQRY.CHAR_PHOTO_SN (캐릭터 오류 문의), CSC-003-10 |
+| inqryTtl | String | Y | 최대 50자, 공백만은 불가(명세 v0.4, 2026-10-26 초안의 200자에서 변경) | OTO_INQRY.INQRY_TTL, CSC-003-08 |
+| inqryCn | String | Y | 최대 2000자, 공백만은 불가(명세 v0.4, 2026-10-26 초안의 4000자에서 변경) | OTO_INQRY.INQRY_CN, CSC-003-08 |
+| images | List<MultipartFile> | N | multipart/form-data로 함께 보낸다(2026-10-26 `atchFileSns`에서 변경: 파일을 먼저 올리는 공용 업로드 API가 없다). 최대 10개, 각 10MB 이내, JPG·PNG·WEBP | INQRY_ATCH_PHOTO.ATCH_FILE_SN, CSC-003-09 |
+| pixelCharSn | Long | N | multipart. 캐릭터 오류 문의면 보낸다. 유형이 픽셀 캐릭터여야 하고, 저장 뒤 pet의 오류 접수가 실패하면(이미 접수·생성 중 등) 문의도 저장되지 않는다. 접수가 돌려준 캐릭터 이미지는 첨부 첫 번째로 붙고 첨부 합계 10개에 포함된다(사용자 이미지는 최대 9개) | OTO_INQRY.PIXEL_CHAR_SN (캐릭터 오류 문의), CSC-003-10 |
+| charPhotoSn | Long | N | multipart. 초안 그대로. `pixelCharSn`과 함께 보낼 때만 받는다 | OTO_INQRY.CHAR_PHOTO_SN (캐릭터 오류 문의), CSC-003-10 |
 
 ### InquiryResponse
 쓰는 API: GET /inquiries/{otoInqrySn}; PATCH /inquiries/{otoInqrySn}; POST /inquiries
@@ -71,9 +71,10 @@
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | inqryTypeCd | String | N | 공통코드 CSCG02 | OTO_INQRY.INQRY_TYPE_CD, CSC-003-06 |
-| inqryTtl | String | N | 최대 200자 | OTO_INQRY.INQRY_TTL, CSC-003-08·15 |
-| inqryCn | String | N | 최대 4000자 | OTO_INQRY.INQRY_CN, CSC-003-08·15 |
-| atchFileSns | List<Long> | N | 최대 10개, 각 10MB 이내. 목록 교체 방식(issues 2) | INQRY_ATCH_PHOTO.ATCH_FILE_SN, CSC-003-09 |
+| inqryTtl | String | N | 최대 50자(2026-10-26 200자에서 변경) | OTO_INQRY.INQRY_TTL, CSC-003-08·15 |
+| inqryCn | String | N | 최대 2000자(2026-10-26 4000자에서 변경) | OTO_INQRY.INQRY_CN, CSC-003-08·15 |
+| keepAtchFileSns | List<Long> | N | multipart. 남길 기존 첨부. 보낸 경우 여기에 없는 기존 첨부는 삭제한다(2026-10-26 `atchFileSns` 목록 교체에서 변경). 보내지 않으면 기존 첨부를 그대로 둔다 | INQRY_ATCH_PHOTO.ATCH_FILE_SN, CSC-003-15 |
+| images | List<MultipartFile> | N | multipart. 새로 추가할 첨부. 남는 첨부와 합쳐 최대 10개, 각 10MB 이내 | INQRY_ATCH_PHOTO.ATCH_FILE_SN, CSC-003-09 |
 
 ### NoticeResponse
 쓰는 API: GET /notices/{ntcMttrSn}
