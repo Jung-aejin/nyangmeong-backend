@@ -1,7 +1,7 @@
 # SJM 핸드오프
 
 ## 지금 하는 것
-SCR-MYP-003 반려동물 등록/수정 — 기획 (시작 2026-10-26 14:48)
+SCR-MYP-003 반려동물 등록/수정 — 구현 중 (승인 2026-10-26 16:03, 시작 2026-10-26 14:48)
 - 기준: 마이페이지_기능명세서_v0.4_20261025, 마이페이지_화면설계서_v0.6_20261025 (DMS)
 - 결정1 경로: 기존 컨트롤러와 같이 `/api` 앞에 붙임. `GET /api/pets/{petSn}`, `POST /api/pets`, `PATCH /api/pets/{petSn}`, `POST /api/pets/{petSn}/representative`
 - 결정2 체중 잠금(docs/api/issues.md 마이페이지 2번): DB 컬럼을 추가하지 않는다. 체중 기록과 기록일시는 `DAILY_HLTH_RCD`(지표 `HLTC0014`, `RCD_DT`)에 이미 있고, 프론트가 `GET /pets/{petSn}/daily-health-records?dailyRcdIdctCd=HLTC0014&size=1`(JAJ)로 받아 체중 칸 잠금과 최근 기록값·기록일 표시를 한다. 서버는 `PATCH`의 `petBdwg`를 막지 않는다(화면에서만 잠금). 같은 정보를 PET에 두 벌 두지 않아 동기화가 필요 없다. 구현 전에 docs/api/pet.md `PetResponse`에서 `bdwgEditableYn`·`latestBdwgRcdDt`를 빼고, issues.md 2번에 이 결정을 적는다
