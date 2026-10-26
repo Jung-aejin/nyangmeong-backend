@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * [서버 간 내부 인증 확인 컨트롤러]
- * - GET /internal/auth/check : X-Internal-Key 와 사용자 쿠키를 필터가 판정한 뒤 회원 번호·권한만 돌려준다
+ * - GET /internal/auth/check : 사용자 쿠키를 필터가 판정한 뒤 회원 번호·권한만 돌려준다
  * - 세션 폐기·정지·탈퇴 판정은 JwtAuthenticationFilter 가 끝냄
  */
 @RestController

@@ -12,7 +12,7 @@
 | GET | /members/me/dashboard-widgets | 메인 건강 지표 위젯의 표시 여부·순서 조회 | MAN-006·007 | YAY | - | List<DashboardWidgetSummary> |
 | GET | /members/me/recovery | 복구 대상 이메일·닉네임·남은 복구 기간·필요 동의·보관 번호 조회(복구 확인 권한) | ACC-001-44 | YAY | - | MemberRecoveryResponse |
 | GET | /auth/me | 로그인한 회원 요약(회원 번호·권한·닉네임·프로필 사진·마스킹 이메일). 구현은 `auth` 도메인(nct-backend `nct.auth`와 같은 자리) | COM-002-15, COM-005-02 | LJS | - | AuthMeResponse |
-| GET | /internal/auth/check | 서버 간 내부 인증 확인(Python 미들웨어가 `/ai/**` 요청마다 사용자 쿠키를 넘겨 호출). `/api` 접두어 없음, `X-Internal-Key` 필수(불일치 401 `INVALID_INTERNAL_KEY`). 세션 폐기 401 `UNAUTHORIZED`, 정지·탈퇴 403 `MEMBER_INACTIVE`(쿠키 삭제 `Set-Cookie`) | - (2026-10-26 사람 결정) | LJS | - | InternalAuthCheckResponse |
+| GET | /internal/auth/check | 서버 간 내부 인증 확인(Python 미들웨어가 `/ai/**` 요청마다 사용자 쿠키를 넘겨 호출). `/api` 접두어 없음, 서버 간 키 없음(사용자 인증만). 세션 폐기 401 `UNAUTHORIZED`, 정지·탈퇴 403 `MEMBER_INACTIVE`(쿠키 삭제 `Set-Cookie`) | - (2026-10-26 사람 결정) | LJS | - | InternalAuthCheckResponse |
 | GET | /members/nickname-availability | 닉네임 형식(한글·영문·숫자 1~10자)·중복 확인 | ACC-001-08, MYP-040-04·10 (기능 분배 3.1절 2번) | YAY | - | MemberNicknameAvailabilityResponse |
 | GET | /members/phone-availability | 휴대전화번호 정규화(+82·하이픈)·형식·중복 확인 | ACC-001-29·30·44, MYP-040-05·11 (기능 분배 3.1절 3번) | YAY | - | MemberPhoneAvailabilityResponse |
 | GET | /terms | 현재 사용 중인 약관 목록(필수 여부·버전) | ACC-001-12·44 | YAY | - | List<TermsSummary> |

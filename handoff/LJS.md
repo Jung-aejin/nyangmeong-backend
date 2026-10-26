@@ -4,14 +4,14 @@
 
 없음
 
-이전: 서버 간 내부 인증 1단계 — 끝 (2026-10-26, `/start`·`/impl` 검증 1회차 통과, 사람 확인). 배경: AI 기능은 Python 서버로 분리, DB는 Java만, 채팅은 React → Python `/ai/`, Python 미들웨어가 모든 `/ai/` 요청에서 `GET /internal/auth/check`로 인증(Python은 JWT 검증 안 함). `/internal/**`는 `InternalKeyFilter`(헤더 `X-Internal-Key`, 설정 `app.internal.inbound-key`, 비면 전부 거부, 불일치 401 `INVALID_INTERNAL_KEY`)를 JWT 필터 앞에서 검사하고 사용자 인증도 필요. 응답 `InternalAuthCheckResponse(mbrSn, mbrAuthrtCd)`. `app.internal.outbound-key`(Spring→Python)는 읽기만. `docs/convention/api.md` `/internal` 예외, `docs/api/member.md` 행·DTO
+이전: 서버 간 내부 호출 키 제거 — 끝 (2026-10-26, `/start`·`/impl` 검증 1회차 통과, 사람 확인). Python↔Spring 양방향 키 없이 통신(사람 결정). `InternalKeyFilter`·`InternalKeyProperties`·`INVALID_INTERNAL_KEY`·`app.internal.*` 삭제, `SecurityConfig`는 `RequestedWithFilter` → `JwtAuthenticationFilter` 순서. `/internal/auth/check`는 사용자 쿠키 인증만(쿠키 없음 401 `UNAUTHORIZED`, 정지·탈퇴 403 `MEMBER_INACTIVE`, 정상 200 `mbrSn`·`mbrAuthrtCd`). `docs/convention/api.md` `/internal` 예외에 "`/internal/**`은 사용자 인증 필수, 회원을 지정하는 무인증 API는 두지 않는다" 규칙. 테스트: `InternalKeyFilterTest` 삭제, `InternalAuthControllerTest` 키 케이스 1건 삭제·3건 헤더 제거(기대값 그대로)
 
 ## 다음에 할 것
 
 - 팀에 알린다(2026-10-26): 공용 DB(`pawever`) 시드를 `seedClean`→`seedData`로 다시 넣었다(팀원 테스트 데이터 삭제됨, 원인 판단 착오로 불필요했던 작업). 예전 시드는 지금 디스코드 키와 다른 AES 키로 암호화돼 있었다. 각 PC는 `./gradlew seedFiles`를 다시. 로컬 서버는 `spring.profiles.default=local`이라 로컬 DB를 쓴다(로컬 데이터가 예전 키면 `seedData -Ptarget=local -Preset`)
-- 디스코드 공유 `application.properties`에 `app.seed.password`(새 값)와 `app.internal.inbound-key`·`app.internal.outbound-key`(방향별 32바이트 난수, Python 쪽 `BACKEND_INTERNAL_KEY`·`INTERNAL_API_KEY`와 짝) 추가(사람)
-- Python 세션(nyangmeong-ai-8a)에 `/internal/auth/check` 구현 완료 알림(응답 `mbrSn`·`mbrAuthrtCd`, 키 불일치 401 `INVALID_INTERNAL_KEY`는 브라우저에 502 `EXTERNAL_API_ERROR`로 바꿔 보낸다)
-- Spring→Python HTTP 클라이언트(OCR·캐릭터 실제 구현)에 `X-Internal-Key`로 `app.internal.outbound-key`를 붙인다
+- 디스코드 공유 `application.properties`에 `app.seed.password`(새 값) 추가, `app.internal.*` 줄은 지운다(서버 간 키 제거, 사람). 각 PC 로컬 파일의 `app.internal.inbound-key`도 지운다
+- 키 제거가 develop에 반영되면 Python 세션(nyangmeong-ai-8a)에 알린다. 그쪽은 이 알림 뒤에 `X-Internal-Key` 헤더·`INTERNAL_API_KEY` 검사·`BACKEND_INTERNAL_KEY` 정리와 실제 연결 확인(`BACKEND_BASE_URL=http://localhost:8080`)을 한다. 그 전에 Python이 헤더를 먼저 빼도 키 제거된 Spring은 무시한다
+- Spring→Python HTTP 클라이언트(OCR·캐릭터 실제 구현)는 키 없이 호출한다. Python의 `INTERNAL_API_KEY` 검사가 지워진 뒤에 붙인다
 - 영수증 인식 결과 조회(2026-10-26 승인, 프론트 요청): `GET /api/receipts/{recptSn}` → `ReceiptResponse`. 저장된 `RECPT.OCR_RSPNS_JSON`을 `ReceiptOcrConverter.toResponse`로 다시 가공(오늘 날짜·현재 공동양육 반려동물 기준이라 분석 직후와 달라질 수 있음을 허용, 테스트하며 조정). 남의·없는 영수증은 `RECEIPT_NOT_FOUND`. 대화창에서 분석한 영수증을 본창 건강 일지 "인식 결과 확인" 모달에서 다시 연다. `docs/api/receipt.md`에 행 추가
 - PR 병합 뒤 공용 DB에 `db/migration/20261025_01_add_expnd_plcus_nm.sql` 실행하고 PR에 완료 댓글(사람). 그 뒤 시드 `ExpenseSeeder`의 OCR 지출을 사용처 = 병원명, 세부사항 = null로 맞춘다
 - 요청자에게 알린다: AI매니저 FN-AIM-009-10·21과 건강기록 FN-HLT-002-41 명세서에 아직 "내용 = 병원명". 사용처로 고치고 SCR-HLT-002에 사용처 칸(선택, 80자, 병원명 기본값)을 넣는다

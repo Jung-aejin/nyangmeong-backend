@@ -4,7 +4,7 @@
 
 - 접두어는 `/api`이다. 버전(`/v1`)은 경로에 넣지 않는다. 리소스는 복수형 kebab-case로 쓴다. 식별자는 경로에, 필터·정렬·페이지는 쿼리에 둔다.
   - 예: `/members/me`, `/pets/{petSn}/checkups`, `/places?plcClsfCd={공통코드}&keyword=병원`
-  - 예외: `/internal`은 서버 간 내부 호출(Python AI 서버 → Spring) 전용이다. nginx가 외부로 넘기지 않고, `X-Internal-Key` 헤더가 필수다(`InternalKeyFilter`, 2026-10-26)
+  - 예외: `/internal`은 서버 간 내부 호출(Python AI 서버 → Spring) 전용이다. 서버 간 키는 없다(2026-10-26 결정). 그래서 `/internal/**`의 모든 API는 사용자 인증(쿠키)을 거치고 호출한 회원 자신의 정보만 다룬다. 사용자 인증 없이 회원을 지정하는 API는 `/internal`에 두지 않는다
 - 로그인한 회원 자신의 자원은 `me`를 쓴다(`/members/me`). 경로에 회원 일련번호를 넣지 않는다.
   - 회원에 딸린 설정·단건(회원당 하나)은 `/members/me/x`에 둔다. 예: `/members/me/notification-settings`, `/members/me/points`, `/members/me/expense-limit`
   - 회원이 쌓는 목록 자원은 최상위 경로에 두고 서버가 로그인 회원으로 거른다. 예: `/notifications`, `/expenses`, `/point-ledgers`, `/chat-rooms`
