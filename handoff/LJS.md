@@ -4,10 +4,11 @@
 
 없음
 
-이전: 서버 간 내부 호출 키 제거 — 끝 (2026-10-26, `/start`·`/impl` 검증 1회차 통과, 사람 확인). Python↔Spring 양방향 키 없이 통신(사람 결정). `InternalKeyFilter`·`InternalKeyProperties`·`INVALID_INTERNAL_KEY`·`app.internal.*` 삭제, `SecurityConfig`는 `RequestedWithFilter` → `JwtAuthenticationFilter` 순서. `/internal/auth/check`는 사용자 쿠키 인증만(쿠키 없음 401 `UNAUTHORIZED`, 정지·탈퇴 403 `MEMBER_INACTIVE`, 정상 200 `mbrSn`·`mbrAuthrtCd`). `docs/convention/api.md` `/internal` 예외에 "`/internal/**`은 사용자 인증 필수, 회원을 지정하는 무인증 API는 두지 않는다" 규칙. 테스트: `InternalKeyFilterTest` 삭제, `InternalAuthControllerTest` 키 케이스 1건 삭제·3건 헤더 제거(기대값 그대로)
+이전: Swagger 설정 — 끝 (2026-10-26, `/start`·`/impl` 검증 1회차 통과, 사람 확인). `global/config/OpenApiConfig` 새로 만듦: 문서 정보(title `냥멍케어 API`, version `0.1`), `GlobalOpenApiCustomizer`로 GET·HEAD·OPTIONS 외 operation에 `X-Requested-With` 헤더(required, 기본값 `XMLHttpRequest`, Swagger UI가 미리 채움), 쿠키 인증 `cookieAuth`(COOKIE `access_token`) 전역 + 열린 경로(`SecurityPathProperties`)는 `security: []`. `application-prod.properties`에서 springdoc 끔(prod `/v3/api-docs`·`/swagger-ui/index.html` 404). 테스트 `OpenApiConfigTest`(컨텍스트 없음). 문서 `api.md:60`·`controller.md:11`. 기획과 다른 점: B를 `GlobalOperationCustomizer` 대신 `GlobalOpenApiCustomizer`로(경로·메서드가 필요해서)
 
 ## 다음에 할 것
 
+- `app.seed.password` 필수값 제외(2026-10-26 사람 요청, 범위 미정): (가) `/start` 설정 키 경고에서만 빼기(`scripts/start-check.sh:51` 제외 목록) (나) `seedData`도 값 없이(기본 비밀번호가 공개 저장소에 들어감). 추천 (가)
 - 팀에 알린다(2026-10-26): 공용 DB(`pawever`) 시드를 `seedClean`→`seedData`로 다시 넣었다(팀원 테스트 데이터 삭제됨, 원인 판단 착오로 불필요했던 작업). 예전 시드는 지금 디스코드 키와 다른 AES 키로 암호화돼 있었다. 각 PC는 `./gradlew seedFiles`를 다시. 로컬 서버는 `spring.profiles.default=local`이라 로컬 DB를 쓴다(로컬 데이터가 예전 키면 `seedData -Ptarget=local -Preset`)
 - 디스코드 공유 `application.properties`에 `app.seed.password`(새 값) 추가, `app.internal.*` 줄은 지운다(서버 간 키 제거, 사람). 각 PC 로컬 파일의 `app.internal.inbound-key`도 지운다
 - 키 제거가 develop에 반영되면 Python 세션(nyangmeong-ai-8a)에 알린다. 그쪽은 이 알림 뒤에 `X-Internal-Key` 헤더·`INTERNAL_API_KEY` 검사·`BACKEND_INTERNAL_KEY` 정리와 실제 연결 확인(`BACKEND_BASE_URL=http://localhost:8080`)을 한다. 그 전에 Python이 헤더를 먼저 빼도 키 제거된 Spring은 무시한다
