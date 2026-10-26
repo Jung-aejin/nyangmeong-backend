@@ -1,7 +1,7 @@
 # SJM 핸드오프
 
 ## 지금 하는 것
-SCR-MYP-001 마이페이지 홈 (반려동물 목록) — 구현 중 (승인 2026-10-26 02:06, 시작 2026-10-26 10:51)
+SCR-MYP-001 마이페이지 홈 (반려동물 목록) — 끝 (검증 통과, 사람 확인 완료, 2026-10-26)
 - 기준: 마이페이지_기능명세서_v0.4_20261025, 마이페이지_화면설계서_v0.6_20261025 (DMS)
 - 결정: `GET /api/pets`(경로 앞부분은 기존 `pet` 컨트롤러와 같은 `/api`). 정렬은 내 양육관계 등록순(`BRUP_REL.REG_DT`, `BRUP_REL_SN`)으로 두고 docs/api/issues.md 마이페이지 1번 결정 전까지 이 순서를 쓴다. 주양육 동물은 PET 등록 시각과 같아 대표 승계 기준과 어긋나지 않는다
 - 초안 수정(구현 전): docs/api/pet.md `PetSummary`에 `bscCharSbstYn`(boolean, PIXEL_CHAR.BSC_CHAR_SBST_YN, 캐릭터가 없으면 false) 추가. 이유: FN-MYP-001-01 "오류 확인 중" 배지를 목록에서 그려야 하는데 초안에 필드가 없다. 같은 `pet` 도메인 테이블이라 층 규칙 문제가 없다
@@ -13,3 +13,5 @@ SCR-MYP-001 마이페이지 홈 (반려동물 목록) — 구현 중 (승인 202
 - 새 의존성: 없음
 
 ## 다음에 할 것
+- 대기 맨 위인 SCR-MYP-003 반려동물 등록/수정을 `/start`로 기획한다 (기다리는 것: 품종 마스터, KSJ)
+- LJS의 `CaregiverPetFake`·`CaregiverFake`를 `PetService.searchMyPets`로 바꾸는 연결은 LJS의 "연결 남음"
