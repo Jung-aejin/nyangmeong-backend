@@ -1,7 +1,10 @@
 package com.nyangmeong.auth.controller;
 
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -13,6 +16,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.nyangmeong.auth.service.AuthService;
+import com.nyangmeong.global.error.CustomException;
+import com.nyangmeong.global.error.ErrorCode;
 import com.nyangmeong.global.error.GlobalExceptionHandler;
 import com.nyangmeong.global.log.SensitiveDataMasker;
 import com.nyangmeong.global.security.AuthMemberMapper;
@@ -29,9 +34,10 @@ import com.nyangmeong.global.security.handler.RestAuthenticationEntryPoint;
 import com.nyangmeong.global.security.jwt.JwtProperties;
 import com.nyangmeong.global.security.jwt.JwtTokenProvider;
 import com.nyangmeong.global.security.jwt.TokenCookies;
+import com.nyangmeong.global.security.session.LoginSessionManager;
 
 /**
- * [검사 - GET /api/auth/me]
+ * [검사 - GET /api/auth/me, POST /api/auth/refresh·logout]
  */
 @WebMvcTest(controllers = AuthController.class)
 @Import({AuthService.class, FieldCryptoService.class, CryptoProperties.class, SecurityConfig.class,
@@ -48,6 +54,9 @@ class AuthControllerTest {
 
     @MockitoBean
     AuthMemberMapper authMemberMapper;
+
+    @MockitoBean
+    LoginSessionManager loginSessionManager;
 
     private AuthMember member(String email, Long atchFileSn) {
         AuthMember member = new AuthMember();
@@ -101,5 +110,34 @@ class AuthControllerTest {
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void 재발급은_로그인_없이_세션_회전을_부르고_data가_없다() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh").header("X-Requested-With", "XMLHttpRequest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        verify(loginSessionManager).rotate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 재발급에_실패하면_401_UNAUTHORIZED다() throws Exception {
+        doThrow(new CustomException(ErrorCode.UNAUTHORIZED)).when(loginSessionManager)
+                .rotate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+
+        mockMvc.perform(post("/api/auth/refresh").header("X-Requested-With", "XMLHttpRequest"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void 로그아웃은_로그인_없이도_세션_폐기를_부른다() throws Exception {
+        mockMvc.perform(post("/api/auth/logout").header("X-Requested-With", "XMLHttpRequest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"));
+
+        verify(loginSessionManager).revoke(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 }
