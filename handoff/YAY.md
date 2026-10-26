@@ -2,7 +2,7 @@
 
 ## 지금 하는 것
 
-SCR-ACC-002 로그인 (이메일) — 진행 중 (2026-10-26 중간 저장). 구현과 빌드는 끝났고 검증 1회차가 "확인 못 함(내 것)"으로 실패해 보관 중이다. 구현 메모: 기획의 `noRollbackFor` 대신 실패를 예외가 아니라 `LoginResult`로 돌려줘 실패 기록이 커밋되게 했다(응답은 기획과 같다). `refresh`·`logout`(AuthController)도 이 커밋에 들어간다
+SCR-ACC-002 로그인 (이메일) — 끝남 (승인 2026-10-26, 검증 통과 회차 1, 사람 확인 2026-10-26). FN-ACC-002-03·04·05·15·16·18·19·20·22, FN-ACC-001-22, FN-COM-005-07·08. 공용 DB에 쓰지 않고 로컬 DB로 5회 실패·보안코드·로그인 성공·닉네임 재안내·정지·탈퇴·SNS 전용을 확인했다. 구현 메모: 기획의 `noRollbackFor` 대신 실패를 예외가 아니라 `LoginResult`로 돌려줘 실패 기록이 커밋되게 했다(응답은 기획과 같다). `refresh`·`logout`(AuthController)도 이 커밋에 들어간다
 - 기준: 로그인·회원가입_기능명세서_v0.7_20260930, 로그인·회원가입_화면설계서_v0.10_20260930 (DMS)
 - 이미 한 것(이 기획 전, 커밋 전): `POST /api/auth/refresh`·`POST /api/auth/logout`(FN-COM-005-07·08, FN-AIM-011-17). `auth/controller/AuthController`가 `LoginSessionManager.rotate`·`revoke`를 부르고 `AuthControllerTest`에 3건. 이 마일스톤의 변경으로 같이 커밋한다
 - 결정: 실패는 오류 응답(4xx)으로 준다. 실패 응답의 `data`에 `LoginAttemptLimitResponse`(`scrtyCdRqtYn`·`cntnuCertFailNmtm`)를 실어 프론트가 보안코드 표시를 바로 정한다(`ApiResponse.errorWithData`). 이유: 기존 `ErrorCode`(LOGIN_FAILED 등)와 nct 응답 규칙을 따르고, 로그인 직후 상태 조회를 한 번 더 부르지 않게 한다
@@ -23,8 +23,10 @@ SCR-ACC-002 로그인 (이메일) — 진행 중 (2026-10-26 중간 저장). 구
 
 ## 다음에 할 것
 
-- 검증 루프 1회차 실패로 보관 중. 기획은 고치지 않는다. 루프를 버리려면 `! sh scripts/verify-loop.sh clear`. 실패 항목: 5회 실패·보안코드·로그인 성공·닉네임 재안내를 검증 에이전트가 확인할 방법이 없다(공용 DB 쓰기와 비밀번호를 아는 회원 필요). 코드·단위 테스트·빌드는 통과, 사람이 시드 계정 `tester@nyangmeong.dev`로 로그인 성공·쿠키·`/me`·로그아웃을 확인했다. 5회 실패 흐름은 사람 확인이 남았다
-- 사람 확인(공용 DB): 없는 이메일로 실패 5회 → 429 → `POST /api/auth/captchas` → 틀린 코드 400 `CAPTCHA_MISMATCH`. 확인한 이메일의 `LGN_ATMPT_LMT` 행 정리, 검증 에이전트가 만든 `verify-…@example.com` 행도 정리
+- 연결 남음: 프론트 `features/member/api.js`의 가짜 `getLoginStatus`·`getCaptcha`·`login`·`logout`을 실제 호출로 바꾼다(프론트 저장소에서 /start). 그 뒤 `DevTokenController` 삭제
+- 로컬 DB 검증 방법(공용 DB에 쓰지 않는다): `application-local.properties`(git 제외)에 로컬 MySQL의 `spring.datasource.url/username/password`를 두면 `bootRun`이 그 DB를 쓴다. 스키마 `nyangmeong_local`을 만들고 `db/` 기준 SQL 두 개와 `db/migration/`을 차례로 실행한 뒤 `./gradlew seedData -Ptarget=local`로 시드 회원 200명(정상 192·정지 3·탈퇴 5, 비밀번호 없는 SNS형 76)을 넣는다. 이 DB에서 검증 에이전트가 쓰기와 로그인 성공을 확인할 수 있다
+- 로컬 DB 확인 결과(사람, 2026-10-26): `tester@nyangmeong.dev`(비밀번호 `app.seed.password`)로 틀린 비밀번호 5번 → 5번째 429 `LOGIN_CAPTCHA_REQUIRED`, 코드 없이 429(횟수 그대로), 보안코드 이미지를 읽어 소문자로 입력 → 맞는 코드+틀린 비밀번호 400 `LOGIN_FAILED`(횟수 6), 같은 코드 재사용 `CAPTCHA_MISMATCH`, 맞는 코드+맞는 비밀번호 200·쿠키 2개·`/me` 200·실패 기록 삭제. `NCNM_STNG_CMPTN_YN='N'`·`LAST_LGN_DT=NULL`로 만든 회원은 첫 로그인 `ncnmReguide:true`, 두 번째 `false`. 정지 `user0074@nyangmeong.dev` 403 `MEMBER_INACTIVE`, 탈퇴 `user0100@nyangmeong.dev` 403 `MEMBER_WITHDRAWN`(틀린 비밀번호면 `LOGIN_FAILED`), SNS 전용 `user0009@nyangmeong.dev`와 없는 아이디 400 `LOGIN_FAILED`, 대문자 이메일 200, refresh 200·옛 토큰 401, logout 뒤 `/me`·refresh 401
+- 검증이 끝나면 `application-local.properties`를 지우거나 이름을 바꿔 공용 DB로 되돌린다(이 파일이 있으면 모든 `bootRun`이 로컬 DB를 쓴다). 공용 DB의 `LGN_ATMPT_LMT` 테스트 행(번호 7, 출처 불명)은 지워도 되는지 팀에 확인한다
 
 - 프론트에 알린다(로그인 연결 때): 로그인 실패는 4xx 오류 응답이고 `data`에 `scrtyCdRqtYn`·`cntnuCertFailNmtm`이 온다. 코드는 `LOGIN_FAILED`·`LOGIN_CAPTCHA_REQUIRED`·`CAPTCHA_MISMATCH`·`MEMBER_WITHDRAWN`·`MEMBER_INACTIVE`. 로그인 요청에는 `skipAuthRedirect`를 붙여야 정지 회원 안내(`MEMBER_INACTIVE`)가 랜딩 이동에 묻히지 않는다. 보안코드는 `POST /auth/captchas`의 `captchaImg`(PNG data URI)
 - 디스코드 공유 `application.properties`의 `app.security.permit-all-paths`에 `/api/auth/login-attempt-limits,/api/auth/captchas`를 더하고 `app.front-base-url`·`app.seed.password`가 빠진 사람이 없는지 공지(사람)
