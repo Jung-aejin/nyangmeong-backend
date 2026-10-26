@@ -1,7 +1,7 @@
 # SJM 핸드오프
 
 ## 지금 하는 것
-SCR-MYP-003 반려동물 등록/수정 — 구현 중 (승인 2026-10-26 16:03, 시작 2026-10-26 14:48)
+SCR-MYP-003 반려동물 등록/수정 — 끝 (승인 2026-10-26 16:03, 시작 2026-10-26 14:48). 검증 1회차 통과, 사람 확인 완료
 - 기준: 마이페이지_기능명세서_v0.4_20261025, 마이페이지_화면설계서_v0.6_20261025 (DMS)
 - 결정1 경로: 기존 컨트롤러와 같이 `/api` 앞에 붙임. `GET /api/pets/{petSn}`, `POST /api/pets`, `PATCH /api/pets/{petSn}`, `POST /api/pets/{petSn}/representative`
 - 결정2 체중 잠금(docs/api/issues.md 마이페이지 2번): DB 컬럼을 추가하지 않는다. 체중 기록과 기록일시는 `DAILY_HLTH_RCD`(지표 `HLTC0014`, `RCD_DT`)에 이미 있고, 프론트가 `GET /pets/{petSn}/daily-health-records?dailyRcdIdctCd=HLTC0014&size=1`(JAJ)로 받아 체중 칸 잠금과 최근 기록값·기록일 표시를 한다. 서버는 `PATCH`의 `petBdwg`를 막지 않는다(화면에서만 잠금). 같은 정보를 PET에 두 벌 두지 않아 동기화가 필요 없다. 구현 전에 docs/api/pet.md `PetResponse`에서 `bdwgEditableYn`·`latestBdwgRcdDt`를 빼고, issues.md 2번에 이 결정을 적는다
@@ -27,4 +27,6 @@ SCR-MYP-003 반려동물 등록/수정 — 구현 중 (승인 2026-10-26 16:03, 
 - 새 의존성: 없음
 
 ## 다음에 할 것
+- PR 병합 직후 공용 DB에 `db/migration/20261026_01_update_petg03_colors.sql` 실행, PR에 완료 댓글. PR 본문에 "DB 변경 있음"과 파일 이름. 실행 뒤 `GET /api/common-codes?prntComCd=PETG03`에서 블랙탄·PETC0028~0034·직접 입력 맨 끝 확인
+- 프론트: 체중 잠금은 `GET /pets/{petSn}/daily-health-records?dailyRcdIdctCd=HLTC0014&size=1`(JAJ)로 판단, 기본 선택 동물은 `rprsPetYn`, 털색 드롭다운 설명
 - LJS의 `CaregiverPetFake`·`CaregiverFake`를 `PetService.searchMyPets`로 바꾸는 연결은 LJS의 "연결 남음"
