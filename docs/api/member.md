@@ -17,7 +17,7 @@
 | GET | /terms | 현재 사용 중인 약관 목록(필수 여부·버전) | ACC-001-12·44 | YAY | - | List<TermsSummary> |
 | GET | /terms/{trmsSn} | 약관 전문 조회 | ACC-001-13 | YAY | - | TermsResponse |
 | POST | /auth/captchas | 보안코드(캡챠) 발급·새로고침, 이전 코드 무효화 | ACC-002-18·19 | YAY | CaptchaCreateRequest | CaptchaResponse |
-| POST | /auth/login | 이메일 로그인(캡챠·ID/PW 검증, 실패 누적, 첫 로그인 닉네임 재안내 여부 반환) | ACC-002-05·16·20, ACC-001-22 | YAY | LoginRequest | LoginResponse |
+| POST | /auth/login | 이메일 로그인(캡챠·ID/PW 검증, 실패 누적, 첫 로그인 닉네임 재안내 여부 반환). 실패는 4xx 오류 응답이고 `data`에 `LoginAttemptLimitResponse`(실패 횟수·보안코드 요구)가 실린다. 코드는 LOGIN_FAILED(400, 없는 아이디·SNS 전용도 같음), LOGIN_CAPTCHA_REQUIRED(429, 보안코드 없음·5회째 실패), CAPTCHA_MISMATCH(400), MEMBER_WITHDRAWN(403, 비밀번호가 맞은 탈퇴 회원), MEMBER_INACTIVE(403, 정지) | ACC-002-05·16·20, ACC-001-22 | YAY | LoginRequest | LoginResponse |
 | POST | /auth/logout | 로그아웃(Refresh 토큰 폐기) | COM-005-07·08, AIM-011-17 (기능 분배 3.1절 28번) | YAY | - | - |
 | POST | /auth/refresh | Access 토큰 재발급. 토큰은 httpOnly 쿠키로만 주고 응답 `data`는 없다(`docs/convention/api.md`). 근거는 로그인 유지 기능(issues 6) | (명세 기능 ID 없음) | YAY | - | - |
 | POST | /auth/sns-login | 네이버·카카오·구글 인가 결과 처리: 기존 회원 로그인 / 신규 가입 확인 / 이메일 중복 / 30일 복구 분기 | ACC-002-09~11, ACC-001-22·31·38·40 | YAY | SnsLoginRequest | SnsLoginResponse |
@@ -40,13 +40,13 @@
 쓰는 API: POST /auth/captchas
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| acntEml | String | Y | 이메일 형식. 이 아이디의 보안코드를 새로 발급하고 이전 코드는 무효화한다. 가입 여부와 무관하게 같은 처리 | LGN_ATMPT_LMT.LGN_ID_HMAC (HMAC 전 원문), ACC-002-19 |
+| acntEml | String | Y | 이메일 형식. 이 아이디의 보안코드를 새로 발급하고 이전 코드는 무효화한다. 가입 여부와 무관하게 같은 처리. 보안코드를 요구하는 상태(5회 실패)가 아닌 아이디는 CAPTCHA_NOT_REQUIRED(400)로 거절한다 | LGN_ATMPT_LMT.LGN_ID_HMAC (HMAC 전 원문), ACC-002-19 |
 
 ### CaptchaResponse
 쓰는 API: POST /auth/captchas
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| captchaImg | String | Y | 영문 대문자·숫자 각 1개 이상, 총 6글자를 그린 이미지. 전달 형식(Base64 data URI 가정) 미정. 코드 원문은 주지 않는다 | ACC-002-18 |
+| captchaImg | String | Y | 영문 대문자·숫자 각 1개 이상, 총 6글자를 그린 이미지. PNG를 Base64 data URI(`data:image/png;base64,...`)로 준다. 코드 원문은 주지 않는다 | ACC-002-18 |
 
 ### DashboardWidgetSaveItem
 쓰는 API: PUT /members/me/dashboard-widgets (DashboardWidgetSaveRequest.widgets의 요소. 입력 목록 밖의 중첩 record, issues 2)

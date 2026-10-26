@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nyangmeong.auth.mapper.LoginAttemptMapper">
+
+    <resultMap id="loginAttemptResultMap" type="com.nyangmeong.auth.domain.LoginAttempt">
+        <id     column="LGN_ATMPT_LMT_SN"     property="lgnAtmptLmtSn" />
+        <result column="LGN_ID_HMAC"          property="lgnIdHmac" />
+        <result column="CNTNU_CERT_FAIL_NMTM" property="cntnuCertFailNmtm" />
+        <result column="SCRTY_CD_HASH"        property="scrtyCdHash" />
+        <result column="SCRTY_CD_RQT_YN"      property="scrtyCdRqtYn" />
+        <result column="REG_DT"               property="regDt" />
+        <result column="MDFCN_DT"             property="mdfcnDt" />
+    </resultMap>
+
+    <!-- LGN_ATMPT_LMT 은 DEL_YN 없음 -->
+    <select id="selectByIdHmac" parameterType="string" resultMap="loginAttemptResultMap">
+        SELECT LGN_ATMPT_LMT_SN
+             , LGN_ID_HMAC
+             , CNTNU_CERT_FAIL_NMTM
+             , SCRTY_CD_HASH
+             , SCRTY_CD_RQT_YN
+             , REG_DT
+             , MDFCN_DT
+          FROM LGN_ATMPT_LMT
+         WHERE LGN_ID_HMAC = #{lgnIdHmac}
+    </select>
+
+    <!-- UK_LGN_ATMPT_LMT_1 로 동시 요청도 한 행. UPDATE 절은 왼쪽부터 계산하므로 증가한 횟수로 비교한다 -->
+    <insert id="upsertFailure">
+        INSERT INTO LGN_ATMPT_LMT
+             ( LGN_ID_HMAC
+             , CNTNU_CERT_FAIL_NMTM
+             , SCRTY_CD_HASH
+             , SCRTY_CD_RQT_YN )
+        VALUES
+             ( #{lgnIdHmac}
+             , 1
+             , NULL
+             , IF(1 &gt;= #{failLimit}, 'Y', 'N') )
+        ON DUPLICATE KEY UPDATE
+               CNTNU_CERT_FAIL_NMTM = CNTNU_CERT_FAIL_NMTM + 1
+             , SCRTY_CD_RQT_YN = IF(CNTNU_CERT_FAIL_NMTM &gt;= #{failLimit}, 'Y', SCRTY_CD_RQT_YN)
+             , SCRTY_CD_HASH = NULL
+             , MDFCN_DT = NOW()
+    </insert>
+
+    <update id="updateCaptchaHash">
+        UPDATE LGN_ATMPT_LMT
+           SET SCRTY_CD_HASH = #{scrtyCdHash}
+             , MDFCN_DT = NOW()
+         WHERE LGN_ID_HMAC = #{lgnIdHmac}
+           AND SCRTY_CD_RQT_YN = 'Y'
+    </update>
+
+    <update id="clearCaptchaHash" parameterType="string">
+        UPDATE LGN_ATMPT_LMT
+           SET SCRTY_CD_HASH = NULL
+             , MDFCN_DT = NOW()
+         WHERE LGN_ID_HMAC = #{lgnIdHmac}
+    </update>
+
+    <delete id="delete" parameterType="string">
+        DELETE FROM LGN_ATMPT_LMT
+         WHERE LGN_ID_HMAC = #{lgnIdHmac}
+    </delete>
+</mapper>
