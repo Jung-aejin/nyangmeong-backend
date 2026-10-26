@@ -34,6 +34,8 @@ public enum ErrorCode {
     ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 요청입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."),
     EXTERNAL_API_ERROR(HttpStatus.BAD_GATEWAY, "외부 서비스 호출에 실패했습니다. 잠시 후 다시 시도해 주세요."),
+    /** 서버 간 내부 호출(/internal/**)의 X-Internal-Key 불일치. 사용자 인증 실패(UNAUTHORIZED)와 구분 */
+    INVALID_INTERNAL_KEY(HttpStatus.UNAUTHORIZED, "내부 호출 인증에 실패했습니다."),
 
     /** member */
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "일치하는 회원정보를 찾을 수 없습니다."),

@@ -4,13 +4,17 @@
 
 없음
 
-이전: SCR-AIM-008 영수증 저장 (3차: 가계부 사용처) — 끝 (2026-10-25, `/start`·`/impl` 검증 1회차 통과, 사람 확인). EXPND에 사용처 `EXPND_PLCUS_NM` varchar(80) NULL(행안부 표준단어 사용처=PLCUS, `db/migration/20261025_01_add_expnd_plcus_nm.sql`). 영수증 저장은 사용처 = 요청 `expndPlcusNm`(공통 1칸, 공백이면 null), 세부사항 = null. 중복 확인 `DuplicateExpense`에 `expndPlcusNm`. `docs/api/receipt.md`·`expense.md`(지출 DTO 4개 행만, 구현은 SJM). 테스트 기대값 변경(사람 승인)은 별도 커밋
+이전: 서버 간 내부 인증 1단계 — 끝 (2026-10-26, `/start`·`/impl` 검증 1회차 통과, 사람 확인). 배경: AI 기능은 Python 서버로 분리, DB는 Java만, 채팅은 React → Python `/ai/`, Python 미들웨어가 모든 `/ai/` 요청에서 `GET /internal/auth/check`로 인증(Python은 JWT 검증 안 함). `/internal/**`는 `InternalKeyFilter`(헤더 `X-Internal-Key`, 설정 `app.internal.inbound-key`, 비면 전부 거부, 불일치 401 `INVALID_INTERNAL_KEY`)를 JWT 필터 앞에서 검사하고 사용자 인증도 필요. 응답 `InternalAuthCheckResponse(mbrSn, mbrAuthrtCd)`. `app.internal.outbound-key`(Spring→Python)는 읽기만. `docs/convention/api.md` `/internal` 예외, `docs/api/member.md` 행·DTO
 
 ## 다음에 할 것
 
+- 팀에 알린다(2026-10-26): 공용 DB(`pawever`) 시드를 `seedClean`→`seedData`로 다시 넣었다(팀원 테스트 데이터 삭제됨, 원인 판단 착오로 불필요했던 작업). 예전 시드는 지금 디스코드 키와 다른 AES 키로 암호화돼 있었다. 각 PC는 `./gradlew seedFiles`를 다시. 로컬 서버는 `spring.profiles.default=local`이라 로컬 DB를 쓴다(로컬 데이터가 예전 키면 `seedData -Ptarget=local -Preset`)
+- 디스코드 공유 `application.properties`에 `app.seed.password`(새 값)와 `app.internal.inbound-key`·`app.internal.outbound-key`(방향별 32바이트 난수, Python 쪽 `BACKEND_INTERNAL_KEY`·`INTERNAL_API_KEY`와 짝) 추가(사람)
+- Python 세션(nyangmeong-ai-8a)에 `/internal/auth/check` 구현 완료 알림(응답 `mbrSn`·`mbrAuthrtCd`, 키 불일치 401 `INVALID_INTERNAL_KEY`는 브라우저에 502 `EXTERNAL_API_ERROR`로 바꿔 보낸다)
+- Spring→Python HTTP 클라이언트(OCR·캐릭터 실제 구현)에 `X-Internal-Key`로 `app.internal.outbound-key`를 붙인다
+- 영수증 인식 결과 조회(2026-10-26 승인, 프론트 요청): `GET /api/receipts/{recptSn}` → `ReceiptResponse`. 저장된 `RECPT.OCR_RSPNS_JSON`을 `ReceiptOcrConverter.toResponse`로 다시 가공(오늘 날짜·현재 공동양육 반려동물 기준이라 분석 직후와 달라질 수 있음을 허용, 테스트하며 조정). 남의·없는 영수증은 `RECEIPT_NOT_FOUND`. 대화창에서 분석한 영수증을 본창 건강 일지 "인식 결과 확인" 모달에서 다시 연다. `docs/api/receipt.md`에 행 추가
 - PR 병합 뒤 공용 DB에 `db/migration/20261025_01_add_expnd_plcus_nm.sql` 실행하고 PR에 완료 댓글(사람). 그 뒤 시드 `ExpenseSeeder`의 OCR 지출을 사용처 = 병원명, 세부사항 = null로 맞춘다
 - 요청자에게 알린다: AI매니저 FN-AIM-009-10·21과 건강기록 FN-HLT-002-41 명세서에 아직 "내용 = 병원명". 사용처로 고치고 SCR-HLT-002에 사용처 칸(선택, 80자, 병원명 기본값)을 넣는다
-- 디스코드 공유 `application.properties`에 `app.seed.password` 추가, 시드 공지(팀원 `./gradlew seedFiles` 한 번, 시드 계정, dev-token 로그인)를 보낸다(사람)
 - KSJ에게 확인: 실종 제보·펫돌봄 모집 글의 `PST.BBS_CD` 규칙이 없어 시드는 펫일상으로 넣었다. 정해지면 `CommunitySeeder`를 맞춘다
 - 로컬 테스트 DB `nyangmeong_seedtest`가 필요 없으면 `DROP DATABASE nyangmeong_seedtest`(사람)
 - 프론트엔드: `getMe` → `/auth/me` 변경(frontend 세션, 커밋 전)과 아래 프론트 변경을 커밋한다
@@ -45,7 +49,7 @@
 - 팀에 알린다: 개인 로컬 DB는 `application-local.properties`(git 제외)에 `spring.datasource.*` 세 줄. `nyangmeong_` 접두어 스키마에 `db/` 기준 SQL 두 개와 `db/migration/`을 차례로 실행해 만든다
 - YAY에게 알린다: 로그인·재발급·로그아웃은 `auth/controller/AuthController`에 `LoginSessionManager`의 `issue`·`rotate`·`revoke`로. 새 공개 경로는 `app.security.permit-all-paths`에. 로그인이 생기면 `DevTokenController` 삭제. 스타터 분석(캡챠 LGN_ATMPT_LMT, 회원 조회 ACNT_EML_HMAC, 소셜 SNS_ACNT_LINK)과 nct-backend OAuth2 핸들러·`CustomOAuth2UserService`(위치는 `docs/OPEN_ISSUES.md`)도 넘긴다
 - `global/validation`은 처음 필요한 YAY(닉네임·휴대전화·비밀번호 검증)가 요청하면 만든다
-- 디스코드 공유 `application.properties`: `app.front-base-url=http://localhost:5173` 추가, 팀 공용 `app.crypto.*`·`app.jwt.secret-base64` 키를 정해 넣고 `mybatis.configuration.map-underscore-to-camel-case`는 넣지 않는다. 키가 정해지면 로컬 DB 회원 1 이메일(`ljs_test@example.com`)도 다시 암호화한다
+- 디스코드 공유 `application.properties`: `app.front-base-url=http://localhost:5173` 추가, 팀 공용 `app.crypto.*`·`app.jwt.secret-base64` 키를 정해 넣고 `mybatis.configuration.map-underscore-to-camel-case`는 넣지 않는다
 - 팀 안건: application.properties를 일반 설정(커밋) + git 제외 `application-secret.properties`로 나눌지 `docs/OPEN_ISSUES.md`에 올린다
 - 로컬 DB 정리(`nyangmeong_local`): RECPT 1~3·그 RECPT_STTS_HSTRY·ATCH_FILE, RGTR_ID `LJS`인 PET 4~6·BRUP_REL, PIXEL_CHAR 2와 작업·사진·이력, ITEM 1~3·6·7과 HLD_ITEM, ATCH_FILE 1~5, `uploads/` 아래 파일, RFRSH_TKN 회원 1 테스트 행(`REG_DT >= '2026-10-22'`). 확인용 회원 1·SYS_STNG는 둔다
 - 프론트엔드 저장소 변경(`src/api/axios.js` baseURL `/api`, `docs/convention/{api,pages}.md`, `scripts/spec-extract.sh`, start 스킬)을 따로 커밋한다

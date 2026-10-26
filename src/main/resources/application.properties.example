@@ -28,6 +28,10 @@ app.cookie.secure=false
 app.cors.allowed-origins=http://localhost:5173
 # 로그인 없이 여는 경로(쉼표 구분). 목록 밖은 전부 인증이 필요하다. 생략하면 아래와 같은 기본값
 app.security.permit-all-paths=/api/auth/dev-tokens,/api/auth/login,/api/auth/refresh,/api/auth/logout,/swagger-ui/**,/swagger-ui.html,/v3/api-docs/**
+# 서버 간 내부 호출 키(비밀값, 디스코드로 받는다). 헤더 X-Internal-Key, 방향마다 다른 32바이트 난수(openssl rand -base64 32)
+# inbound: Python -> Spring /internal/** 검증, 비우면 /internal/** 전부 거부. outbound: Spring -> Python 호출에 붙인다
+app.internal.inbound-key=
+app.internal.outbound-key=
 
 # 파일 저장(SCR-MYP-010). 저장 루트 폴더(git 제외 uploads 권장, 개인 PC 경로는 커밋하지 않는다). 업로드 상한은 SYS_STNG.FILE_MAX_SZ(10MB)와 맞춘다
 app.file.root-dir=uploads

@@ -23,3 +23,5 @@ app:
     hmac-key-base64: dGVzdC1obWFjLWtleS0zMi1ieXRlcy1sb25nLTAwMDA=
   jwt:
     secret-base64: dGVzdC1qd3Qtc2VjcmV0LTMyLWJ5dGVzLWxvbmctMDAwMA==
+  internal:
+    inbound-key: test-internal-inbound-key

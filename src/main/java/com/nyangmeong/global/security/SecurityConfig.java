@@ -13,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.nyangmeong.global.security.domain.MemberAuthority;
+import com.nyangmeong.global.security.filter.InternalKeyFilter;
 import com.nyangmeong.global.security.filter.JwtAuthenticationFilter;
 import com.nyangmeong.global.security.filter.RequestedWithFilter;
 import com.nyangmeong.global.security.handler.ErrorResponseWriter;
@@ -29,11 +30,12 @@ import lombok.RequiredArgsConstructor;
  * - STATELESS : JWT 쿠키 기반, 세션 미사용
  * - 열린 경로 : app.security.permit-all-paths (SecurityPathProperties)
  * - /api/admin/** 은 ROLE_ADMIN, 목록 밖은 전부 인증 필요
+ * - /internal/** 은 X-Internal-Key 를 먼저 검사(InternalKeyProperties), 그 뒤 사용자 인증도 필요
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties(SecurityPathProperties.class)
+@EnableConfigurationProperties({SecurityPathProperties.class, InternalKeyProperties.class})
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -44,9 +46,11 @@ public class SecurityConfig {
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
     private final SecurityPathProperties securityPathProperties;
+    private final InternalKeyProperties internalKeyProperties;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        InternalKeyFilter internalKeyFilter = new InternalKeyFilter(internalKeyProperties, errorResponseWriter);
         RequestedWithFilter requestedWithFilter = new RequestedWithFilter(errorResponseWriter);
         JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtTokenProvider,
                 tokenCookies, authMemberMapper, errorResponseWriter);
@@ -67,7 +71,9 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
-                .addFilterBefore(requestedWithFilter, UsernamePasswordAuthenticationFilter.class)
+                /** 키 없는 내부 호출은 회원 조회 전에 거절 */
+                .addFilterBefore(internalKeyFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(requestedWithFilter, InternalKeyFilter.class)
                 .addFilterAfter(jwtAuthenticationFilter, RequestedWithFilter.class)
                 .build();
     }
