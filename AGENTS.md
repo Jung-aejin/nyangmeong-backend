@@ -33,7 +33,7 @@ com.nyangmeong
 │  ├─ notification/  mail/  code/  setting/
 │  └─ external/  batch/  config/  log/
 ├─ member/  auth/  pet/  health/  community/  place/
-├─ support/  notification/  expense/
+├─ support/  notification/  expense/  ai/
 │                          업무 기능. 도메인 1개 = 패키지 1개
 ├─ admin/                  여러 도메인을 합치는 관리자 조회만
 └─ scheduler/              여러 도메인에 걸친 배치만
@@ -69,7 +69,7 @@ db/migration/              기존 DB 위에 차례로 실행하는 변경 SQL. �
 | 0 | `member` | 없음 |
 | 1 | `pet`, `auth` | 0층 |
 | 2 | `health`, `place`, `notification` | 0~1층 |
-| 3 | `expense`, `community`, `support` | 0~2층 |
+| 3 | `expense`, `community`, `support`, `ai` | 0~2층 |
 | 4 | `admin`, `scheduler` | 전부 |
 
 - 자기보다 낮은 층의 service만 부른다. 같은 층끼리는 부르지 않는다. 이 규칙이면 두 도메인이 서로를 부르는 순환이 생기지 않는다.
