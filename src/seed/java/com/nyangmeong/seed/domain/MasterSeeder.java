@@ -79,17 +79,29 @@ public class MasterSeeder implements Seeder {
     private record Mission(String pool, String name, int point, int times, String path) {
     }
 
+    /** 케어미션 마스터 (FN-MYP-020-03·05, 케어리스트는 FN-HLT-003-12 기본 항목, db/migration/20261027_02와 같음) */
     private static final List<Mission> MISSIONS = List.of(
-            new Mission("일상케어", "체중 기록하기", 20, 1, "/health"),
+            new Mission("일상케어", "화장실 청소하기", 10, 1, "/health/calendar"),
+            new Mission("일상케어", "양치하기", 5, 1, "/health/calendar"),
+            new Mission("일상케어", "빗질하기", 5, 1, "/health/calendar"),
+            new Mission("일상케어", "발 관리하기", 3, 1, "/health/calendar"),
+            new Mission("일상케어", "놀이하기", 5, 1, "/health/calendar"),
+            new Mission("일상케어", "체중 기록하기", 10, 1, "/health"),
             new Mission("일상케어", "식사량 기록하기", 10, 1, "/health"),
             new Mission("일상케어", "음수량 기록하기", 10, 1, "/health"),
-            new Mission("일상케어", "배변 상태 기록하기", 10, 1, "/health"),
-            new Mission("일상케어", "케어리스트 완료하기", 20, 1, "/health/calendar"),
-            new Mission("활동기반", "산책 기록하기", 20, 1, "/health"),
-            new Mission("활동기반", "커뮤니티 글 쓰기", 30, 1, "/community"),
-            new Mission("활동기반", "댓글 3개 남기기", 15, 3, "/community"),
-            new Mission("활동기반", "가계부 기록하기", 15, 1, "/mypage/expenses"),
-            new Mission("활동기반", "일정 등록하기", 15, 1, "/health/calendar"));
+            new Mission("일상케어", "배변 기록하기", 5, 1, "/health"),
+            new Mission("활동기반", "가계부 지출 등록하기", 5, 1, "/mypage/expenses"),
+            new Mission("활동기반", "케어 캘린더 일정 등록하기", 5, 1, "/health/calendar"),
+            new Mission("활동기반", "귀 청소하기", 10, 1, "/health/calendar"),
+            new Mission("활동기반", "발톱 관리하기", 15, 1, "/health/calendar"),
+            new Mission("활동기반", "목욕하기", 20, 1, "/health/calendar"),
+            new Mission("활동기반", "눈 주변 관리하기", 5, 1, "/health/calendar"),
+            new Mission("활동기반", "발바닥 털 관리하기", 10, 1, "/health/calendar"),
+            new Mission("활동기반", "구강 상태 확인하기", 5, 1, "/health/calendar"),
+            new Mission("활동기반", "산책 기록하기", 10, 1, "/health"),
+            new Mission("활동기반", "관찰 기록 추가하기", 10, 1, "/health"),
+            new Mission("활동기반", "펫이야기 글 등록하기", 20, 1, "/community"),
+            new Mission("활동기반", "펫이야기 댓글 작성하기", 5, 1, "/community"));
 
     private static final List<List<String>> ITEMS = List.of(
             List.of("머리", "빨간 리본", "밀짚모자", "작은 왕관", "털모자"),

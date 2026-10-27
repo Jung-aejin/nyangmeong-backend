@@ -102,7 +102,7 @@
 | scorPnt | Integer | Y | 배점 | DAY_MSN.SCOR_PNT, MYP-020-04·05 |
 | prgrsNmtm | Integer | Y | 진행 횟수 | DAY_MSN.PRGRS_NMTM, MYP-020-04 |
 | achvCrtrNmtm | Integer | Y | 달성 기준 횟수(진행률 분모) | CARE_MSN.ACHV_CRTR_NMTM, MYP-020-05 |
-| givePnt | Integer | N | 지급 포인트. 지급 전이면 null(issues 13번) | DAY_MSN.GIVE_PNT, MYP-020-04·05 |
+| givePnt | Integer | N | 지급 포인트. 완료도 자정 정산도 안 됐으면 null, 그 밖에는 값(0 포함) | DAY_MSN.GIVE_PNT, MYP-020-04·05 |
 | cmptnYn | boolean | Y | 완료/미완료 | DAY_MSN.CMPTN_YN, MYP-020-04 |
 
 ### EquippedItemSaveRequest
@@ -282,7 +282,9 @@
 | pntGnlgrSn | Long | Y | | PNT_GNLGR.PNT_GNLGR_SN |
 | pntDlngTypeCd | String | Y | 거래 유형(MYPG03). 적립·사용 구분 | PNT_GNLGR.PNT_DLNG_TYPE_CD, MYP-020-02 |
 | pntDlngTypeCdNm | String | Y | 내역 표시 이름(예: "검진기록 등록") | COM_CD.COM_CD_NM, MYP-020-08 |
-| dlngPnt | Integer | Y | 거래 포인트 | PNT_GNLGR.DLNG_PNT, MYP-020-02 |
+| dlngPnt | Integer | Y | 거래 포인트. 적립은 양수, 사용은 음수 | PNT_GNLGR.DLNG_PNT, MYP-020-02 |
+| memoCn | String | N | 내용 보조 문구. 미션은 "{반려동물명} · {미션명}", 검진은 반려동물명, 아이템 구매는 구매 문구 | PNT_GNLGR.MEMO_CN, MYP-020-02 |
+| regDt | LocalDateTime | Y | 거래 일시(행의 MM-DD) | PNT_GNLGR.REG_DT, MYP-020-02 |
 
 ### PointResponse
 쓰는 API: GET /members/me/points
