@@ -52,6 +52,7 @@ SCR-MYP-020 포인트 관리/케어미션 — 기획 (시작 2026-10-26 16:58)
 - 새 의존성: 없음
 
 ## 다음에 할 것
+- 건강기록 기본 항목 "발 관리"의 이름을 JAJ와 정하기(후보: 발바닥 확인하기). 발톱 관리·발바닥 털 관리와 겹쳐 보이고 뜻이 넓다. 바뀌면 마이그레이션으로 `CARE_MSN` 미션 이름도 맞춘다
 - PR 병합 직후 공용 DB에 `db/migration/20261026_01_update_petg03_colors.sql` 실행, PR에 완료 댓글. PR 본문에 "DB 변경 있음"과 파일 이름. 실행 뒤 `GET /api/common-codes?prntComCd=PETG03`에서 블랙탄·PETC0028~0034·직접 입력 맨 끝 확인
 - 프론트: 체중 잠금은 `GET /pets/{petSn}/daily-health-records?dailyRcdIdctCd=HLTC0014&size=1`(JAJ)로 판단, 기본 선택 동물은 `rprsPetYn`, 털색 드롭다운 설명
 - LJS의 `CaregiverPetFake`·`CaregiverFake`를 `PetService.searchMyPets`로 바꾸는 연결은 LJS의 "연결 남음"
