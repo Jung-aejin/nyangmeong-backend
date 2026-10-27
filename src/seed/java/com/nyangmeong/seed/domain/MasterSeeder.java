@@ -143,12 +143,12 @@ public class MasterSeeder implements Seeder {
 
     private void terms(Seed s) {
         String[][] terms = { { "SERVICE", "서비스 이용약관", "Y" }, { "PRIVACY", "개인정보 수집·이용 동의", "Y" },
-                { "LOCATION", "위치기반 서비스 이용약관", "Y" }, { "MARKETING", "마케팅 정보 수신 동의", "N" } };
+                { "AGE_14", "만 14세 이상입니다", "Y" }, { "MARKETING", "마케팅 정보 수신 동의", "N" } };
         for (int i = 0; i < terms.length; i++) {
             String[] t = terms[i];
             int seq = (i + 1) * 10;
             s.store().add("TRMS", r -> r.set("TRMS_FIX_IDNTF_KEY", t[0]).set("TRMS_VER_ID", "v1.0").set("TRMS_TTL", t[1])
-                    .set("TRMS_CN", t[1] + " 본문입니다. 시드 데이터용 문구로 실제 약관이 아닙니다.").yn("ESNTL_AGRE_YN", "Y".equals(t[2]))
+                    .set("TRMS_CN", "AGE_14".equals(t[0]) ? t[1] : t[1] + " 본문입니다. 시드 데이터용 문구로 실제 약관이 아닙니다.").yn("ESNTL_AGRE_YN", "Y".equals(t[2]))
                     .set("SORT_SEQ", seq).set("REG_DT", s.now().minusDays(200)));
         }
     }
