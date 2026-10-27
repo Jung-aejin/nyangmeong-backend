@@ -94,7 +94,7 @@ REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽�
 | splmntDmndRsn | String | N | 보완 요청 사유 | PRTC_CMPTN_DMND_CYCL.SPLMNT_DMND_RSN, CMU-005-09 |
 | photos | List<ImageItem> | Y | 없으면 빈 목록 | PRTC_CMPTN_PHOTO, CMU-005-09 |
 
-#### ImageItem (응답 record, 쓰는 DTO: CareCompletionRequestResponse, CareRecruitmentResponse, ChatMessageResponse, ChatMessageSummary, LostReportResponse, PostResponse, InquiryResponse)
+#### ImageItem (응답 record. 펫이야기는 접미어 규칙에 맞춰 `PostImageSummary`로 쓴다. 쓰는 DTO: CareCompletionRequestResponse, CareRecruitmentResponse, ChatMessageResponse, ChatMessageSummary, LostReportResponse, PostResponse, InquiryResponse)
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | atchFileSn | Long | Y | 이미지 조회 경로는 첨부파일 API로 만든다 | PST_IMG·PRTC_CMPTN_PHOTO·CHAT_MSG_PHOTO·INQRY_ATCH_PHOTO의 ATCH_FILE_SN |
@@ -346,8 +346,8 @@ REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽�
 쓰는 API: POST /posts/{pstSn}/comments
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| cmntCn | String | Y | 최대 1000자 | CMNT.CMNT_CN, CMU-001-11, CMU-002-07 |
-| prntCmntSn | Long | N | 대댓글이면 부모 댓글. 부모는 최상위 댓글이어야 한다(1depth) | CMNT.PRNT_CMNT_SN, CMU-001-11 |
+| cmntCn | String | Y | 최대 500자, 공백만이면 400 | CMNT.CMNT_CN, CMU-001-11, CMU-002-07 |
+| prntCmntSn | Long | N | 답글이면 대상 댓글. 대댓글을 고르면 그 대댓글의 최상위 댓글에 붙는다(1depth 유지, 화면설계서 "원 댓글 스레드에 이어서"). 다른 글의 댓글이거나 삭제된 댓글이면 404 | CMNT.PRNT_CMNT_SN, CMU-001-11 |
 
 ### CommentResponse
 쓰는 API: POST /posts/{pstSn}/comments
@@ -359,6 +359,7 @@ REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽�
 | cmntCn | String | Y | | CMNT.CMNT_CN |
 | mbrSn | Long | Y | | CMNT.MBR_SN |
 | mbrNcnm | String | Y | | MBR.MBR_NCNM |
+| regDt | LocalDateTime | Y | 화면의 "1시간 전" 표시용 | CMNT.REG_DT, CMU-001-11 |
 
 ### CommentSummary
 쓰는 API: GET /posts/{pstSn}/comments
@@ -372,6 +373,7 @@ REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽�
 | mbrNcnm | String | N | 삭제된 댓글이면 null | MBR.MBR_NCNM |
 | sysAutoCrtYn | boolean | Y | 찾았어요 완료 안내 자동 댓글 | CMNT.SYS_AUTO_CRT_YN, CMU-002-09 |
 | owner | Boolean | Y | 내 댓글인지(삭제 버튼) | CMNT.MBR_SN, CMU-001-11 |
+| regDt | LocalDateTime | Y | 화면의 "1시간 전" 표시용 | CMNT.REG_DT, CMU-001-11 |
 
 ### CommunityAiCommentaryResponse
 쓰는 API: GET /community-ai-commentaries
@@ -397,8 +399,8 @@ REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽�
 | wtnsPlcLat | BigDecimal | Y | 지도 핀 좌표 | LOST_TPOF.WTNS_PLC_LAT, CMU-002-11 |
 | wtnsPlcLot | BigDecimal | Y | 지도 핀 좌표 | LOST_TPOF.WTNS_PLC_LOT, CMU-002-11 |
 | cnpl | String | Y | 전화번호. 형식은 명세 없음 | LOST_TPOF.CNPL_ENC, CMU-002-10 |
-| pstTtl | String | Y | 최대 200자(펫이야기와 동일) | PST.PST_TTL, CMU-002-10, CMU-001-14 |
-| pstCn | String | Y | 최대 4000자(펫이야기와 동일) | PST.PST_CN, CMU-002-10, CMU-001-14 |
+| pstTtl | String | Y | 최대 200자. 펫이야기는 50자로 바뀌었으니 SCR-CMU-002 기획에서 명세로 확정 | PST.PST_TTL, CMU-002-10, CMU-001-14 |
+| pstCn | String | Y | 최대 4000자. 펫이야기는 2000자로 바뀌었으니 SCR-CMU-002 기획에서 명세로 확정 | PST.PST_CN, CMU-002-10, CMU-001-14 |
 | atchFileSns | List<Long> | N | 최대 10장, 장당 10MB, 확장자 검증(펫이야기와 동일) | PST_IMG.ATCH_FILE_SN, CMU-002-10 |
 | prvcRlsAgreYn | Boolean | Y | 개인정보 수집·이용 및 게시글 공개 동의. true여야 등록 | LOST_TPOF.PRVC_RLS_AGRE_YN, CMU-002-10 |
 
@@ -481,9 +483,9 @@ REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽�
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | bbsCd | String | Y | 공통코드 CMUG01(정보·일상) | PST.BBS_CD, CMU-001-14 |
-| pstTtl | String | Y | 최대 200자 | PST.PST_TTL, CMU-001-14 |
-| pstCn | String | Y | 최대 4000자 | PST.PST_CN, CMU-001-14 |
-| atchFileSns | List<Long> | N | 최대 10장, 장당 10MB, 확장자 검증 | PST_IMG.ATCH_FILE_SN, CMU-001-14 |
+| pstTtl | String | Y | 최대 50자 | PST.PST_TTL, CMU-001-14 |
+| pstCn | String | Y | 최대 2000자 | PST.PST_CN, CMU-001-14 |
+| images | List<MultipartFile> | N | multipart/form-data. 최대 10장, 장당 10MB, jpg·jpeg·png·webp. 첫 장이 대표 사진. 공용 업로드 API가 없어 파일을 같이 받는다 | PST_IMG.ATCH_FILE_SN, CMU-001-14 |
 
 ### PostLikeResponse
 쓰는 API: POST /posts/{pstSn}/likes
@@ -518,18 +520,22 @@ REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽�
 | bbsCd | String | Y | 공통코드 CMUG01 | PST.BBS_CD, CMU-001-02 |
 | pstTtl | String | Y | 1행 말줄임 | PST.PST_TTL, CMU-001-01 |
 | pstCn | String | Y | 2행 말줄임 | PST.PST_CN, CMU-001-01 |
+| mbrNcnm | String | Y | 작성자 | MBR.MBR_NCNM, CMU-001-01 |
+| regDt | LocalDateTime | Y | 작성일("1시간 전" 표시용) | 공통 감사 컬럼 REG_DT, CMU-001-01 |
+| thumbAtchFileSn | Long | N | 대표 사진(첫 장). 사진이 없으면 null | PST_IMG.ATCH_FILE_SN, CMU-001-01 |
 | rcmdtnCnt | Integer | Y | | PST.RCMDTN_CNT, CMU-001-03 |
 | cmntCnt | Integer | Y | 삭제 댓글 제외 | CMNT.DEL_YN, CMU-001-11 |
-| popular | Boolean | Y | 인기글 배지(최근 7일, 좋아요 상위 5개). 인기순 정렬이면 false | CMU-001-03·04 |
+| popular | Boolean | Y | 인기글 배지(최근 7일, 좋아요 1개 이상 상위 5개). 인기순 정렬이면 false | CMU-001-03·04 |
 
 ### PostUpdateRequest
 쓰는 API: PATCH /posts/{pstSn}
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | bbsCd | String | N | 공통코드 CMUG01 | PST.BBS_CD, CMU-001-15 |
-| pstTtl | String | N | 최대 200자 | PST.PST_TTL, CMU-001-14·15 |
-| pstCn | String | N | 최대 4000자 | PST.PST_CN, CMU-001-14·15 |
-| atchFileSns | List<Long> | N | 최대 10장, 장당 10MB. 목록 교체 방식(issues 2) | PST_IMG.ATCH_FILE_SN, CMU-001-14·15 |
+| pstTtl | String | N | 최대 50자, 공백만이면 400 | PST.PST_TTL, CMU-001-14·15 |
+| pstCn | String | N | 최대 2000자, 공백만이면 400 | PST.PST_CN, CMU-001-14·15 |
+| keepAtchFileSns | List<Long> | N | 남길 기존 사진. 보내면 목록에 없는 기존 사진은 삭제(DEL_YN='Y'), 안 보내면 모두 유지 | PST_IMG.ATCH_FILE_SN, CMU-001-15 |
+| images | List<MultipartFile> | N | multipart/form-data. 새로 추가할 사진. 남은 사진과 합쳐 최대 10장 | PST_IMG.ATCH_FILE_SN, CMU-001-15 |
 
 ### ReportCreateRequest
 쓰는 API: POST /reports
@@ -538,7 +544,7 @@ REST는 보내기·과거 조회·읽음 처리만 맡고, 새 메시지와 읽�
 | pstSn | Long | N | `pstSn`·`cmntSn` 중 하나만 필수 | DCLR.PST_SN, CMU-001-13 |
 | cmntSn | Long | N | 같은 회원의 같은 댓글 중복 신고 불가 | DCLR.CMNT_SN, CMU-001-13 |
 | dclrRsnCd | String | Y | 공통코드 CMUG04(스팸·광고성/욕설·비방/음란물·유해콘텐츠/개인정보 노출/사기·허위 정보/기타) | DCLR.DCLR_RSN_CD, CMU-001-13 |
-| dclrDtlCn | String | N | 최대 500자 | DCLR.DCLR_DTL_CN, CMU-001-13 |
+| dclrDtlCn | String | N | 최대 500자. 사유가 기타(CMUC0014)면 필수 | DCLR.DCLR_DTL_CN, CMU-001-13 |
 
 ### ReportResponse
 쓰는 API: POST /reports
