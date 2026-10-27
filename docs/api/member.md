@@ -22,17 +22,17 @@
 | POST | /auth/logout | 로그아웃(Refresh 토큰 폐기) | COM-005-07·08, AIM-011-17 (기능 분배 3.1절 28번) | YAY | - | - |
 | POST | /auth/refresh | Access 토큰 재발급. 토큰은 httpOnly 쿠키로만 주고 응답 `data`는 없다(`docs/convention/api.md`). 근거는 로그인 유지 기능(issues 6) | (명세 기능 ID 없음) | YAY | - | - |
 | POST | /auth/sns-login | 네이버·카카오·구글 인가 결과 처리: 기존 회원 로그인 / 신규 가입 확인 / 이메일 중복 / 30일 복구 분기 | ACC-002-09~11, ACC-001-22·31·38·40 | YAY | SnsLoginRequest | SnsLoginResponse |
-| POST | /email-certifications | 이메일 인증번호 발송·재전송(목적: 가입·비밀번호 찾기·복구). 가입 목적은 정상 회원 이메일 중복이면 거절 | ACC-001-03·04·38·41, ACC-011-03·07 | YAY | EmailCertificationCreateRequest | EmailCertificationResponse |
+| POST | /email-certifications | 이메일 인증번호 발송·재전송(목적: 가입·비밀번호 찾기·복구). 가입 목적은 정상 회원 이메일 중복이면 거절(409 EMAIL_ALREADY_REGISTERED, 탈퇴 보관 이메일은 409 MEMBER_RECOVERY_AVAILABLE). 재전송 간격·횟수에 걸리면 400 EMAIL_CERT_RESEND_NOT_YET이고 data의 `resendAvailableDt`가 재시도 가능 시각. 지금은 가입 목적(USRC0010)만 구현 | ACC-001-03·04·38·41, ACC-011-03·07 | YAY | EmailCertificationCreateRequest | EmailCertificationResponse |
 | POST | /email-certifications/{emlCertSn}/invalidate | 인증번호·재설정 권한·복구 확인 권한 무효화 | ACC-011-05, ACC-012-04, ACC-001-46 | YAY | - | - |
 | POST | /email-certifications/{emlCertSn}/password-reset | 본인확인 결과로 비밀번호 재설정, 대상 계정 기존 로그인 종료 | ACC-012-01~03 | YAY | EmailCertificationPasswordResetRequest | - |
 | POST | /email-certifications/{emlCertSn}/verify | 인증번호 확인. 목적별 결과(가입 진행 / 재설정 대상·SNS 전용·미가입·탈퇴 보관 분기 / 복구 확인 권한) 반환 | ACC-001-06·40·43, ACC-011-08~10 | YAY | EmailCertificationVerifyRequest | EmailCertificationResponse |
-| POST | /members | 회원가입(이메일·SNS 공통). 약관별 동의·번호 암호문/HMAC·기본 닉네임·최초 상태 이력·SNS 연결 저장, 서버 재검사 | ACC-001-09·10·12·14·22·24·27·29·32·38 | YAY | MemberCreateRequest | MemberResponse |
+| POST | /members | 회원가입(이메일·SNS 공통). 약관별 동의·번호 암호문/HMAC·기본 닉네임·최초 상태 이력·SNS 연결 저장, 서버 재검사. 201과 함께 닉네임 설정 전용 쿠키 `ncnm_setup`(로그인 쿠키 아님)을 준다. 이메일 가입만 구현(SNS 가입은 SNS 로그인 마일스톤) | ACC-001-09·10·12·14·22·24·27·29·32·38 | YAY | MemberCreateRequest | MemberResponse |
 | POST | /members/me/password-verification | 현재 비밀번호 확인(회원정보 수정 진입·비밀번호 변경 전) *통합 때 추가* | MYP-040-01 | YAY | PasswordVerifyRequest | - |
 | POST | /members/me/recover | 30일 이내 탈퇴 회원 기존 정보 복구 실행(탈퇴 → 정상 이력) | ACC-001-45 | YAY | MemberRecoverRequest | - |
 | POST | /members/me/withdraw | 회원탈퇴(상태·이력 반영, 모든 로그인·인증 권한 종료, 30일 보관) | ACC-020-03·14·16, AIM-011-19, MYP-002-08 (기능 분배 3.1절 5번) | YAY | MemberWithdrawRequest | - |
 | PUT | /members/me/dashboard-widgets | 메인 건강 지표 위젯 표시 여부·순서 전체 저장 | MAN-007 | YAY | DashboardWidgetSaveRequest | List<DashboardWidgetSummary> |
 | PATCH | /members/me | 회원정보 수정. 휴대전화(저장 시 중복 재검사)·프로필 사진 | MYP-040-02·05·08·11 | SJM | MemberUpdateRequest | MemberResponse |
-| PATCH | /members/me/nickname | 닉네임 설정 확정(가입 직후 제한 권한 또는 로그인 회원), 설정 완료 여부 반영 | ACC-001-26 | YAY | MemberNicknameUpdateRequest | MemberResponse |
+| PATCH | /members/me/nickname | 닉네임 설정 확정(로그인 회원 또는 가입 직후 받은 `ncnm_setup` 쿠키, 둘 다 없으면 401), 설정 완료 여부 반영 | ACC-001-26 | YAY | MemberNicknameUpdateRequest | MemberResponse |
 | PATCH | /members/me/password | 로그인 상태에서 비밀번호 변경 *통합 때 추가* | MYP-040-06 | YAY | PasswordChangeRequest | - |
 
 ## DTO
@@ -96,7 +96,7 @@
 | certExpryDt | LocalDateTime | Y | 남은 시간 표시 기준(서버 만료시각) | EML_CERT.CERT_EXPRY_DT, ACC-001-05 |
 | resendAvailableDt | LocalDateTime | N | 재전송 제한 중이면 재시도 가능 시점 | ACC-011-07 |
 | certCmptnDt | LocalDateTime | N | 인증 확인 성공 시각. verify 이후 | EML_CERT.CERT_CMPTN_DT |
-| certRslt | String | N | verify 결과 분기. 가입 진행 / 복구 대상 / 재설정 대상 / SNS 전용 / 미가입 / 탈퇴 보관 중 하나(값 미정) | ACC-001-06·43, ACC-011-08 |
+| certRslt | String | N | verify 결과 분기. 가입 목적은 `SIGNUP_READY`로 확정. 복구 대상 / 재설정 대상 / SNS 전용 / 미가입 / 탈퇴 보관은 해당 마일스톤에서 값 확정 | ACC-001-06·43, ACC-011-08 |
 | snsOffrCds | List<String> | N | `certRslt`가 SNS 전용일 때 실제 연결된 제공자(USRG03) | SNS_ACNT_LINK.SNS_OFFR_CD, ACC-011-10 |
 | pswdInitTkn | String | N | 재설정 대상일 때만. 비밀번호 재설정 권한 토큰 원문 | EML_CERT.PSWD_INIT_TKN_HASH (해시 전 원문), ACC-011-08 |
 | initAuthrtExpryDt | LocalDateTime | N | 재설정 권한 만료 시각 | EML_CERT.INIT_AUTHRT_EXPRY_DT |
@@ -137,14 +137,15 @@
 | --- | --- | --- | --- | --- |
 | joinPathCd | String | Y | 공통코드 USRG03(이메일·네이버·카카오·구글) | MBR.JOIN_PATH_CD |
 | emlCertSn | Long | N | 이메일 가입이면 필수. 가입 목적 인증이 완료·유효해야 한다. 이메일은 이 인증의 대상 이메일을 쓴다 | EML_CERT.EML_CERT_SN, ACC-001-14 |
-| signupTkn | String | N | SNS 가입이면 필수. `POST /auth/sns-login`이 준 신규 가입 확인 토큰(저장소 미정, issues 5) | ACC-001-31·32 |
+| certNo | String | N | 이메일 가입이면 필수. 숫자 6자리 인증번호를 한 번 더 확인한다. `emlCertSn`이 순번이라 남이 인증해 둔 번호로 가입하는 것을 막는다(issues 로그인 6) | EML_CERT.CERT_NO_HASH, ACC-001-14 |
+| signupTkn | String | N | 지금은 받지 않는다(SNS 가입 마일스톤에서 추가). SNS 가입이면 필수. `POST /auth/sns-login`이 준 신규 가입 확인 토큰(저장소 미정, issues 5) | ACC-001-31·32 |
 | mblTelno | String | Y | 공백·하이픈 제거, +82 표기 통일 후 형식 검사. 다른 회원(30일 보관 포함)과 중복 불가 | MBR.MBL_TELNO_ENC, MBR.MBL_TELNO_HMAC, ACC-001-29·30 |
-| pswd | String | N | 이메일 가입이면 필수, SNS 가입이면 보내지 않는다. 8자 이상, 문자와 숫자 조합 | MBR.PSWD_HASH (해시 전 원문), ACC-001-09, ACC-001-32 |
+| pswd | String | N | 이메일 가입이면 필수, SNS 가입이면 보내지 않는다. 8자 이상 64자 이하, 영문과 숫자를 함께 포함하는 공백 없는 ASCII(BCrypt 72바이트 한계) | MBR.PSWD_HASH (해시 전 원문), ACC-001-09, ACC-001-32 |
 | pswdCnfrm | String | N | 이메일 가입이면 필수. `pswd`와 일치 | ACC-001-10 |
-| trmsAgres | List<TermsAgreeItem> | Y | 화면에 보여 준 약관 전부. 필수 약관(서비스 이용약관·개인정보 수집 및 이용·만 14세 이상) 모두 `agreYn=true`. 마케팅 미동의도 false로 보낸다 | MBR_TRMS_AGRE, ACC-001-12 |
-| idmptDmndId | String | N | 같은 가입 시도의 재요청 식별값. 같은 값이면 기존 결과만 돌려준다(저장 컬럼 없음, issues 5) | ACC-001-14, ACC-001-32 |
+| trmsAgres | List<TermsAgreeRequest> | Y | 화면에 보여 준 약관 전부. 필수 약관(서비스 이용약관·개인정보 수집 및 이용·만 14세 이상) 모두 `agreYn=true`. 마케팅 미동의도 false로 보낸다 | MBR_TRMS_AGRE, ACC-001-12 |
+| idmptDmndId | String | N | 같은 가입 시도의 재요청 식별값. 저장 컬럼이 없어 받기만 한다. 중복 클릭·응답 유실 재요청은 같은 인증(`emlCertSn`·`certNo`)의 사용 기록으로 가려 닉네임 쿠키 유효시간 안에서 기존 결과만 돌려준다 | ACC-001-14, ACC-001-32 |
 
-#### TermsAgreeItem (요청 record, 쓰는 DTO: MemberCreateRequest, MemberRecoverRequest)
+#### TermsAgreeRequest (요청 record, 쓰는 DTO: MemberCreateRequest, MemberRecoverRequest)
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | trmsSn | Long | Y | 현재 사용 중인 약관 버전이어야 한다 | MBR_TRMS_AGRE.TRMS_SN, ACC-001-12 |
@@ -166,14 +167,14 @@
 쓰는 API: GET /members/phone-availability
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| normalizedMblTelno | String | Y | 초안 그대로. 공백·하이픈 제거, +82 표기 통일 결과 | ACC-001-29 |
+| normalizedMblTelno | String | Y | 공백·하이픈 제거, +82 표기를 국내 표기 숫자(`01012345678`)로 통일한 결과 | ACC-001-29 |
 | available | Boolean | Y | 초안 그대로 | ACC-001-30 |
 
 ### MemberRecoverRequest
 쓰는 API: POST /members/me/recover
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
-| trmsAgres | List<TermsAgreeItem> | N | 같은 버전으로 이미 동의한 약관은 빼고, 빠진 현재 버전 필수 약관만. 빠진 필수 약관이 있으면 필수 | MBR_TRMS_AGRE, ACC-001-44·45 |
+| trmsAgres | List<TermsAgreeRequest> | N | 같은 버전으로 이미 동의한 약관은 빼고, 빠진 현재 버전 필수 약관만. 빠진 필수 약관이 있으면 필수 | MBR_TRMS_AGRE, ACC-001-44·45 |
 | mblTelno | String | N | 보관 번호가 없을 때만 필수. 정규화·형식·중복 검사는 가입과 같다 | MBR.MBL_TELNO_ENC, ACC-001-29, ACC-001-44 |
 | idmptDmndId | String | N | 중복 클릭·응답 유실 시 같은 요청의 결과를 확인하는 식별값(저장 컬럼 없음, issues 5) | ACC-001-45 |
 
@@ -198,9 +199,9 @@
 | atchFileSn | Long | N | 프로필 사진. null이면 기본 이미지 | MBR.ATCH_FILE_SN, MYP-040-02 |
 | joinPathCd | String | Y | 가입 경로(USRG03). SNS 회원은 본인 확인 생략 | MBR.JOIN_PATH_CD, MYP-040-01 |
 | ncnmStngCmptnYn | boolean | Y | 닉네임 설정 완료 여부 | MBR.NCNM_STNG_CMPTN_YN, ACC-001-26·27 |
-| snsAcntLinks | List<MemberSnsAccountItem> | Y | 연동된 SNS 계정. 없으면 빈 목록 | SNS_ACNT_LINK, MYP-040-09 |
+| snsAcntLinks | List<MemberSnsAccountSummary> | Y | 연동된 SNS 계정. 없으면 빈 목록 | SNS_ACNT_LINK, MYP-040-09 |
 
-#### MemberSnsAccountItem (MemberResponse.snsAcntLinks)
+#### MemberSnsAccountSummary (MemberResponse.snsAcntLinks)
 | 필드 | 타입 | 필수 | 검증·설명 | 근거 |
 | --- | --- | --- | --- | --- |
 | snsOffrCd | String | Y | SNS 제공자(USRG03) | SNS_ACNT_LINK.SNS_OFFR_CD, MYP-040-09 |
