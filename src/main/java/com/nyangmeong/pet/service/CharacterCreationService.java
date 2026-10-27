@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 public class CharacterCreationService {
 
     static final String SYSTEM = "SYSTEM";
-    static final String MVMN_PATH = "/mypage/pixel-characters";
+    static final String MVMN_PATH = "/mypage/characters";
     private static final int FAIL_RSN_MAX = 1000;
 
     private final PixelCharacterMapper pixelCharacterMapper;

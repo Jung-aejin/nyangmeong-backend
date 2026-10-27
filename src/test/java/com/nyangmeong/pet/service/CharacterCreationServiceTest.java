@@ -126,7 +126,7 @@ class CharacterCreationServiceTest {
         assertThat(event.getValue().mbrSn()).isEqualTo(1L);
         assertThat(event.getValue().type()).isEqualTo(NotificationType.CHARACTER);
         assertThat(event.getValue().notiTtl()).isEqualTo("콩이의 캐릭터가 완성됐어요");
-        assertThat(event.getValue().mvmnPath()).isEqualTo("/mypage/pixel-characters");
+        assertThat(event.getValue().mvmnPath()).isEqualTo("/mypage/characters");
     }
 
     @Test
