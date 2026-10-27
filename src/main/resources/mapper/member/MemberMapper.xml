@@ -4,9 +4,12 @@
 
     <resultMap id="memberResultMap" type="com.nyangmeong.member.domain.Member">
         <id     column="MBR_SN"             property="mbrSn" />
+        <result column="ATCH_FILE_SN"       property="atchFileSn" />
         <result column="MBR_STTS_CD"        property="mbrSttsCd" />
         <result column="MBR_AUTHRT_CD"      property="mbrAuthrtCd" />
         <result column="JOIN_PATH_CD"       property="joinPathCd" />
+        <result column="ACNT_EML_ENC"       property="acntEmlEnc" />
+        <result column="MBL_TELNO_ENC"      property="mblTelnoEnc" />
         <result column="PSWD_HASH"          property="pswdHash" />
         <result column="MBR_NCNM"           property="mbrNcnm" />
         <result column="LAST_LGN_DT"        property="lastLgnDt" />
@@ -16,9 +19,12 @@
     <!-- MBR 은 DEL_YN 없음, 탈퇴는 MBR_STTS_CD 로 구분 -->
     <select id="selectByEmailHmac" parameterType="string" resultMap="memberResultMap">
         SELECT MBR_SN
+             , ATCH_FILE_SN
              , MBR_STTS_CD
              , MBR_AUTHRT_CD
              , JOIN_PATH_CD
+             , ACNT_EML_ENC
+             , MBL_TELNO_ENC
              , PSWD_HASH
              , MBR_NCNM
              , LAST_LGN_DT
@@ -26,6 +32,95 @@
           FROM MBR
          WHERE ACNT_EML_HMAC = #{acntEmlHmac}
     </select>
+
+    <select id="selectBySn" parameterType="long" resultMap="memberResultMap">
+        SELECT MBR_SN
+             , ATCH_FILE_SN
+             , MBR_STTS_CD
+             , MBR_AUTHRT_CD
+             , JOIN_PATH_CD
+             , ACNT_EML_ENC
+             , MBL_TELNO_ENC
+             , PSWD_HASH
+             , MBR_NCNM
+             , LAST_LGN_DT
+             , NCNM_STNG_CMPTN_YN
+          FROM MBR
+         WHERE MBR_SN = #{mbrSn}
+    </select>
+
+    <select id="selectMbrSnByPhoneHmac" parameterType="string" resultType="long">
+        SELECT MBR_SN
+          FROM MBR
+         WHERE MBL_TELNO_HMAC = #{mblTelnoHmac}
+         LIMIT 1
+    </select>
+
+    <select id="selectMbrSnByNickname" parameterType="string" resultType="long">
+        SELECT MBR_SN
+          FROM MBR
+         WHERE MBR_NCNM = #{mbrNcnm}
+         LIMIT 1
+    </select>
+
+    <select id="selectSnsOffrCds" parameterType="long" resultType="string">
+        SELECT SNS_OFFR_CD
+          FROM SNS_ACNT_LINK
+         WHERE MBR_SN = #{mbrSn}
+           AND USE_YN = 'Y'
+         ORDER BY SNS_ACNT_LINK_SN
+    </select>
+
+    <!-- 로그인 이력(LAST_LGN_DT)은 비워 둔다 : 첫 로그인 닉네임 재안내 판정 기준 -->
+    <insert id="insert" parameterType="com.nyangmeong.member.domain.Member"
+            useGeneratedKeys="true" keyProperty="mbrSn">
+        INSERT INTO MBR (
+               MBR_STTS_CD
+             , MBR_AUTHRT_CD
+             , JOIN_PATH_CD
+             , ACNT_EML_ENC
+             , ACNT_EML_HMAC
+             , MBL_TELNO_ENC
+             , MBL_TELNO_HMAC
+             , PSWD_HASH
+             , MBR_NCNM
+             , NCNM_STNG_CMPTN_YN
+        ) VALUES (
+               #{mbrSttsCd}
+             , #{mbrAuthrtCd}
+             , #{joinPathCd}
+             , #{acntEmlEnc}
+             , #{acntEmlHmac}
+             , #{mblTelnoEnc}
+             , #{mblTelnoHmac}
+             , #{pswdHash}
+             , #{mbrNcnm}
+             , 'N'
+        )
+    </insert>
+
+    <insert id="insertStatusHistory">
+        INSERT INTO MBR_STTS_HSTRY (
+               MBR_SN
+             , BFR_STTS_CD
+             , AFTR_STTS_CD
+             , CHG_RSN
+        ) VALUES (
+               #{mbrSn}
+             , #{bfrSttsCd}
+             , #{aftrSttsCd}
+             , #{chgRsn}
+        )
+    </insert>
+
+    <update id="updateNickname">
+        UPDATE MBR
+           SET MBR_NCNM = #{mbrNcnm}
+             , NCNM_STNG_CMPTN_YN = 'Y'
+             , MDFR_ID = #{actorId}
+             , MDFCN_DT = NOW()
+         WHERE MBR_SN = #{mbrSn}
+    </update>
 
     <update id="updateLastLogin">
         UPDATE MBR

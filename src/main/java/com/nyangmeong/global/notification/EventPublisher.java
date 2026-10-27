@@ -34,6 +34,14 @@ public class EventPublisher {
     }
 
     /**
+     * 인증번호 메일 이벤트 발행
+     */
+    public void publish(CertificationMailEvent event) {
+        checkTransaction();
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    /**
      * 케어 일정 사전 알림 이벤트 발행
      */
     public void publish(CareScheduleAlarmEvent event) {

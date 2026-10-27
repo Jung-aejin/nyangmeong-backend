@@ -330,6 +330,7 @@ CREATE TABLE `EML_CERT` (
   `CERT_TRGT_EML_ENC` text NOT NULL COMMENT '인증대상이메일암호문',
   `CERT_TRGT_EML_HMAC` char(64) NOT NULL COMMENT '인증대상이메일HMAC',
   `CERT_NO_HASH` char(64) NOT NULL COMMENT '인증번호해시',
+  `CERT_FAIL_NMTM` decimal(2,0) NOT NULL DEFAULT '0' COMMENT '인증번호실패횟수',
   `CERT_EXPRY_DT` datetime NOT NULL COMMENT '인증만료일시',
   `CERT_CMPTN_DT` datetime NULL COMMENT '인증완료일시',
   `CERT_USE_CMPTN_DT` datetime NULL COMMENT '인증사용완료일시',
