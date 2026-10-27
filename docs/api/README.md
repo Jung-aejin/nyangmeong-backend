@@ -18,7 +18,8 @@
 | 영수증(expense 도메인) | [`receipt.md`](receipt.md) | 6 | 10 | LJS 6 |
 | 커뮤니티(community) | [`community.md`](community.md) | 41 | 35 | KSJ 41 |
 | 고객센터(support) | [`support.md`](support.md) | 7 | 7 | KSJ 7 |
-| 합계 | | 176 | 167 | |
+| AI 대화(ai, 내부 API) | [`ai.md`](ai.md) | 5 | 5 | LJS 5 |
+| 합계 | | 181 | 172 | |
 
 | 그 밖의 파일 | 내용 |
 | --- | --- |

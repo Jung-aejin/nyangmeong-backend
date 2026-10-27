@@ -575,7 +575,9 @@ public class DbCheck {
     Properties env = new Properties();
     try (FileReader r = new FileReader(args[0])) { env.load(r); }
     DriverManager.setLoginTimeout(5);
-    try (var c = DriverManager.getConnection(env.getProperty("spring.datasource.url"), env.getProperty("spring.datasource.username"), env.getProperty("spring.datasource.password"));
+    // 앱은 SQL 로그용 jdbc:log4jdbc: 주소를 쓴다. 여기서는 일반 MySQL 드라이버로 확인하므로 접두어를 뗀다
+    String url = env.getProperty("spring.datasource.url").replaceFirst("^jdbc:log4jdbc:", "jdbc:");
+    try (var c = DriverManager.getConnection(url,env.getProperty("spring.datasource.username"), env.getProperty("spring.datasource.password"));
          var rs = c.createStatement().executeQuery("SELECT DATABASE(), (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE())")) {
       rs.next();
       System.out.println(rs.getString(1) + ", 테이블 " + rs.getInt(2) + "개");
