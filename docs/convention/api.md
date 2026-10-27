@@ -4,6 +4,7 @@
 
 - 접두어는 `/api`이다. 버전(`/v1`)은 경로에 넣지 않는다. 리소스는 복수형 kebab-case로 쓴다. 식별자는 경로에, 필터·정렬·페이지는 쿼리에 둔다.
   - 예: `/members/me`, `/pets/{petSn}/checkups`, `/places?plcClsfCd={공통코드}&keyword=병원`
+  - 예외: `/internal`은 서버 간 내부 호출(Python AI 서버 → Spring) 전용이다. 서버 간 키는 없다(2026-10-26 결정). 그래서 `/internal/**`의 모든 API는 사용자 인증(쿠키)을 거치고 호출한 회원 자신의 정보만 다룬다. 사용자 인증 없이 회원을 지정하는 API는 `/internal`에 두지 않는다
 - 로그인한 회원 자신의 자원은 `me`를 쓴다(`/members/me`). 경로에 회원 일련번호를 넣지 않는다.
   - 회원에 딸린 설정·단건(회원당 하나)은 `/members/me/x`에 둔다. 예: `/members/me/notification-settings`, `/members/me/points`, `/members/me/expense-limit`
   - 회원이 쌓는 목록 자원은 최상위 경로에 두고 서버가 로그인 회원으로 거른다. 예: `/notifications`, `/expenses`, `/point-ledgers`, `/chat-rooms`
@@ -56,7 +57,7 @@
 - 입력값 검증 오류(`INVALID_INPUT_VALUE`)만 `data`에 `[{"field":"...","message":"..."}]`를 담는다.
 - 컨트롤러는 `ResponseEntity<ApiResponse<T>>`를 돌려준다(`ResponseEntity.ok(ApiResponse.success(data))`, 생성은 `ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(data))`). 실패 응답은 `GlobalExceptionHandler`와 `global/security`의 응답기가 만들며 컨트롤러가 직접 만들지 않는다.
 - 인증 토큰(Access·Refresh)은 httpOnly 쿠키로만 오간다. 응답 본문에 토큰을 넣지 않는다. 토큰이 만료되면 401 `TOKEN_EXPIRED`가 오고 프론트가 `POST /auth/refresh`로 재발급한 뒤 다시 보낸다.
-- 상태를 바꾸는 요청(GET·HEAD·OPTIONS가 아닌 요청)은 `X-Requested-With: XMLHttpRequest` 헤더가 없으면 403이 된다. 프론트는 모든 요청에 이 헤더를 붙인다. curl이나 Swagger UI로 시험할 때 403이 나오면 이 헤더부터 확인한다.
+- 상태를 바꾸는 요청(GET·HEAD·OPTIONS가 아닌 요청)은 `X-Requested-With: XMLHttpRequest` 헤더가 없으면 403이 된다. 프론트는 모든 요청에 이 헤더를 붙인다. Swagger UI는 이 헤더를 미리 채운다(`OpenApiConfig`). curl로 시험할 때 403이 나오면 이 헤더부터 확인한다.
 
 날짜와 시간은 아래 형식으로만 주고받는다.
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nyangmeong.member.mapper.MemberMapper">
+
+    <resultMap id="memberResultMap" type="com.nyangmeong.member.domain.Member">
+        <id     column="MBR_SN"             property="mbrSn" />
+        <result column="MBR_STTS_CD"        property="mbrSttsCd" />
+        <result column="MBR_AUTHRT_CD"      property="mbrAuthrtCd" />
+        <result column="JOIN_PATH_CD"       property="joinPathCd" />
+        <result column="PSWD_HASH"          property="pswdHash" />
+        <result column="MBR_NCNM"           property="mbrNcnm" />
+        <result column="LAST_LGN_DT"        property="lastLgnDt" />
+        <result column="NCNM_STNG_CMPTN_YN" property="ncnmStngCmptnYn" />
+    </resultMap>
+
+    <!-- MBR 은 DEL_YN 없음, 탈퇴는 MBR_STTS_CD 로 구분 -->
+    <select id="selectByEmailHmac" parameterType="string" resultMap="memberResultMap">
+        SELECT MBR_SN
+             , MBR_STTS_CD
+             , MBR_AUTHRT_CD
+             , JOIN_PATH_CD
+             , PSWD_HASH
+             , MBR_NCNM
+             , LAST_LGN_DT
+             , NCNM_STNG_CMPTN_YN
+          FROM MBR
+         WHERE ACNT_EML_HMAC = #{acntEmlHmac}
+    </select>
+
+    <update id="updateLastLogin">
+        UPDATE MBR
+           SET LAST_LGN_DT = NOW()
+             , MDFR_ID = #{actorId}
+             , MDFCN_DT = NOW()
+         WHERE MBR_SN = #{mbrSn}
+    </update>
+</mapper>
