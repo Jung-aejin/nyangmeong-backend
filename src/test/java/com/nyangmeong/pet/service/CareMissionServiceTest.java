@@ -119,6 +119,15 @@ class CareMissionServiceTest {
     }
 
     @Test
+    void 사용_중이어도_케어미션에_없는_행은_사용자_추가_항목처럼_내지_않는다() {
+        CareMsn userAdded = master(900L, "사용자 추가 항목", CareMissionPool.DAILY, 10, 1, "Y");
+        masters.add(userAdded);
+        target(PetSe.CAT, true);
+
+        assertThat(issuedSnsRepeatedly(Set.of(PET))).doesNotContain(userAdded.getCareMsnSn());
+    }
+
+    @Test
     void 활동기반_후보가_2개뿐이면_일상케어에서_6개를_낸다() {
         masters.removeIf(m -> CareMissionPool.ACTIVITY.is(m.getMsnPoolCd())
                 && !m.getMsnNm().equals(CareMission.EXPENSE_CREATE.getMsnNm())
