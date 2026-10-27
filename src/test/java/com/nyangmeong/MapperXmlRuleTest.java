@@ -32,7 +32,8 @@ class MapperXmlRuleTest {
     private static final Path MAPPER_DIR = Path.of("src/main/resources/mapper");
 
     /** 삭제된 행까지 읽는 조회 ("namespace.id") */
-    private static final Set<String> EXCEPTIONS = Set.of();
+    private static final Set<String> EXCEPTIONS = Set.of(
+            "com.nyangmeong.community.mapper.CommentMapper.selectList");
 
     private static final Pattern TABLE = Pattern.compile("\\b(?:FROM|JOIN)\\s+`?(\\w+)`?", Pattern.CASE_INSENSITIVE);
     private static final Pattern DEL_YN_CONDITION = Pattern.compile("DEL_YN`?\\s*=\\s*'N'", Pattern.CASE_INSENSITIVE);
