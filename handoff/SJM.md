@@ -1,7 +1,7 @@
 # SJM 핸드오프
 
 ## 지금 하는 것
-SCR-MYP-020 포인트 관리/케어미션 — 구현 중 (승인 2026-10-27 06:14, 시작 2026-10-26 16:58)
+SCR-MYP-020 포인트 관리/케어미션 — 진행 중: 구현·검증 끝(판정 확인 못 함 있음, 연결 남음만), 3-1·추가-1 사람 확인은 병합 뒤 (승인 2026-10-27 06:14, 시작 2026-10-26 16:58)
 - 기준: 마이페이지_기능명세서_v0.4_20261025, 마이페이지_화면설계서_v0.6_20261025, 건강기록_기능명세서_v1.1_20261026(FN-HLT-003-12 케어리스트 기본 항목) (DMS)
 - 결정1 위치: 포인트·케어미션은 `pet` 도메인(1층)에 둔다. 부르는 쪽 health(2층)·expense·community(3층)·scheduler(4층)가 모두 아래로 부르게 된다. 경로는 기존처럼 `/api`를 앞에 붙인다
 - 결정2 보유 포인트: `MBR.HLD_PNT`는 `member` 도메인에 service가 아직 없어서 `pet/mapper/PointMapper`가 직접 읽고 바꾼다(PetMapper가 이미 MBR을 JOIN하는 것과 같다). `HLD_PNT`를 바꾸는 곳은 `PointService` 하나뿐이다. 바꿀 때는 `UPDATE MBR SET HLD_PNT = HLD_PNT + #{delta} WHERE MBR_SN = ? AND HLD_PNT + #{delta} >= 0` 한 문장으로 하고, 0행이면 `POINT_NOT_ENOUGH`다. 거래 후 잔액은 같은 트랜잭션에서 다시 읽어 `DLNG_AFTR_BLNC_PNT`에 넣는다
@@ -55,7 +55,6 @@ SCR-MYP-020 포인트 관리/케어미션 — 구현 중 (승인 2026-10-27 06:1
 | 추가-1 | `scheduler/CareMissionJob`(`@ConditionalOnProperty(name = "app.care-mission.batch-enabled", havingValue = "true")`), `application-prod.properties`(`app.care-mission.batch-enabled=true`), `application.properties.example`(배치 구획에 주석 줄로 키 안내, 생략하면 false), 새 테스트 `scheduler/CareMissionJobSwitchTest` | 명령: `./gradlew build -q`, `CareMissionJobSwitchTest` 키가 없거나 false면 `CareMissionJob` 빈이 없고 true면 있음. 화면: 키 없이 로컬 `bootRun`하면 정각이 지나도 `DAY_MSN`에 행이 생기지 않음 | 요청 2026-10-27 16:40 "배치 스위치 추가: 로컬 기본 꺼짐, 배포(prod)에서 켜짐, 확인할 때만 로컬에서 켬. 팀원 PC마다 배치가 공용 DB에 쓰지 않게" |
 
 ## 다음에 할 것
+- SCR-MYP-020 병합 뒤: PR(본문에 "DB 변경 있음" `db/migration/20261027_02_update_care_msn_and_ckup_pnt.sql`, `MasterSeeder` 변경 LJS에 알림) → 병합 직후 공용 DB에 실행(아직이면 `20261026_01_update_petg03_colors.sql`도), PR에 완료 댓글 → 사람 확인 3-1(로컬 `app.care-mission.batch-enabled=true`로 띄워 정각 뒤 `GET /api/pets/{petSn}/daily-missions` 8개, 확인 뒤 키 지움)·추가-1(키 없이 정각을 넘겨 `DAY_MSN` 오늘 행 수 그대로) → `/end`에서 `확인`해 `끝`
+- 연결 남음: 프론트 SCR-MYP-020 포인트 카드·요약·내역·케어미션 탭과 SCR-MYP-001 요약(프론트 저장소에서 /start, SCR-MYP-003은 체중 잠금은 `GET /pets/{petSn}/daily-health-records?dailyRcdIdctCd=HLTC0014&size=1`(JAJ)로 판단, 기본 선택 동물은 `rprsPetYn`, 털색 드롭다운 설명), JAJ 건강 일지 기록·케어리스트 기본 항목 체크·일정·관찰 기록 → `reflect`, 검진기록·영수증 빠른 등록 → `earnCheckupPoint`, 관찰 중 반려동물 조회(`scheduler/ObservationFake` 대체), KSJ 펫이야기 글·댓글 → `reflectRepresentative`, LJS `PointFake` → `PointService.use`, 가계부 지출 → `reflect`(반려동물 있는 지출만)
 - 건강기록 기본 항목 "발 관리"의 이름을 JAJ와 정하기(후보: 발바닥 확인하기). 발톱 관리·발바닥 털 관리와 겹쳐 보이고 뜻이 넓다. 바뀌면 마이그레이션으로 `CARE_MSN` 미션 이름도 맞춘다
-- PR 병합 직후 공용 DB에 `db/migration/20261026_01_update_petg03_colors.sql` 실행, PR에 완료 댓글. PR 본문에 "DB 변경 있음"과 파일 이름. 실행 뒤 `GET /api/common-codes?prntComCd=PETG03`에서 블랙탄·PETC0028~0034·직접 입력 맨 끝 확인
-- 프론트: 체중 잠금은 `GET /pets/{petSn}/daily-health-records?dailyRcdIdctCd=HLTC0014&size=1`(JAJ)로 판단, 기본 선택 동물은 `rprsPetYn`, 털색 드롭다운 설명
-- LJS의 `CaregiverPetFake`·`CaregiverFake`를 `PetService.searchMyPets`로 바꾸는 연결은 LJS의 "연결 남음"
