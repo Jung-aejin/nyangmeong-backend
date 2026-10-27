@@ -51,6 +51,9 @@ SCR-MYP-020 포인트 관리/케어미션 — 구현 중 (승인 2026-10-27 06:1
 - 하지 않는 것: `PointFake` → `PointService` 연결(LJS), 각 활동에서 `reflect`·`earnCheckupPoint`를 부르는 것(JAJ·KSJ·가계부 담당), 관찰 중 동물 조회(JAJ, 가짜), 대표 동물 삭제 때 당일 미션 삭제(SCR-MYP-002), 관리자 포인트 조정(MYPC0009), 지출 합계(SCR-MYP-030)
 - 새 의존성: 없음
 
+### 추가 요청
+| 추가-1 | `scheduler/CareMissionJob`(`@ConditionalOnProperty(name = "app.care-mission.batch-enabled", havingValue = "true")`), `application-prod.properties`(`app.care-mission.batch-enabled=true`), `application.properties.example`(배치 구획에 주석 줄로 키 안내, 생략하면 false), 새 테스트 `scheduler/CareMissionJobSwitchTest` | 명령: `./gradlew build -q`, `CareMissionJobSwitchTest` 키가 없거나 false면 `CareMissionJob` 빈이 없고 true면 있음. 화면: 키 없이 로컬 `bootRun`하면 정각이 지나도 `DAY_MSN`에 행이 생기지 않음 | 요청 2026-10-27 16:40 "배치 스위치 추가: 로컬 기본 꺼짐, 배포(prod)에서 켜짐, 확인할 때만 로컬에서 켬. 팀원 PC마다 배치가 공용 DB에 쓰지 않게" |
+
 ## 다음에 할 것
 - 건강기록 기본 항목 "발 관리"의 이름을 JAJ와 정하기(후보: 발바닥 확인하기). 발톱 관리·발바닥 털 관리와 겹쳐 보이고 뜻이 넓다. 바뀌면 마이그레이션으로 `CARE_MSN` 미션 이름도 맞춘다
 - PR 병합 직후 공용 DB에 `db/migration/20261026_01_update_petg03_colors.sql` 실행, PR에 완료 댓글. PR 본문에 "DB 변경 있음"과 파일 이름. 실행 뒤 `GET /api/common-codes?prntComCd=PETG03`에서 블랙탄·PETC0028~0034·직접 입력 맨 끝 확인
