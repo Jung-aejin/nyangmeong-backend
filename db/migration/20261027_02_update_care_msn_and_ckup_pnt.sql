@@ -13,7 +13,7 @@
 --   DELETE FROM `COM_CD` WHERE `COM_CD`='MYPC0021';
 --   UPDATE `CARE_MSN` SET `USE_YN`='Y' WHERE `MSN_NM`='케어리스트 완료하기';
 --   DELETE FROM `CARE_MSN` WHERE `MSN_NM` IN ('화장실 청소하기','양치하기','빗질하기','발 관리하기','놀이하기','귀 청소하기','발톱 관리하기','목욕하기','눈 주변 관리하기','발바닥 털 관리하기','구강 상태 확인하기','관찰 기록 추가하기');
---   UPDATE `CARE_MSN` SET `MSN_NM`='배변 상태 기록하기' WHERE `MSN_NM`='배변 기록하기';
+--   UPDATE `CARE_MSN` SET `MSN_NM`='배변 상태 기록하기', `CMPN_PNT`=10 WHERE `MSN_NM`='배변 기록하기';
 --   UPDATE `CARE_MSN` SET `MSN_NM`='커뮤니티 글 쓰기', `CMPN_PNT`=30 WHERE `MSN_NM`='펫이야기 글 등록하기';
 --   UPDATE `CARE_MSN` SET `MSN_NM`='댓글 3개 남기기', `CMPN_PNT`=15, `ACHV_CRTR_NMTM`=3 WHERE `MSN_NM`='펫이야기 댓글 작성하기';
 --   UPDATE `CARE_MSN` SET `MSN_NM`='가계부 기록하기', `CMPN_PNT`=15 WHERE `MSN_NM`='가계부 지출 등록하기';
