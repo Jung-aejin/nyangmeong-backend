@@ -12,8 +12,8 @@
         <result column="MDFCN_DT"       property="mdfcnDt" />
     </resultMap>
 
-    <!-- 만료일시는 DB 시각 기준 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="token.rfrshTknSn" keyColumn="RFRSH_TKN_SN">
+        /* 리프레시 토큰 등록 */
         INSERT INTO RFRSH_TKN
              ( MBR_SN
              , RFRSH_TKN_HASH
@@ -29,6 +29,7 @@
     </insert>
 
     <update id="updateHash">
+        /* 리프레시 토큰 해시 갱신 */
         UPDATE RFRSH_TKN
            SET RFRSH_TKN_HASH = #{rfrshTknHash}
              , MDFCN_DT = NOW()
@@ -36,6 +37,7 @@
     </update>
 
     <select id="selectActiveByHash" parameterType="string" resultMap="refreshTokenResultMap">
+        /* 해시로 유효한 리프레시 토큰 조회(폐기·만료 제외) */
         SELECT RFRSH_TKN_SN
              , MBR_SN
              , RFRSH_TKN_HASH
@@ -49,8 +51,8 @@
            AND EXPRY_DT &gt; NOW()
     </select>
 
-    <!-- 이미 폐기된 행은 0건: 동시 회전·재사용 판별 -->
     <update id="updateDiscard" parameterType="long">
+        /* 리프레시 토큰 폐기 */
         UPDATE RFRSH_TKN
            SET DSCD_DT = NOW()
              , MDFCN_DT = NOW()
@@ -59,6 +61,7 @@
     </update>
 
     <update id="updateDiscardByHash" parameterType="string">
+        /* 해시로 리프레시 토큰 폐기 */
         UPDATE RFRSH_TKN
            SET DSCD_DT = NOW()
              , MDFCN_DT = NOW()

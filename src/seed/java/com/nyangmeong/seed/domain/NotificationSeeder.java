@@ -27,13 +27,13 @@ public class NotificationSeeder implements Seeder {
     }
 
     private static final List<Template> TEMPLATES = List.of(
-            new Template("케어 일정", "%s의 병원 일정이 내일이에요", "/care"),
-            new Template("펫돌봄 거래 상태", "펫돌봄 매칭 요청이 도착했어요", "/chats"),
-            new Template("커뮤니티", "내 글에 새 댓글이 달렸어요", "/posts/%d"),
-            new Template("공동양육", "공동양육 초대가 수락되었어요", "/mypage/caregivers"),
-            new Template("실종 만료", "실종 제보 게시 기간이 3일 남았어요", "/lost-reports"),
+            new Template("케어 일정", "%s의 병원 일정이 내일이에요", "/health/calendar"),
+            new Template("펫돌봄 거래 상태", "펫돌봄 매칭 요청이 도착했어요", "/chat"),
+            new Template("커뮤니티", "내 글에 새 댓글이 달렸어요", "/community"),
+            new Template("공동양육", "공동양육 초대가 수락되었어요", "/mypage/pets"),
+            new Template("실종 만료", "실종 제보 게시 기간이 3일 남았어요", "/community/missing"),
             new Template("가계부", "이번 달 지출이 한도의 80%%를 넘었어요", "/mypage/expenses"),
-            new Template("캐릭터", "%s의 캐릭터가 완성됐어요", "/mypage/pixel-characters"),
+            new Template("캐릭터", "%s의 캐릭터가 완성됐어요", "/mypage/characters"),
             new Template("공지", "새 공지사항이 올라왔어요", "/notices"),
             new Template("1:1 문의 답변", "문의하신 내용에 답변이 등록됐어요", "/inquiries"));
 

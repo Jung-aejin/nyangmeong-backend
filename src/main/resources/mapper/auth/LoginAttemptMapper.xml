@@ -12,8 +12,8 @@
         <result column="MDFCN_DT"             property="mdfcnDt" />
     </resultMap>
 
-    <!-- LGN_ATMPT_LMT 은 DEL_YN 없음 -->
     <select id="selectByIdHmac" parameterType="string" resultMap="loginAttemptResultMap">
+        /* 로그인 아이디별 실패 횟수·보안코드 상태 조회 */
         SELECT LGN_ATMPT_LMT_SN
              , LGN_ID_HMAC
              , CNTNU_CERT_FAIL_NMTM
@@ -25,8 +25,8 @@
          WHERE LGN_ID_HMAC = #{lgnIdHmac}
     </select>
 
-    <!-- UK_LGN_ATMPT_LMT_1 로 동시 요청도 한 행. UPDATE 절은 왼쪽부터 계산하므로 증가한 횟수로 비교한다 -->
     <insert id="upsertFailure">
+        /* 로그인 실패 횟수 증가(없으면 행 생성), 한도 도달 시 보안코드 필요 표시 */
         INSERT INTO LGN_ATMPT_LMT
              ( LGN_ID_HMAC
              , CNTNU_CERT_FAIL_NMTM
@@ -45,6 +45,7 @@
     </insert>
 
     <update id="updateCaptchaHash">
+        /* 보안코드 해시 저장(보안코드 필요 상태일 때만) */
         UPDATE LGN_ATMPT_LMT
            SET SCRTY_CD_HASH = #{scrtyCdHash}
              , MDFCN_DT = NOW()
@@ -53,6 +54,7 @@
     </update>
 
     <update id="clearCaptchaHash" parameterType="string">
+        /* 보안코드 해시 비움 */
         UPDATE LGN_ATMPT_LMT
            SET SCRTY_CD_HASH = NULL
              , MDFCN_DT = NOW()
@@ -60,6 +62,7 @@
     </update>
 
     <delete id="delete" parameterType="string">
+        /* 로그인 실패 기록 삭제 */
         DELETE FROM LGN_ATMPT_LMT
          WHERE LGN_ID_HMAC = #{lgnIdHmac}
     </delete>

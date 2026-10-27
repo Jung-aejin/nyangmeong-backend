@@ -105,8 +105,8 @@
              , MDFCN_DT
     </sql>
 
-    <!-- 주양육·공동양육 모두, 연동 해제(USE_YN = 'N') 제외. 상태는 반려동물의 최근 생성 작업 -->
     <select id="selectList" parameterType="long" resultMap="pixelCharacterSummaryResultMap">
+        /* 반려동물별 픽셀 캐릭터 목록 조회 */
         SELECT P.PET_SN
              , P.PET_NM
              , P.PET_SE_CD
@@ -135,6 +135,7 @@
     </select>
 
     <select id="selectPixelCharacter" parameterType="long" resultMap="pixelCharacterResultMap">
+        /* 픽셀 캐릭터 단건 조회 */
         SELECT <include refid="pixelCharacterColumns" />
           FROM PIXEL_CHAR
          WHERE PIXEL_CHAR_SN = #{pixelCharSn}
@@ -142,6 +143,7 @@
     </select>
 
     <select id="selectByPetSn" parameterType="long" resultMap="pixelCharacterResultMap">
+        /* 반려동물의 픽셀 캐릭터 조회 */
         SELECT <include refid="pixelCharacterColumns" />
           FROM PIXEL_CHAR
          WHERE PET_SN = #{petSn}
@@ -150,6 +152,7 @@
 
     <insert id="insertPixelCharacter" parameterType="com.nyangmeong.pet.domain.PixelCharacter"
             useGeneratedKeys="true" keyProperty="pixelCharSn" keyColumn="PIXEL_CHAR_SN">
+        /* 픽셀 캐릭터 등록 */
         INSERT INTO PIXEL_CHAR
              ( MBR_SN
              , PET_SN
@@ -167,6 +170,7 @@
     </insert>
 
     <update id="updateBscCharSbstYn">
+        /* 기본 캐릭터 대체 여부 변경 */
         UPDATE PIXEL_CHAR
            SET BSC_CHAR_SBST_YN = #{bscCharSbstYn}
              , MDFR_ID = #{actorId}
@@ -176,18 +180,21 @@
     </update>
 
     <select id="selectJob" parameterType="long" resultMap="jobResultMap">
+        /* 캐릭터 생성 작업 단건 조회 */
         SELECT <include refid="jobColumns" />
           FROM CHAR_CRT_JOB
          WHERE CHAR_CRT_JOB_SN = #{charCrtJobSn}
     </select>
 
     <select id="selectJobByIdmptDmndId" parameterType="string" resultMap="jobResultMap">
+        /* 멱등 요청 ID로 캐릭터 생성 작업 조회 */
         SELECT <include refid="jobColumns" />
           FROM CHAR_CRT_JOB
          WHERE IDMPT_DMND_ID = #{idmptDmndId}
     </select>
 
     <select id="selectLatestJob" parameterType="long" resultMap="jobResultMap">
+        /* 반려동물의 최근 캐릭터 생성 작업 조회 */
         SELECT <include refid="jobColumns" />
           FROM CHAR_CRT_JOB
          WHERE PET_SN = #{petSn}
@@ -197,6 +204,7 @@
 
     <insert id="insertJob" parameterType="com.nyangmeong.pet.domain.CharacterCreationJob"
             useGeneratedKeys="true" keyProperty="charCrtJobSn" keyColumn="CHAR_CRT_JOB_SN">
+        /* 캐릭터 생성 작업 등록 */
         INSERT INTO CHAR_CRT_JOB
              ( PET_SN
              , MBR_SN
@@ -213,8 +221,8 @@
              , NOW() )
     </insert>
 
-    <!-- 다른 스레드가 먼저 시작한 작업은 0건 -->
     <update id="updateJobStarted">
+        /* 캐릭터 생성 작업 시작 처리 */
         UPDATE CHAR_CRT_JOB
            SET CRT_JOB_STTS_CD = #{aftrSttsCd}
              , PRCS_BGNG_DT = NOW()
@@ -224,6 +232,7 @@
     </update>
 
     <update id="updateJobFinished">
+        /* 캐릭터 생성 작업 종료 처리(성공·실패) */
         UPDATE CHAR_CRT_JOB
            SET CRT_JOB_STTS_CD = #{aftrSttsCd}
              , FAIL_RSN = #{failRsn}
@@ -237,6 +246,7 @@
     </update>
 
     <update id="updateJobInquiry">
+        /* 캐릭터 생성 작업에 문의 연결 */
         UPDATE CHAR_CRT_JOB
            SET OTO_INQRY_SN = #{otoInqrySn}
              , MDFCN_DT = NOW()
@@ -246,6 +256,7 @@
 
     <insert id="insertJobStatusHistory" parameterType="com.nyangmeong.pet.domain.CharacterJobStatusHistory"
             useGeneratedKeys="true" keyProperty="charCrtJobSttsHstrySn" keyColumn="CHAR_CRT_JOB_STTS_HSTRY_SN">
+        /* 캐릭터 생성 작업 상태 변경 이력 등록 */
         INSERT INTO CHAR_CRT_JOB_STTS_HSTRY
              ( CHAR_CRT_JOB_SN
              , MBR_SN
@@ -264,6 +275,7 @@
 
     <insert id="insertPhoto" parameterType="com.nyangmeong.pet.domain.CharacterPhoto"
             useGeneratedKeys="true" keyProperty="charPhotoSn" keyColumn="CHAR_PHOTO_SN">
+        /* 캐릭터 사진 등록 */
         INSERT INTO CHAR_PHOTO
              ( PIXEL_CHAR_SN
              , CHAR_CRT_JOB_SN
@@ -285,6 +297,7 @@
     </insert>
 
     <select id="selectJobPhoto" resultMap="photoResultMap">
+        /* 생성 작업의 역할별 사진 조회 */
         SELECT <include refid="photoColumns" />
           FROM CHAR_PHOTO
          WHERE CHAR_CRT_JOB_SN = #{charCrtJobSn}
@@ -295,6 +308,7 @@
     </select>
 
     <select id="selectCurrentPhoto" parameterType="long" resultMap="photoResultMap">
+        /* 캐릭터의 현재 표시 사진 조회 */
         SELECT <include refid="photoColumns" />
           FROM CHAR_PHOTO
          WHERE PIXEL_CHAR_SN = #{pixelCharSn}
@@ -302,6 +316,7 @@
     </select>
 
     <update id="updatePhotoHidden" parameterType="long">
+        /* 캐릭터의 현재 표시 사진 해제 */
         UPDATE CHAR_PHOTO
            SET NOW_INDCT_YN = 'N'
              , MDFCN_DT = NOW()
@@ -310,6 +325,7 @@
     </update>
 
     <select id="selectHeldItems" parameterType="long" resultMap="heldItemSummaryResultMap">
+        /* 캐릭터 보유 아이템 목록 조회 */
         SELECT H.HLD_ITEM_SN
              , H.ITEM_SN
              , I.ITEM_NM
@@ -327,6 +343,7 @@
     </select>
 
     <update id="updateUnequipAll" parameterType="long">
+        /* 보유 아이템 전체 착용 해제 */
         UPDATE HLD_ITEM
            SET EQUIP_YN = 'N'
              , MDFCN_DT = NOW()
@@ -336,6 +353,7 @@
     </update>
 
     <update id="updateEquip">
+        /* 선택한 보유 아이템 착용 */
         UPDATE HLD_ITEM
            SET EQUIP_YN = 'Y'
              , MDFCN_DT = NOW()
@@ -347,8 +365,8 @@
             </foreach>
     </update>
 
-    <!-- 품종·털색은 직접 입력값 우선 -->
     <select id="selectPetProfile" parameterType="long" resultMap="petProfileSummaryResultMap">
+        /* 캐릭터 생성용 반려동물 프로필 조회 */
         SELECT P.PET_SN
              , P.PET_NM
              , P.PET_SE_CD
