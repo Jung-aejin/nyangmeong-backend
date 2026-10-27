@@ -9,6 +9,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.nyangmeong.global.file.FileRootResolver;
 import com.nyangmeong.seed.SeedException;
 import com.nyangmeong.seed.SeedOptions.Target;
 
@@ -38,7 +39,7 @@ public record SeedSettings(String jdbcUrl, String username, String password, Str
         return new SeedSettings(jdbcUrl, required(props, "spring.datasource.username"),
                 props.getProperty("spring.datasource.password", ""), m.group(1), m.group(2),
                 required(props, "app.crypto.aes-key-base64"), required(props, "app.crypto.hmac-key-base64"),
-                Path.of(props.getProperty("app.file.root-dir", "uploads")), props.getProperty("app.seed.password"));
+                FileRootResolver.resolve(props.getProperty("app.file.root-dir"), false), props.getProperty("app.seed.password"));
     }
 
     /**

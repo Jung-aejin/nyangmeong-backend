@@ -107,7 +107,7 @@ class CharacterCreationServiceTest {
         when(mapper.selectJob(5L)).thenReturn(job(CharacterJobStatus.CREATING));
         when(mapper.selectByPetSn(10L)).thenReturn(character());
         when(mapper.selectPetProfile(10L)).thenReturn(pet());
-        when(fileStore.store(any(byte[].class), eq(FileExtension.PNG), anyString(), eq("SYSTEM"))).thenReturn(30L);
+        when(fileStore.storePublic(any(byte[].class), eq(FileExtension.PNG), anyString(), eq("SYSTEM"))).thenReturn(30L);
 
         service.complete(5L, new byte[] {1});
 

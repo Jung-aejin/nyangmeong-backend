@@ -22,7 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * [파일 저장·읽기]
- * - 디스크(app.file.root-dir) + ATCH_FILE 행, 확장자 jpg·jpeg·png·webp + 실제 형식, 크기 상한 SYS_STNG.FILE_MAX_SZ
+ * - 디스크(FileRoot) + ATCH_FILE 행, 확장자 jpg·jpeg·png·webp + 실제 형식, 크기 상한 SYS_STNG.FILE_MAX_SZ
+ * - 공개 파일은 public/ 아래에 저장하고(storePublic) 로그인 없이 열린다. 나머지는 비공개이며 각 도메인 API 가 소유 검사 후 준다
  * - 트랜잭션 롤백 시 디스크 파일도 삭제
  */
 @Slf4j
@@ -30,17 +31,31 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class FileStore {
 
+    /** 공개 파일의 저장 경로 접두어 (ATCH_FILE.PHYS_STRG_PATH 는 루트를 뺀 상대 경로) */
+    public static final String PUBLIC_PREFIX = "public/";
+
     private static final int ORGNL_FILE_NM_MAX = 200;
     private static final DateTimeFormatter DIR_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM");
 
     private final AtchFileMapper atchFileMapper;
-    private final FileProperties fileProperties;
+    private final FileRoot fileRoot;
     private final SystemSettingService systemSettingService;
 
     /**
-     * 업로드 이미지 저장
+     * 업로드 이미지 저장 (비공개)
      */
     public Long store(MultipartFile file, String actorId) {
+        return store(file, actorId, false);
+    }
+
+    /**
+     * 업로드 이미지 저장 (공개 : GET /api/files/public/{atchFileSn})
+     */
+    public Long storePublic(MultipartFile file, String actorId) {
+        return store(file, actorId, true);
+    }
+
+    private Long store(MultipartFile file, String actorId, boolean publicFile) {
         if (file == null || file.isEmpty()) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
@@ -59,21 +74,42 @@ public class FileStore {
         if (!extension.matchesContent(content)) {
             throw new CustomException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
         }
-        return save(content, extension, file.getOriginalFilename(), actorId);
+        return save(content, extension, file.getOriginalFilename(), actorId, publicFile);
     }
 
     /**
-     * 서버 생성 파일 저장
+     * 서버 생성 파일 저장 (비공개)
      */
     public Long store(byte[] content, FileExtension extension, String orgnlFileNm, String actorId) {
-        return save(content, extension, orgnlFileNm, actorId);
+        return save(content, extension, orgnlFileNm, actorId, false);
+    }
+
+    /**
+     * 서버 생성 파일 저장 (공개)
+     */
+    public Long storePublic(byte[] content, FileExtension extension, String orgnlFileNm, String actorId) {
+        return save(content, extension, orgnlFileNm, actorId, true);
     }
 
     /**
      * 파일 읽기
      */
     public StoredFile load(Long atchFileSn) {
+        return read(atchFileMapper.selectInUse(atchFileSn));
+    }
+
+    /**
+     * 공개 파일 읽기 : 공개가 아닌 파일은 없는 파일과 똑같이 FILE_NOT_FOUND
+     */
+    public StoredFile loadPublic(Long atchFileSn) {
         AtchFile atchFile = atchFileMapper.selectInUse(atchFileSn);
+        if (atchFile == null || !atchFile.getPhysStrgPath().startsWith(PUBLIC_PREFIX)) {
+            throw new CustomException(ErrorCode.FILE_NOT_FOUND);
+        }
+        return read(atchFile);
+    }
+
+    private StoredFile read(AtchFile atchFile) {
         if (atchFile == null) {
             throw new CustomException(ErrorCode.FILE_NOT_FOUND);
         }
@@ -92,8 +128,9 @@ public class FileStore {
     /**
      * 디스크 저장과 ATCH_FILE 등록
      */
-    private Long save(byte[] content, FileExtension extension, String orgnlFileNm, String actorId) {
-        String physStrgPath = LocalDate.now().format(DIR_FORMAT) + "/" + UUID.randomUUID() + "." + extension.getExtension();
+    private Long save(byte[] content, FileExtension extension, String orgnlFileNm, String actorId, boolean publicFile) {
+        String physStrgPath = (publicFile ? PUBLIC_PREFIX : "") + LocalDate.now().format(DIR_FORMAT) + "/"
+                + UUID.randomUUID() + "." + extension.getExtension();
         Path path = resolve(physStrgPath);
         try {
             Files.createDirectories(path.getParent());
@@ -118,7 +155,7 @@ public class FileStore {
      * - 루트 밖 경로 차단
      */
     private Path resolve(String physStrgPath) {
-        Path root = Path.of(fileProperties.getRootDir()).toAbsolutePath().normalize();
+        Path root = fileRoot.getPath();
         Path path = root.resolve(physStrgPath).normalize();
         if (!path.startsWith(root)) {
             throw new CustomException(ErrorCode.FILE_NOT_FOUND);

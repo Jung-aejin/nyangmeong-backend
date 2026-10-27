@@ -23,3 +23,7 @@ app:
     hmac-key-base64: dGVzdC1obWFjLWtleS0zMi1ieXRlcy1sb25nLTAwMDA=
   jwt:
     secret-base64: dGVzdC1qd3Qtc2VjcmV0LTMyLWJ5dGVzLWxvbmctMDAwMA==
+
+# 테스트가 쓰는 파일 저장 루트(빌드 폴더 안). 기본 경로(OS별)를 만들지 않는다
+  file:
+    root-dir: build/test-attachment

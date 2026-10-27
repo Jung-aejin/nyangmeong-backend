@@ -103,7 +103,8 @@ public final class SeedValidator {
         rule("확정 매칭이 다른 모집글의 매칭", """
                 SELECT COUNT(*) FROM PET_PRTC_RCRT r JOIN PET_PRTC_MTCH m ON m.PET_PRTC_MTCH_SN = r.CFMTN_PET_PRTC_MTCH_SN
                  WHERE m.PET_PRTC_RCRT_SN <> r.PET_PRTC_RCRT_SN""");
-        rule("시드 이미지 경로가 seed/ 밖", "SELECT COUNT(*) FROM ATCH_FILE WHERE PHYS_STRG_PATH NOT LIKE 'seed/%'");
+        rule("시드 이미지 경로가 seed/·public/seed/ 밖",
+                "SELECT COUNT(*) FROM ATCH_FILE WHERE PHYS_STRG_PATH NOT LIKE 'seed/%' AND PHYS_STRG_PATH NOT LIKE 'public/seed/%'");
     }
 
     /**

@@ -147,7 +147,7 @@ public final class SeedDataApplication {
             int files = SeedImages.deleteFiles(settings.fileRootDir());
             long total = deleted.values().stream().mapToLong(Long::longValue).sum();
             System.out.printf("[시드] 비우기 완료: %d개 테이블 %,d행, 이 PC의 이미지 %,d개%n", deleted.size(), total, files);
-            System.out.println("[시드] 다른 PC의 uploads/seed 폴더는 그대로 남습니다. 다시 넣으면 seedFiles가 덮어씁니다");
+            System.out.println("[시드] 다른 PC의 파일 저장 루트 아래 seed·public/seed 폴더는 그대로 남습니다. 다시 넣으면 seedFiles가 덮어씁니다");
         }
     }
 

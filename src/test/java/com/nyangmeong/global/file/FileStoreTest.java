@@ -37,8 +37,6 @@ class FileStoreTest {
 
     @BeforeEach
     void setUp() {
-        FileProperties properties = new FileProperties();
-        properties.setRootDir(root.toString());
         SystemSetting setting = new SystemSetting();
         setting.setFileMaxSz(10L);
         when(systemSettingService.get()).thenReturn(setting);
@@ -46,7 +44,7 @@ class FileStoreTest {
             invocation.<AtchFile>getArgument(0).setAtchFileSn(7L);
             return null;
         }).when(atchFileMapper).insert(any());
-        fileStore = new FileStore(atchFileMapper, properties, systemSettingService);
+        fileStore = new FileStore(atchFileMapper, new FileRoot(root), systemSettingService);
     }
 
     @Test
@@ -130,6 +128,40 @@ class FileStoreTest {
         when(atchFileMapper.selectInUse(5L)).thenReturn(escaped);
 
         assertThatThrownBy(() -> fileStore.load(5L))
+                .extracting("errorCode").isEqualTo(ErrorCode.FILE_NOT_FOUND);
+    }
+
+    @Test
+    void 공개_파일은_public_아래에_저장하고_공개로_읽는다() throws Exception {
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+        MockMultipartFile file = new MockMultipartFile("photo", "post.png", "image/png", png);
+
+        Long atchFileSn = fileStore.storePublic(file, "1");
+
+        ArgumentCaptor<AtchFile> captor = ArgumentCaptor.forClass(AtchFile.class);
+        verify(atchFileMapper).insert(captor.capture());
+        AtchFile saved = captor.getValue();
+        assertThat(saved.getPhysStrgPath()).startsWith(FileStore.PUBLIC_PREFIX);
+        assertThat(Files.readAllBytes(root.resolve(saved.getPhysStrgPath()))).containsExactly(png);
+        when(atchFileMapper.selectInUse(atchFileSn)).thenReturn(saved);
+        assertThat(fileStore.loadPublic(atchFileSn).content()).containsExactly(png);
+    }
+
+    @Test
+    void 비공개_파일은_공개로_읽으면_FILE_NOT_FOUND() {
+        Long atchFileSn = fileStore.store(new byte[] {9, 8}, FileExtension.PNG, "receipt.png", "1");
+        ArgumentCaptor<AtchFile> captor = ArgumentCaptor.forClass(AtchFile.class);
+        verify(atchFileMapper).insert(captor.capture());
+        when(atchFileMapper.selectInUse(atchFileSn)).thenReturn(captor.getValue());
+
+        assertThat(captor.getValue().getPhysStrgPath()).doesNotStartWith(FileStore.PUBLIC_PREFIX);
+        assertThatThrownBy(() -> fileStore.loadPublic(atchFileSn))
+                .extracting("errorCode").isEqualTo(ErrorCode.FILE_NOT_FOUND);
+    }
+
+    @Test
+    void 없는_번호는_공개로_읽어도_FILE_NOT_FOUND() {
+        assertThatThrownBy(() -> fileStore.loadPublic(99L))
                 .extracting("errorCode").isEqualTo(ErrorCode.FILE_NOT_FOUND);
     }
 }
