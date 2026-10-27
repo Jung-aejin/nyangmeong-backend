@@ -139,7 +139,7 @@
            AND AUTO_HIDE_DT &gt; NOW()
     </select>
 
-    <!-- 전체 탭은 notiTypeCds 없음 -->
+    <!-- 전체 탭은 notiTypeCds 없음. 안 읽음(PRSL_DT IS NULL)이 먼저, 같은 상태끼리 최신순. LIMIT 전에 정렬해 안 읽은 알림이 최신 5건 밖이어도 포함된다 (COM-004-05) -->
     <select id="selectRecentList" resultMap="notificationSummaryResultMap">
         SELECT INAPP_NOTI_SN
              , NOTI_TYPE_CD
@@ -157,7 +157,8 @@
                 #{notiTypeCd}
             </foreach>
         </if>
-         ORDER BY REG_DT DESC
+         ORDER BY (PRSL_DT IS NULL) DESC
+                , REG_DT DESC
                 , INAPP_NOTI_SN DESC
          LIMIT #{limit}
     </select>
