@@ -27,6 +27,8 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
 	// JWT 발급·검증(global/security/jwt). Spring Security 내장 NimbusJwtEncoder/Decoder, 버전은 Boot 관리
 	implementation 'org.springframework.security:spring-security-oauth2-jose'
+	// SQL 로그(global/config/Log4jdbcConfig). 바인딩 값이 채워진 SQL과 결과 표를 찍는다. prod 프로필에서는 쓰지 않는다
+	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'

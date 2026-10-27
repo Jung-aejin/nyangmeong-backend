@@ -38,10 +38,14 @@ public enum ErrorCode {
     /** member */
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "일치하는 회원정보를 찾을 수 없습니다."),
     /** 이메일·비밀번호 불일치는 토큰 문제가 아니라 400 */
-    LOGIN_FAILED(HttpStatus.BAD_REQUEST, "이메일 또는 비밀번호가 일치하지 않습니다."),
-    LOGIN_CAPTCHA_REQUIRED(HttpStatus.TOO_MANY_REQUESTS, "로그인 5회 실패로 보안코드 확인이 필요합니다."),
-    CAPTCHA_MISMATCH(HttpStatus.BAD_REQUEST, "보안코드가 일치하지 않습니다."),
+    LOGIN_FAILED(HttpStatus.BAD_REQUEST, "일치하는 회원정보를 찾을 수 없습니다."),
+    LOGIN_CAPTCHA_REQUIRED(HttpStatus.TOO_MANY_REQUESTS,
+            "로그인 5회 실패로 보안코드 확인이 필요합니다. 보안코드를 입력해 다시 로그인해 주세요."),
+    CAPTCHA_MISMATCH(HttpStatus.BAD_REQUEST, "보안코드가 일치하지 않습니다. 다시 입력해 주세요."),
+    CAPTCHA_NOT_REQUIRED(HttpStatus.BAD_REQUEST, "보안코드 확인이 필요하지 않습니다."),
     MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "이용할 수 없는 계정입니다. 고객센터에 문의해 주세요."),
+    /** 비밀번호가 맞은 탈퇴 회원 : 프론트가 재가입·복구를 안내 (MEMBER_INACTIVE 는 랜딩 이동이라 따로 둠) */
+    MEMBER_WITHDRAWN(HttpStatus.FORBIDDEN, "탈퇴한 계정입니다. 재가입 또는 계정 복구를 진행해 주세요."),
     SNS_ONLY_MEMBER(HttpStatus.BAD_REQUEST, "SNS로 가입한 계정입니다. SNS 로그인을 이용해 주세요."),
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     EMAIL_ALREADY_REGISTERED(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
@@ -132,6 +136,7 @@ public enum ErrorCode {
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
     COMMENT_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "대댓글에는 답글을 달 수 없습니다."),
     REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 신고한 글입니다."),
+    REPORT_COMMENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 신고한 댓글입니다."),
     LOST_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "실종 제보를 찾을 수 없습니다."),
     LOST_REPORT_ALREADY_FOUND(HttpStatus.CONFLICT, "이미 찾았어요 처리된 제보입니다."),
     LOST_REPORT_EXPIRED(HttpStatus.BAD_REQUEST, "게시 기간이 끝난 제보는 갱신할 수 없습니다."),

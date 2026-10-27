@@ -84,12 +84,12 @@ public class MasterSeeder implements Seeder {
             new Mission("일상케어", "식사량 기록하기", 10, 1, "/health"),
             new Mission("일상케어", "음수량 기록하기", 10, 1, "/health"),
             new Mission("일상케어", "배변 상태 기록하기", 10, 1, "/health"),
-            new Mission("일상케어", "케어리스트 완료하기", 20, 1, "/care"),
+            new Mission("일상케어", "케어리스트 완료하기", 20, 1, "/health/calendar"),
             new Mission("활동기반", "산책 기록하기", 20, 1, "/health"),
             new Mission("활동기반", "커뮤니티 글 쓰기", 30, 1, "/community"),
             new Mission("활동기반", "댓글 3개 남기기", 15, 3, "/community"),
             new Mission("활동기반", "가계부 기록하기", 15, 1, "/mypage/expenses"),
-            new Mission("활동기반", "일정 등록하기", 15, 1, "/care/calendar"));
+            new Mission("활동기반", "일정 등록하기", 15, 1, "/health/calendar"));
 
     private static final List<List<String>> ITEMS = List.of(
             List.of("머리", "빨간 리본", "밀짚모자", "작은 왕관", "털모자"),

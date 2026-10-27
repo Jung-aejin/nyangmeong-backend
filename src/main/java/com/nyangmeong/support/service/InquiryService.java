@@ -43,7 +43,7 @@ import lombok.RequiredArgsConstructor;
 public class InquiryService {
 
     static final int MAX_IMAGES = 10;
-    static final String MVMN_PATH = "/support/inquiries/";
+    static final String MVMN_PATH = "/inquiries/";
 
     private final InquiryMapper inquiryMapper;
     private final FileStore fileStore;

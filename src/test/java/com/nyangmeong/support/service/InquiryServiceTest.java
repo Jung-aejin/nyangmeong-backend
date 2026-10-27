@@ -351,7 +351,7 @@ class InquiryServiceTest {
         verify(eventPublisher).publish(event.capture());
         assertThat(event.getValue().mbrSn()).isEqualTo(MBR);
         assertThat(event.getValue().type()).isEqualTo(NotificationType.INQUIRY_ANSWER);
-        assertThat(event.getValue().mvmnPath()).isEqualTo("/support/inquiries/7");
+        assertThat(event.getValue().mvmnPath()).isEqualTo("/inquiries/7");
     }
 
     @Test

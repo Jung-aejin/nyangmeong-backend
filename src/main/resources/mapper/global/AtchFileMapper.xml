@@ -17,6 +17,7 @@
 
     <insert id="insert" parameterType="com.nyangmeong.global.file.AtchFile"
             useGeneratedKeys="true" keyProperty="atchFileSn" keyColumn="ATCH_FILE_SN">
+        /* 첨부파일 등록 */
         INSERT INTO ATCH_FILE
              ( FILE_EXTN_CD
              , ORGNL_FILE_NM
@@ -38,6 +39,7 @@
     </insert>
 
     <select id="selectInUse" parameterType="long" resultMap="atchFileResultMap">
+        /* 사용 중인 첨부파일 단건 조회 */
         SELECT ATCH_FILE_SN
              , FILE_EXTN_CD
              , ORGNL_FILE_NM

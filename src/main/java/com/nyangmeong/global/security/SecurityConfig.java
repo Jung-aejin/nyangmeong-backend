@@ -29,6 +29,7 @@ import lombok.RequiredArgsConstructor;
  * - STATELESS : JWT 쿠키 기반, 세션 미사용
  * - 열린 경로 : app.security.permit-all-paths (SecurityPathProperties)
  * - /api/admin/** 은 ROLE_ADMIN, 목록 밖은 전부 인증 필요
+ * - /internal/** 도 사용자 인증 필요 (서버 간 키 없음)
  */
 @Configuration
 @EnableWebSecurity
