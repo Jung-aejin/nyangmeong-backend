@@ -88,9 +88,10 @@
 
 ## SCR-MYP-010 픽셀 캐릭터 관리 · 파일 저장 외부 디렉토리·OS별 기본 경로·서빙 — 끝
 - 기능: 없음(연결 작업, 명세 기능 ID 추가 없음). 파일 저장 루트를 `/home/ggorilab/attachment`로 옮기고, 개발 OS(Windows·Mac)별 기본 경로와 공개 이미지 서빙을 만든다. 프론트 LJS 세션 요청(2026-10-27)
+- 구현 방식(처음 요청과 다름): `WebConfig` 리소스 핸들러가 아니라 번호로 여는 `FileController`(`GET /api/files/public/{atchFileSn}`)가 `public/` 경로 접두어로 공개 여부를 판정한다. 비공개 범용 `GET /api/files/{fileSn}`은 만들지 않는다(`global`은 소유 검사를 못 함). 비공개는 도메인 API(`/receipts/{recptSn}/image`, `/pets/{petSn}/character-image`, `/items/{itemSn}/image`)가 소유 검사 후 준다. 보안은 `permit-all-paths`에 `/api/files/public/**`만 추가. 개발 Linux는 기본 경로 없음(키 없으면 시작 실패), 경로 철자 `attachment`, Windows는 프로젝트 드라이브 루트 아래, Mac은 `/Users/Shared/ggorilab/attachment`, prod는 키 필수·쓰기 실패 시 시작 중단
 - 기다리는 것: 공개·비공개 분류 확인(반려동물·캐릭터 공동양육자 한정 여부 SJM), 운영 서버 폴더 준비와 nginx `client_max_body_size`(10MB 이상)
-- 완료 조건: 시작 로그에 해석된 절대 경로가 한 줄 나온다. 공개 이미지가 `/api/files/public/...`로 열린다. 비공개 파일은 URL로 직접 열리지 않는다. prod에서 폴더에 쓸 수 없으면 앱이 시작되지 않는다. Windows에서 프로젝트를 C:와 D:에 두고 띄우면 각 드라이브 아래에 폴더가 생긴다
-- 연결 남음: 게시글·캐릭터 이미지를 `<img src="/api/files/public/{atchFileSn}">`로 전환(프론트 연결 게시글·캐릭터 화면, 프론트 저장소에서 /start). 공개·비공개 분류 확인(SJM), 운영 서버 폴더·nginx `client_max_body_size`(사람)
+- 완료 조건: 시작 로그에 해석된 절대 경로가 한 줄 나온다. 공개 이미지가 `/api/files/public/{atchFileSn}`로 열리고, 공개가 아니거나 없는 번호는 404 `FILE_NOT_FOUND`다(비공개는 도메인 API로). prod에서 폴더에 쓸 수 없으면 앱이 시작되지 않는다. Windows에서 프로젝트를 C:와 D:에 두고 띄우면 각 드라이브 아래에 폴더가 생긴다
+- 연결 남음: 게시글·캐릭터 이미지를 `<img src="/api/files/public/{atchFileSn}">`로 전환(프론트 연결 공통 파일 이미지 컴포넌트, 프론트 저장소 LJS 마일스톤. 게시글·캐릭터는 담당 KSJ·SJM에게 안내. 캐릭터는 응답에 번호가 없어 `character-image` API 사용). 공개·비공개 분류 확인(SJM), 운영 서버 폴더·nginx `client_max_body_size`(사람)
 
 ## 제외
 - FN-COM-002-01·03·04·05·06·07·08·10·12·13·14·16·17·18·19·20·21·22·23: 화면만 있다(서버 동작 없음)

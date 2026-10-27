@@ -6,7 +6,7 @@ SCR-MYP-010 파일 저장 외부 디렉토리·OS별 기본 경로·서빙 — �
 
 ## 다음에 할 것
 
-- 프론트 연결(frontend 세션): 게시글·캐릭터 이미지를 `<img src="/api/files/public/{atchFileSn}">`로, 번호 방식으로 바꾼 이유를 알린다. 비공개(영수증 등)는 도메인 API
+- 프론트 연결(frontend 세션 회신 완료): 공통 파일 이미지 컴포넌트(공개 `/api/files/public/{atchFileSn}` + 비공개 blob 훅)를 프론트가 만든다. 캐릭터 번호가 필요하다고 하면 응답에 번호 추가를 추가 요청으로 받는다
 - 팀에 알린다(파일 저장): 각자 `application.properties`의 `app.security.permit-all-paths`에 `/api/files/public/**` 추가, 기존 `uploads/` 파일은 새 경로로 옮기거나 `seedFiles` 다시. 공용 DB(`pawever`)는 옛 시드라 `public/` 행이 없어 시드 사진이 404 → 다음에 공용 시드를 넣을 때 반영
 - 운영(사람): 서버에 저장 폴더와 쓰기 권한, nginx `client_max_body_size` 10m 이상. SJM에게 공개·비공개 분류 확인(반려동물·캐릭터를 공동양육자에게만 보이게 할지)
 - AIM-011 연결(ai 세션): Python이 쿠키·`X-Requested-With`를 그대로 넘겨 이 API를 부른 뒤 실제 연결 확인. 이때 탈퇴 보관일수 경계 SQL(`MemberMapper.xml` `selectExpiredWithdrawnMbrSns`)은 mock 테스트라 실제 DB에서 아직 실행하지 않았다
