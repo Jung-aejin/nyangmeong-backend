@@ -24,8 +24,8 @@
         <result column="BSC_CHAR_SBST_YN"  property="bscCharSbstYn" />
     </resultMap>
 
-    <!-- 주양육·공동양육 모두, 연동 해제(USE_YN = 'N') 제외. 공동양육 인원은 사용 중인 공동양육자 관계 수 -->
     <select id="selectList" resultMap="petSummaryResultMap">
+        /* 반려동물 목록 조회 */
         SELECT P.PET_SN
              , P.PET_NM
              , P.PET_SE_CD
@@ -113,6 +113,7 @@
     </resultMap>
 
     <select id="selectPet" parameterType="long" resultMap="petResultMap">
+        /* 반려동물 단건 조회 */
         SELECT PET_SN
              , VRTY_SN
              , PET_SE_CD
@@ -146,12 +147,14 @@
     </select>
 
     <select id="selectVrtyNm" parameterType="long" resultType="string">
+        /* 품종명 조회 */
         SELECT VRTY_NM
           FROM VRTY
          WHERE VRTY_SN = #{vrtySn}
     </select>
 
     <select id="existsVrty" resultType="boolean">
+        /* 사용 중인 품종 존재 여부(반려동물 종 일치) */
         SELECT EXISTS (
                SELECT 1
                  FROM VRTY
@@ -162,6 +165,7 @@
     </select>
 
     <select id="selectBrupRel" resultMap="brupRelResultMap">
+        /* 사용 중인 양육 관계 조회 */
         SELECT BRUP_REL_SN
              , PET_SN
              , MBR_SN
@@ -177,8 +181,8 @@
            AND USE_YN = 'Y'
     </select>
 
-    <!-- 사용 중인 관계만, 주양육자 먼저 -->
     <select id="selectCaregivers" parameterType="long" resultMap="caregiverSummaryResultMap">
+        /* 반려동물 양육자 목록 조회 */
         SELECT R.BRUP_REL_SN
              , R.MBR_SN
              , M.MBR_NCNM
@@ -193,8 +197,8 @@
                 , R.BRUP_REL_SN
     </select>
 
-    <!-- 등록 상한과 첫 등록 대표 판단용. 공동양육·연동 해제·삭제된 반려동물 제외 -->
     <select id="countPrimaryPets" resultType="int">
+        /* 주양육 반려동물 수 조회 */
         SELECT COUNT(*)
           FROM BRUP_REL R
           JOIN PET P
@@ -207,6 +211,7 @@
 
     <insert id="insertPet" parameterType="com.nyangmeong.pet.domain.Pet"
             useGeneratedKeys="true" keyProperty="petSn" keyColumn="PET_SN">
+        /* 반려동물 등록 */
         INSERT INTO PET
              ( VRTY_SN
              , PET_SE_CD
@@ -253,6 +258,7 @@
 
     <insert id="insertBrupRel" parameterType="com.nyangmeong.pet.domain.BrupRel"
             useGeneratedKeys="true" keyProperty="brupRelSn" keyColumn="BRUP_REL_SN">
+        /* 양육 관계 등록 */
         INSERT INTO BRUP_REL
              ( PET_SN
              , MBR_SN
@@ -270,6 +276,7 @@
     </insert>
 
     <update id="updatePet">
+        /* 반려동물 수정 */
         UPDATE PET
            SET VRTY_SN           = #{pet.vrtySn}
              , PET_SE_CD         = #{pet.petSeCd}
@@ -294,8 +301,8 @@
            AND DEL_YN = 'N'
     </update>
 
-    <!-- 대표 유일 키(RPRS_MBR_SN) 때문에 지정 전에 먼저 해제 -->
     <update id="updateRepresentativeOff">
+        /* 대표 반려동물 해제 */
         UPDATE BRUP_REL
            SET RPRS_PET_YN = 'N'
              , MDFR_ID     = #{actorId}
@@ -305,6 +312,7 @@
     </update>
 
     <update id="updateRepresentativeOn">
+        /* 대표 반려동물 지정 */
         UPDATE BRUP_REL
            SET RPRS_PET_YN = 'Y'
              , MDFR_ID     = #{actorId}

@@ -3,6 +3,7 @@
 <mapper namespace="com.nyangmeong.global.auth.PetAuthMapper">
 
     <select id="existsPet" parameterType="long" resultType="boolean">
+        /* 삭제되지 않은 반려동물 존재 여부 */
         SELECT EXISTS (
                SELECT 1
                  FROM PET
@@ -11,8 +12,8 @@
                )
     </select>
 
-    <!-- 연동 해제된 관계(USE_YN = 'N')는 권한 없음 -->
     <select id="selectBrupRoleCd" resultType="string">
+        /* 회원의 반려동물 양육 역할 코드 조회 */
         SELECT R.BRUP_ROLE_CD
           FROM BRUP_REL R
           JOIN PET P

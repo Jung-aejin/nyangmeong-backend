@@ -196,4 +196,12 @@ public class MemberService {
         }
         return new CustomException(ErrorCode.NICKNAME_ALREADY_USED);
     }
+
+    /**
+     * 탈퇴 보관일수가 지난 회원 번호 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<Long> searchExpiredWithdrawn(int keepDayCnt) {
+        return memberMapper.selectExpiredWithdrawnMbrSns(MemberStatus.WITHDRAWN.getCode(), keepDayCnt);
+    }
 }

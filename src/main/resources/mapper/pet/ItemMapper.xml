@@ -23,15 +23,15 @@
            AND H.DEL_YN = 'N'
     </sql>
 
-    <!-- 판매 종료(NTSL_YN = 'N') 아이템도 보유 중이면 이미지 필요 -->
     <select id="selectAtchFileSn" parameterType="long" resultType="long">
+        /* 아이템 이미지 파일 번호 조회 */
         SELECT ATCH_FILE_SN
           FROM ITEM
          WHERE ITEM_SN = #{itemSn}
     </select>
 
-    <!-- 보유 판정은 이 캐릭터의 HLD_ITEM 만 (FN-MYP-011-03) -->
     <select id="selectShopItems" resultMap="shopItemSummaryResultMap">
+        /* 상점 아이템 목록 조회(부위 필터) */
         SELECT <include refid="shopItemColumns" />
          WHERE I.NTSL_YN = 'Y'
         <if test="itemRegnCd != null and itemRegnCd != ''">
@@ -43,6 +43,7 @@
     </select>
 
     <select id="selectShopItemsBySn" resultMap="shopItemSummaryResultMap">
+        /* 일련번호로 판매 중 아이템 조회 */
         SELECT <include refid="shopItemColumns" />
          WHERE I.NTSL_YN = 'Y'
            AND I.ITEM_SN IN
@@ -52,6 +53,7 @@
     </select>
 
     <insert id="insertHeldItems">
+        /* 보유 아이템 일괄 등록 */
         INSERT INTO HLD_ITEM
              ( PIXEL_CHAR_SN
              , ITEM_SN

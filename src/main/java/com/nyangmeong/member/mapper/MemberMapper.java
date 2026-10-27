@@ -59,4 +59,10 @@ public interface MemberMapper {
      * 최종 로그인 일시 갱신
      */
     int updateLastLogin(@Param("mbrSn") Long mbrSn, @Param("actorId") String actorId);
+
+    /**
+     * 탈퇴 보관일수가 지난 회원 번호 목록 조회
+     */
+    List<Long> selectExpiredWithdrawnMbrSns(@Param("mbrSttsCd") String mbrSttsCd,
+            @Param("keepDayCnt") int keepDayCnt);
 }

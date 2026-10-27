@@ -20,7 +20,7 @@ public record SeedSettings(String jdbcUrl, String username, String password, Str
         String aesKeyBase64, String hmacKeyBase64, Path fileRootDir, String seedPassword) {
 
     private static final Path RESOURCES = Path.of("src", "main", "resources");
-    private static final Pattern MYSQL_URL = Pattern.compile("jdbc:mysql://([^:/?]+)(?::\\d+)?/([^?]+).*");
+    private static final Pattern MYSQL_URL = Pattern.compile("jdbc:(?:log4jdbc:)?mysql://([^:/?]+)(?::\\d+)?/([^?]+).*");
 
     public static SeedSettings load(Target target) {
         Properties props = read(RESOURCES.resolve("application.properties"), true);
@@ -32,8 +32,9 @@ public record SeedSettings(String jdbcUrl, String username, String password, Str
         if (!m.matches()) {
             throw new SeedException("spring.datasource.url이 jdbc:mysql://주소/DB 형식이 아닙니다");
         }
-        // 대량 INSERT를 여러 행 한 문장으로 묶는다
-        String jdbcUrl = url + (url.contains("?") ? "&" : "?") + "rewriteBatchedStatements=true";
+        // 시드는 MySQL 드라이버로 직접 연결하므로 서버용 log4jdbc 접두어는 뗀다. 대량 INSERT는 여러 행 한 문장으로 묶는다
+        String plainUrl = url.replaceFirst("^jdbc:log4jdbc:", "jdbc:");
+        String jdbcUrl = plainUrl + (plainUrl.contains("?") ? "&" : "?") + "rewriteBatchedStatements=true";
         return new SeedSettings(jdbcUrl, required(props, "spring.datasource.username"),
                 props.getProperty("spring.datasource.password", ""), m.group(1), m.group(2),
                 required(props, "app.crypto.aes-key-base64"), required(props, "app.crypto.hmac-key-base64"),
