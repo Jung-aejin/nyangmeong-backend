@@ -28,8 +28,8 @@
         <result column="MTCH_NO_RSPNS_END_CRTR_DAY_CNT" property="mtchNoRspnsEndCrtrDayCnt" />
     </resultMap>
 
-    <!-- 설정은 1행, 여러 행이면 일련번호가 가장 낮은 행 -->
     <select id="selectCurrent" resultMap="systemSettingResultMap">
+        /* 시스템 설정 조회 */
         SELECT SYS_STNG_SN
              , PET_MAX_CNT
              , JNT_BRUP_MAX_NOPE

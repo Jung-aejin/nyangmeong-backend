@@ -2,9 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.nyangmeong.notification.mapper.NotificationSendingLogMapper">
 
-    <!-- IGNORE 미사용 : 외래키 위반까지 0행으로 삼킴. 결과는 발송 전 실패로 두고 발송 뒤 수정 -->
     <insert id="insert" parameterType="com.nyangmeong.notification.domain.NotificationSendingLog"
             useGeneratedKeys="true" keyProperty="notiSndngLogSn" keyColumn="NOTI_SNDNG_LOG_SN">
+        /* 알림 발송 이력 등록 */
         INSERT INTO NOTI_SNDNG_LOG
              ( MBR_SN
              , SCHDL_SN
@@ -36,6 +36,7 @@
     </insert>
 
     <update id="updateResult">
+        /* 알림 발송 결과 수정 */
         UPDATE NOTI_SNDNG_LOG
            SET SNDNG_RSLT_CD = #{sndngRsltCd}
              , RTRY_NMTM = #{rtryNmtm}
