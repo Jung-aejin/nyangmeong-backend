@@ -2,12 +2,12 @@
 
 ## 지금 하는 것
 
-없음
-
-이전: Swagger 설정 — 끝 (2026-10-26, `/start`·`/impl` 검증 1회차 통과, 사람 확인). `global/config/OpenApiConfig` 새로 만듦: 문서 정보(title `냥멍케어 API`, version `0.1`), `GlobalOpenApiCustomizer`로 GET·HEAD·OPTIONS 외 operation에 `X-Requested-With` 헤더(required, 기본값 `XMLHttpRequest`, Swagger UI가 미리 채움), 쿠키 인증 `cookieAuth`(COOKIE `access_token`) 전역 + 열린 경로(`SecurityPathProperties`)는 `security: []`. `application-prod.properties`에서 springdoc 끔(prod `/v3/api-docs`·`/swagger-ui/index.html` 404). 테스트 `OpenApiConfigTest`(컨텍스트 없음). 문서 `api.md:60`·`controller.md:11`. 기획과 다른 점: B를 `GlobalOperationCustomizer` 대신 `GlobalOpenApiCustomizer`로(경로·메서드가 필요해서)
+SCR-AIM-011 AI 대화 저장·조회 내부 API — 끝 (2026-10-27, `/start`·`/impl` 검증 3회차 통과, 사람 확인). 새 `ai` 도메인(3층): `POST·GET /internal/ai/conversations`, `GET·DELETE …/{aiCnvrsRoomSn}`, 메시지 추가 `POST …/{aiCnvrsRoomSn}/messages`. 회원은 쿠키로만 판정(`mbrSn` 안 받음), 제목·내용 암호화, 남의 대화·없는 번호·남의 petSn은 404 `NOT_FOUND`. 탈퇴 보관일수 경과 회원 대화 파기는 `scheduler/AiConversationPurgeJob`(03:00 KST, `member`에 `searchExpiredWithdrawn` 추가). 계약은 `docs/api/ai.md`, ai 세션에 회신함. 기획과 다른 점: 상세 응답 이름 `ConversationResponse`(`ConversationDetail` 대신), `cmptnYn` 필드 추가, 남의 petSn도 404. 추가 요청: AIM 대화 기능을 제외에서 빼고 담당 표(`milestones/LJS.md`, `docs/convention/milestone.md`) 수정(사람 승인).
 
 ## 다음에 할 것
 
+- AIM-011 연결(ai 세션): Python이 쿠키·`X-Requested-With`를 그대로 넘겨 이 API를 부른 뒤 실제 연결 확인. 이때 탈퇴 보관일수 경계 SQL(`MemberMapper.xml` `selectExpiredWithdrawnMbrSns`)은 mock 테스트라 실제 DB에서 아직 실행하지 않았다
+- AIM-011 후속: 미완료 메시지를 완료로 바꾸는 `PATCH …/messages/{aiCnvrsMsgSn}`는 설계만(`docs/api/ai.md`). SCR-AIM-002·012에서 필요해지면 추가
 - `app.seed.password` 필수값 제외(2026-10-26 사람 요청, 범위 미정): (가) `/start` 설정 키 경고에서만 빼기(`scripts/start-check.sh:51` 제외 목록) (나) `seedData`도 값 없이(기본 비밀번호가 공개 저장소에 들어감). 추천 (가)
 - 팀에 알린다(2026-10-26): 공용 DB(`pawever`) 시드를 `seedClean`→`seedData`로 다시 넣었다(팀원 테스트 데이터 삭제됨, 원인 판단 착오로 불필요했던 작업). 예전 시드는 지금 디스코드 키와 다른 AES 키로 암호화돼 있었다. 각 PC는 `./gradlew seedFiles`를 다시. 로컬 서버는 `spring.profiles.default=local`이라 로컬 DB를 쓴다(로컬 데이터가 예전 키면 `seedData -Ptarget=local -Preset`)
 - 디스코드 공유 `application.properties`에 `app.seed.password`(새 값) 추가, `app.internal.*` 줄은 지운다(서버 간 키 제거, 사람). 각 PC 로컬 파일의 `app.internal.inbound-key`도 지운다

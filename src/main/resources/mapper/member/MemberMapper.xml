@@ -35,4 +35,13 @@
              , MDFCN_DT = NOW()
          WHERE MBR_SN = #{mbrSn}
     </update>
+
+    <select id="selectExpiredWithdrawnMbrSns" resultType="long">
+        /* 탈퇴 보관일수 경과 회원 번호 조회 */
+        SELECT MBR_SN
+          FROM MBR
+         WHERE MBR_STTS_CD = #{mbrSttsCd}
+           AND WHDWL_DT IS NOT NULL
+           AND WHDWL_DT &lt; DATE_SUB(NOW(), INTERVAL #{keepDayCnt} DAY)
+    </select>
 </mapper>

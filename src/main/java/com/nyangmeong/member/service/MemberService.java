@@ -1,8 +1,11 @@
 package com.nyangmeong.member.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nyangmeong.global.security.domain.MemberStatus;
 import com.nyangmeong.member.domain.Member;
 import com.nyangmeong.member.mapper.MemberMapper;
 
@@ -32,5 +35,13 @@ public class MemberService {
     @Transactional
     public void recordLogin(Long mbrSn) {
         memberMapper.updateLastLogin(mbrSn, String.valueOf(mbrSn));
+    }
+
+    /**
+     * 탈퇴 보관일수가 지난 회원 번호 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<Long> searchExpiredWithdrawn(int keepDayCnt) {
+        return memberMapper.selectExpiredWithdrawnMbrSns(MemberStatus.WITHDRAWN.getCode(), keepDayCnt);
     }
 }
