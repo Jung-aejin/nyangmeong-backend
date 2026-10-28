@@ -43,6 +43,8 @@ app.signup.nickname-token-valid-minutes=30
 # app.file.root-dir=
 spring.servlet.multipart.max-file-size=10MB
 spring.servlet.multipart.max-request-size=10MB
+# 로그 파일 폴더(logback-spring.xml). 비우면 실행 폴더 아래 logs. 운영은 application-prod.properties에 /home/ggorilab/logs
+# app.log.dir=
 # 캐릭터 생성기. 외부 API가 정해지기 전에는 fake(가짜 성공), 실패 시험은 fake-fail
 app.character.generator=fake
 

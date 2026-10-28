@@ -8,7 +8,8 @@
 -->
 <configuration>
 	<!-- 변수 지정 -->
-    <property name="LOG_DIR" value="/home/ggorilab/logs" />
+    <!-- 로그 폴더. 운영은 application-prod.properties의 app.log.dir, 그 밖은 실행 폴더 아래 logs -->
+    <springProperty name="LOG_DIR" source="app.log.dir" defaultValue="logs" />
     <property name="LOG_PATH_NAME" value="${LOG_DIR}/application.log" />
 	
 	<!-- ConsoleAppender -->
