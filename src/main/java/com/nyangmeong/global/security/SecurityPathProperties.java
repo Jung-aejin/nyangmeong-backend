@@ -25,6 +25,7 @@ public class SecurityPathProperties {
             "/api/auth/captchas",
             "/api/auth/refresh",
             "/api/auth/logout",
+            "/api/files/public/**",
             "/api/terms",
             "/api/terms/*",
             "/api/email-certifications",

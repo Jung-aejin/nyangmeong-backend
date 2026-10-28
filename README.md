@@ -109,7 +109,9 @@ fetch('/api/auth/dev-tokens',{method:'POST',headers:{'Content-Type':'application
 
 - 시드 대상 테이블에 행이 있으면 넣지 않는다. 고쳐서 다시 넣을 때는 `seedClean` → `seedData`. 둘 다 한 트랜잭션이라 실패하면 DB가 그대로다.
 - `seedClean`은 시드 행만이 아니라 시드 대상·기록 테이블을 전부 비운다(팀원 테스트 데이터 포함). `COM_CD`·`NOTI_TMPLT`는 남는다.
-- 공용 DB에는 이미지 행만 있어서 각 PC가 `seedFiles`로 파일(`uploads/seed/`, git 제외)을 만든다.
+- 공용 DB에는 이미지 행만 있어서 각 PC가 `seedFiles`로 파일(파일 저장 루트 아래 `seed/`·`public/seed/`)을 만든다. 남이 올린 이미지는 내 PC에 파일이 없어 404다. 공용 DB를 쓰면 `seedFiles`를 한 번 실행한다.
+- 파일 저장 루트는 `app.file.root-dir`이다. 비우면 Windows는 프로젝트가 있는 드라이브 루트 아래 `home/ggorilab/attachment`(C:와 D:에 프로젝트를 두면 각 드라이브에 따로 생긴다), Mac은 `/Users/Shared/ggorilab/attachment`다. 서버를 켜면 로그에 `[FileRoot] 파일 저장 루트=…` 한 줄이 나온다. 예전 `uploads/` 폴더의 파일은 새 경로로 옮기거나 `seedFiles`를 다시 실행한다.
+- `app.security.permit-all-paths`에 `/api/files/public/**`가 있어야 공개 이미지가 로그인 없이 열린다. 내 `application.properties`에 이 값을 직접 적었다면 추가한다.
 - 사진은 `src/seed/resources/images`의 CC0 사진을 고른다. 사진을 바꾸면 같은 폴더 `SOURCES.md`에 출처를 적는다(표에 있는 사진만 쓴다). 영수증·검사결과지·픽셀 캐릭터·아이템은 생성기가 그린다.
 - 같은 번호는 늘 같은 회원·반려동물이다. 날짜는 실행한 날 기준이다.
 - 테이블 구조가 바뀌어도 생성기를 고치지 않아도 된다. 빠진 NOT NULL 컬럼은 타입·주석·공통코드 그룹·FK로 채우고, 없어진 컬럼은 빼고, 새 테이블은 자동으로 행을 만든다(못 넣으면 그 테이블만 건너뜀). 실행 끝의 "자동 처리" 경고를 보고, 화면에 어색한 값이 있으면 그 도메인 Seeder(`src/seed/java/com/nyangmeong/seed/domain/`)에서 다듬는다.

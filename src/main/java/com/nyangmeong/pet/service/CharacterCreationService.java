@@ -78,7 +78,7 @@ public class CharacterCreationService {
             throw new IllegalStateException("삭제된 반려동물 charCrtJobSn=" + charCrtJobSn);
         }
 
-        Long atchFileSn = fileStore.store(image, FileExtension.PNG,
+        Long atchFileSn = fileStore.storePublic(image, FileExtension.PNG,
                 "character-" + character.getPixelCharSn() + ".png", SYSTEM);
         pixelCharacterMapper.updatePhotoHidden(character.getPixelCharSn());
         CharacterPhoto result = new CharacterPhoto();

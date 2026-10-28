@@ -8,7 +8,7 @@ import lombok.Setter;
 
 /**
  * [파일 저장 설정]
- * - app.file.root-dir, 키가 없는 PC 대비 실행 폴더 아래 uploads
+ * - app.file.root-dir, 비우면 OS별 기본 경로(FileRootResolver)
  */
 @Getter
 @Setter
@@ -16,6 +16,6 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "app.file")
 public class FileProperties {
 
-    /** 저장 루트 폴더 */
-    private String rootDir = "uploads";
+    /** 저장 루트 폴더 (기본값 없음) */
+    private String rootDir;
 }

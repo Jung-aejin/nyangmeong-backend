@@ -224,7 +224,7 @@ class PostServiceTest {
             return 1;
         }).when(postMapper).insertPost(any(Post.class));
         when(postMapper.selectPost(PST, NORMAL)).thenReturn(post(MBR));
-        when(fileStore.store(any(MultipartFile.class), anyString())).thenReturn(101L, 102L);
+        when(fileStore.storePublic(any(MultipartFile.class), anyString())).thenReturn(101L, 102L);
 
         service.create(MBR, new PostCreateRequest("CMUC0002", "제목", "내용", List.of(file("a.png"), file("b.png"))));
 
@@ -276,7 +276,7 @@ class PostServiceTest {
         when(postMapper.selectPost(PST, NORMAL)).thenReturn(post(MBR));
         when(postMapper.selectImages(PST)).thenReturn(List.of(image(101L, 0), image(102L, 1)));
         when(postMapper.updatePost(eq(PST), any(), eq("새 제목"), any(), eq("1"), eq(NORMAL))).thenReturn(1);
-        when(fileStore.store(any(MultipartFile.class), anyString())).thenReturn(103L);
+        when(fileStore.storePublic(any(MultipartFile.class), anyString())).thenReturn(103L);
 
         service.update(MBR, PST,
                 new PostUpdateRequest("CMUC0001", "새 제목", null, List.of(101L), List.of(file("c.png"))));

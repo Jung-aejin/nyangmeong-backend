@@ -2,10 +2,13 @@
 
 ## 지금 하는 것
 
-SCR-AIM-011 AI 대화 저장·조회 내부 API — 끝 (2026-10-27, `/start`·`/impl` 검증 3회차 통과, 사람 확인). 새 `ai` 도메인(3층): `POST·GET /internal/ai/conversations`, `GET·DELETE …/{aiCnvrsRoomSn}`, 메시지 추가 `POST …/{aiCnvrsRoomSn}/messages`. 회원은 쿠키로만 판정(`mbrSn` 안 받음), 제목·내용 암호화, 남의 대화·없는 번호·남의 petSn은 404 `NOT_FOUND`. 탈퇴 보관일수 경과 회원 대화 파기는 `scheduler/AiConversationPurgeJob`(03:00 KST, `member`에 `searchExpiredWithdrawn` 추가). 계약은 `docs/api/ai.md`, ai 세션에 회신함. 기획과 다른 점: 상세 응답 이름 `ConversationResponse`(`ConversationDetail` 대신), `cmptnYn` 필드 추가, 남의 petSn도 404. 추가 요청: AIM 대화 기능을 제외에서 빼고 담당 표(`milestones/LJS.md`, `docs/convention/milestone.md`) 수정(사람 승인).
+SCR-MYP-010 파일 저장 외부 디렉토리·OS별 기본 경로·서빙 — 끝 (2026-10-27, `/start`·`/impl` 검증 2회차 통과, 사람 확인). 프론트 LJS 세션 요청. 저장 루트는 `app.file.root-dir`, 비우면 Windows는 프로젝트 드라이브 루트 아래·Mac은 `/Users/Shared` 아래(`FileRootResolver`, 시작 로그 `[FileRoot]` 한 줄, prod는 쓸 수 없으면 시작 실패). 공개 파일은 `public/` 아래에 저장하고 `GET /api/files/public/{atchFileSn}`로 로그인 없이 연다(게시글 사진·생성 캐릭터 PNG). 기획과 다른 점: 요청한 정적 리소스 핸들러·`WebConfig`·비공개 범용 `/api/files/{fileSn}` 대신 번호 방식 컨트롤러(응답에 경로가 없고 `global`은 소유 검사를 못 해서). 비공개는 각 도메인 API가 준다.
 
 ## 다음에 할 것
 
+- 프론트 연결(frontend 세션 회신 완료): 공통 파일 이미지 컴포넌트(공개 `/api/files/public/{atchFileSn}` + 비공개 blob 훅)를 프론트가 만든다. 캐릭터 번호가 필요하다고 하면 응답에 번호 추가를 추가 요청으로 받는다
+- 팀에 알린다(파일 저장): 각자 `application.properties`의 `app.security.permit-all-paths`에 `/api/files/public/**` 추가, 기존 `uploads/` 파일은 새 경로로 옮기거나 `seedFiles` 다시. 공용 DB(`pawever`)는 옛 시드라 `public/` 행이 없어 시드 사진이 404 → 다음에 공용 시드를 넣을 때 반영
+- 운영(사람): 서버에 저장 폴더와 쓰기 권한, nginx `client_max_body_size` 10m 이상. SJM에게 공개·비공개 분류 확인(반려동물·캐릭터를 공동양육자에게만 보이게 할지)
 - AIM-011 연결(ai 세션): Python이 쿠키·`X-Requested-With`를 그대로 넘겨 이 API를 부른 뒤 실제 연결 확인. 이때 탈퇴 보관일수 경계 SQL(`MemberMapper.xml` `selectExpiredWithdrawnMbrSns`)은 mock 테스트라 실제 DB에서 아직 실행하지 않았다
 - AIM-011 후속: 미완료 메시지를 완료로 바꾸는 `PATCH …/messages/{aiCnvrsMsgSn}`는 설계만(`docs/api/ai.md`). SCR-AIM-002·012에서 필요해지면 추가
 - `app.seed.password` 필수값 제외(2026-10-26 사람 요청, 범위 미정): (가) `/start` 설정 키 경고에서만 빼기(`scripts/start-check.sh:51` 제외 목록) (나) `seedData`도 값 없이(기본 비밀번호가 공개 저장소에 들어감). 추천 (가)
@@ -31,7 +34,7 @@ SCR-AIM-011 AI 대화 저장·조회 내부 API — 끝 (2026-10-27, `/start`·`
 - 프론트에 알린다: 알림·상점·영수증 API는 `docs/api/notification.md`·`pet.md`·`receipt.md`(구현에 맞춤). 알림 설정 경로는 `/api/members/me/notification-settings`로 바뀌었다. 영수증 업로드는 실패도 201이고 `ocrPrcsSttsCd`·`failRsn`으로 문구를 고른다. 중복 확인에서 [아니오]를 고른 탭은 `expenseYn=false`
 - 프론트 `start` 스킬에도 `docs/api`(백엔드 저장소) 기준 줄을 넣을지 정한다
 - 정하기: 휴대폰 일정 가져오기(기획에 없음, JAJ 영역). 넣는다면 QR 짝짓기 `.ics` 업로드, iPhone 단축어, 웹 → 휴대폰은 `webcal://` 구독 QR
-- 정하기: 파일 저장소 운영(지금 로컬 디스크 `uploads/`. 서버 여러 대·재배포 대비 영구 볼륨 또는 S3), 영상 업로드 형식·용량
+- 정하기: 파일 저장소 운영(지금 서버 로컬 디스크 폴더. 서버 여러 대·재배포 대비 영구 볼륨 또는 S3), 영상 업로드 형식·용량
 - SCR-AIM-008 연결 남음: health 검진기록·일정 등록(JAJ)이 나오면 `expense/service/CheckupRecordFake`를 그 service로(같은 날 병원 일정 연결·새 일정·앞뒤 7일 미연결 일정·처방약 `CARE_RFLT_YN='N'`), 멱등 재전송용 `remember`·`findByReceipt`도 DB 조회로
 - SCR-AIM-008 연결 남음: 가계부 지출 생성·중복 확인(SJM)이 나오면 `ExpenseFake`를, pet 연동 반려동물 목록(SJM)이 나오면 `CaregiverPetFake`를 그 service로(그 전에는 FN-AIM-009-17 구역 자동 연결이 안 된다). 지출 생성에 줄마다 `idmptDmndId`, 사용처 `ExpenseCreateCommand.expndPlcusNm`(세부사항은 null)을 넘기고 중복 조회에 `expndPlcusNm`을 채운다
 - SCR-AIM-008 연결 남음: OCR 외부 API 규격이 정해지면 `OcrClient` 실제 구현을 두고 `app.ocr.client`를 바꾼다(지금 `FakeOcrClient`)
@@ -46,7 +49,7 @@ SCR-AIM-011 AI 대화 저장·조회 내부 API — 끝 (2026-10-27, `/start`·`
 - SCR-COM-002 연결 남음: `/auth/me`의 프로필 이미지 URL은 `FileStore`·파일 조회 API 뒤 연결. 지금은 `atchFileSn`만
 - 정하기: HLD_ITEM 유일 키 `UK_HLD_ITEM_1`에 DEL_YN이 없다. 보유 아이템 소프트 삭제가 생기면 재구매가 막히므로 그때 키를 고친다
 - 팀에 알린다: 배치 패키지 `job` → `scheduler`(기능 분배 정본은 아직 `job`과 AIM-006 담당 YAY), 케어 일정 사전 알림 `CareScheduleAlarmEvent`, 메일 `global/mail/MailSender`(로그만), 스케줄러 `global/batch/SchedulingConfig`
-- 팀에 알린다: 알림은 `EventPublisher.publish(new NotificationEvent(...))`(@Transactional 안), 반려동물 권한 `global/auth/PetAuthorizer`, 파일 `global/file/FileStore`, 공통코드 `GET /api/common-codes?prntComCd=`. 범용 파일 조회 API는 두지 않는다
+- 팀에 알린다: 알림은 `EventPublisher.publish(new NotificationEvent(...))`(@Transactional 안), 반려동물 권한 `global/auth/PetAuthorizer`, 파일 `global/file/FileStore`, 공통코드 `GET /api/common-codes?prntComCd=`.
 - 팀에 알린다: 개인 로컬 DB는 `application-local.properties`(git 제외)에 `spring.datasource.*` 세 줄. `nyangmeong_` 접두어 스키마에 `db/` 기준 SQL 두 개와 `db/migration/`을 차례로 실행해 만든다
 - YAY에게 알린다: 로그인·재발급·로그아웃은 `auth/controller/AuthController`에 `LoginSessionManager`의 `issue`·`rotate`·`revoke`로. 새 공개 경로는 `app.security.permit-all-paths`에. 로그인이 생기면 `DevTokenController` 삭제. 스타터 분석(캡챠 LGN_ATMPT_LMT, 회원 조회 ACNT_EML_HMAC, 소셜 SNS_ACNT_LINK)과 nct-backend OAuth2 핸들러·`CustomOAuth2UserService`(위치는 `docs/OPEN_ISSUES.md`)도 넘긴다
 - `global/validation`은 처음 필요한 YAY(닉네임·휴대전화·비밀번호 검증)가 요청하면 만든다

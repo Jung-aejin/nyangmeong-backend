@@ -27,7 +27,7 @@ app.cookie.secure=false
 # 쿠키를 실어 보낼 수 있는 프론트 오리진(쉼표 구분). 개발은 Vite 주소
 app.cors.allowed-origins=http://localhost:5173
 # 로그인 없이 여는 경로(쉼표 구분). 목록 밖은 전부 인증이 필요하다. 생략하면 아래와 같은 기본값
-app.security.permit-all-paths=/api/auth/dev-tokens,/api/auth/login,/api/auth/login-attempt-limits,/api/auth/captchas,/api/auth/refresh,/api/auth/logout,/api/terms,/api/terms/*,/api/email-certifications,/api/email-certifications/*/verify,/api/members,/api/members/nickname-availability,/api/members/phone-availability,/api/members/me/nickname,/swagger-ui/**,/swagger-ui.html,/v3/api-docs/**
+app.security.permit-all-paths=/api/auth/dev-tokens,/api/auth/login,/api/auth/login-attempt-limits,/api/auth/captchas,/api/auth/refresh,/api/auth/logout,/api/terms,/api/terms/*,/api/email-certifications,/api/email-certifications/*/verify,/api/members,/api/members/nickname-availability,/api/members/phone-availability,/api/members/me/nickname,/api/files/public/**,/swagger-ui/**,/swagger-ui.html,/v3/api-docs/**
 
 # 이메일 인증·가입(SCR-ACC-001). 모두 생략 가능, 생략하면 아래와 같은 기본값(초·분 단위는 키 이름 끝)
 app.email-cert.code-validity-seconds=180
@@ -38,10 +38,13 @@ app.email-cert.verified-keep-minutes=30
 app.email-cert.fail-limit=5
 app.signup.nickname-token-valid-minutes=30
 
-# 파일 저장(SCR-MYP-010). 저장 루트 폴더(git 제외 uploads 권장, 개인 PC 경로는 커밋하지 않는다). 업로드 상한은 SYS_STNG.FILE_MAX_SZ(10MB)와 맞춘다
-app.file.root-dir=uploads
+# 파일 저장(SCR-MYP-010). 저장 루트 폴더. 비우면 OS별 기본 경로: Windows는 프로젝트가 있는 드라이브 루트 아래 home/ggorilab/attachment, Mac은 /Users/Shared/ggorilab/attachment
+# 그 밖의 OS와 prod는 반드시 적는다(운영은 application-prod.properties). 개인 PC 경로는 커밋하지 않는다. 업로드 상한은 SYS_STNG.FILE_MAX_SZ(10MB)와 맞춘다
+# app.file.root-dir=
 spring.servlet.multipart.max-file-size=10MB
 spring.servlet.multipart.max-request-size=10MB
+# 로그 파일 폴더(logback-spring.xml). 비우면 실행 폴더 아래 logs. 운영은 application-prod.properties에 /home/ggorilab/logs
+# app.log.dir=
 # 캐릭터 생성기. 외부 API가 정해지기 전에는 fake(가짜 성공), 실패 시험은 fake-fail
 app.character.generator=fake
 

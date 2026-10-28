@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
+import com.nyangmeong.global.file.FileStore;
 import com.nyangmeong.seed.SeedException;
 
 /**
@@ -75,7 +76,7 @@ public final class SeedImages {
         Row row = store.add("ATCH_FILE", r -> r
                 .set("FILE_EXTN_CD", extension)
                 .set("ORGNL_FILE_NM", fileName(kind, sn, asset.extension()))
-                .set("PHYS_STRG_PATH", SEED_DIR + "/" + kind.name().toLowerCase() + "/" + sn + "." + asset.extension())
+                .set("PHYS_STRG_PATH", seedPath(kind) + "/" + sn + "." + asset.extension())
                 .set("FILE_SZ", asset.bytes().length));
         if (row.sn() != sn) {
             throw new IllegalStateException("ATCH_FILE 번호가 어긋났습니다");
@@ -125,7 +126,10 @@ public final class SeedImages {
      * @return 지운 파일 수
      */
     public static int deleteFiles(Path rootDir) throws IOException {
-        Path dir = rootDir.resolve(SEED_DIR);
+        return deleteDir(rootDir.resolve(SEED_DIR)) + deleteDir(rootDir.resolve(FileStore.PUBLIC_PREFIX + SEED_DIR));
+    }
+
+    private static int deleteDir(Path dir) throws IOException {
         if (!Files.isDirectory(dir)) {
             return 0;
         }
@@ -139,6 +143,12 @@ public final class SeedImages {
             }
         }
         return count;
+    }
+
+    /** 서버가 공개로 저장하는 종류(게시글 사진·캐릭터 이미지)는 public/ 아래에 둔다 */
+    private static String seedPath(Kind kind) {
+        boolean publicKind = kind == Kind.POST || kind == Kind.CHARACTER;
+        return (publicKind ? FileStore.PUBLIC_PREFIX : "") + SEED_DIR + "/" + kind.name().toLowerCase();
     }
 
     private static String fileName(Kind kind, long sn, String extension) {
