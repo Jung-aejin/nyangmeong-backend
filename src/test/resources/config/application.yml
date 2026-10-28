@@ -27,3 +27,7 @@ app:
 # 테스트가 쓰는 파일 저장 루트(빌드 폴더 안). 기본 경로(OS별)를 만들지 않는다
   file:
     root-dir: build/test-attachment
+
+# 테스트가 쓰는 로그 폴더(빌드 폴더 안). prod 프로필 테스트가 /home/ggorilab/logs를 만들지 않게 한다
+  log:
+    dir: build/test-logs
